@@ -1,14 +1,54 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Course
-from .forms import CourseForm
-from .forms import SectionForm
-from .forms import KeyHighlightForm
+from .models import Course, KeyHighlight
+from .forms import CourseForm, SectionForm, KeyHighlightForm
 from .models import Section
 import json, os
 from django.conf import settings
 
+
 def dashboard(request):
-    return render(request, 'dashboard.html')
+    courses = Course.objects.all()
+    selected_course = None
+    existing_highlight = None
+    form = None
+
+    # Handle form submission
+    if request.method == 'POST':
+        course_id = request.POST.get('course')
+        if not course_id:
+            return render(request, 'dashboard.html', {
+                'courses': courses,
+                'error': 'Please select a course first.'
+            })
+
+        selected_course = get_object_or_404(Course, id=course_id)
+        existing_highlight = KeyHighlight.objects.filter(course=selected_course).first()
+        form = KeyHighlightForm(request.POST, request.FILES, instance=existing_highlight)
+
+        if form.is_valid():
+            highlight = form.save(commit=False)
+            highlight.course = selected_course
+            highlight.save()
+            return redirect('dashboard')
+        else:
+            print(form.errors)
+
+    # Handle GET (initial load or course selection)
+    else:
+        course_id = request.GET.get('course')
+        if course_id:
+            selected_course = get_object_or_404(Course, id=course_id)
+            existing_highlight = KeyHighlight.objects.filter(course=selected_course).first()
+            form = KeyHighlightForm(instance=existing_highlight)
+        else:
+            form = KeyHighlightForm()
+
+    return render(request, 'dashboard.html', {
+        'courses': courses,
+        'selected_course': selected_course,
+        'existing_highlight': existing_highlight,
+        'form': form
+    })
 
 def course_list(request):
     courses = Course.objects.all()
@@ -71,13 +111,45 @@ def add_section(request):
 
 
 def add_key_highlight(request):
+    courses = Course.objects.all()  # for dropdown
+    selected_course = None
+    existing_highlight = None
+
     if request.method == 'POST':
-        form = KeyHighlightForm(request.POST, request.FILES)
+        course_id = request.POST.get('course')
+        if not course_id:
+            return render(request, 'key_highlight.html', {
+                'courses': courses,
+                'error': 'Please select a course first.'
+            })
+
+        selected_course = get_object_or_404(Course, id=course_id)
+
+        # check if KeyHighlight already exists for this course
+        existing_highlight = KeyHighlight.objects.filter(course=selected_course).first()
+
+        form = KeyHighlightForm(request.POST, request.FILES, instance=existing_highlight)
         if form.is_valid():
-            form.save()
-            return redirect('add_section') 
+            highlight = form.save(commit=False)
+            highlight.course = selected_course
+            highlight.save()
+            return redirect('add_key_highlight')
         else:
             print(form.errors)
+
     else:
-        form = KeyHighlightForm()
-    return render(request, 'dashboard.html', {'form': form})
+        course_id = request.GET.get('course')
+        if course_id:
+            selected_course = get_object_or_404(Course, id=course_id)
+            existing_highlight = KeyHighlight.objects.filter(course=selected_course).first()
+            form = KeyHighlightForm(instance=existing_highlight)
+        else:
+            form = KeyHighlightForm()
+
+        return render(request, 'dashboard.html', {
+            'form': form,
+            'courses': courses,
+            'selected_course': selected_course,
+            'existing_highlight': existing_highlight,
+        })
+

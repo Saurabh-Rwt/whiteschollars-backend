@@ -1,29 +1,57 @@
 <div class="container">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Add Key Highlight</h5>
+      <h5 class="mb-0">Add / Update Key Highlight</h5>
     </div>
     <div class="card-body">
-        <form method="POST" enctype="multipart/form-data" action="{% url 'add_key_highlight' %}">
-            {% csrf_token %}
-            <!-- Logo -->
-            <div class="mb-3">
-            <label for="logo" class="form-label">Logo</label>
-            <input type="file" class="form-control" id="logo" name="logo" accept="image/*" />
-            <div id="mainLogoPreview" class="mt-2"></div>
-            </div>
 
-            <!-- Text -->
-            <div class="mb-3">
-            <label for="text" class="form-label">Text</label>
-            <textarea class="form-control" id="text" name="text" rows="3" placeholder="Enter highlight text"></textarea>
-            </div>
+      {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
 
-            <!-- Submit -->
-            <div class="text-end">
-            <button type="submit" class="btn btn-success px-4">Submit</button>
-            </div>
-        </form>
+      <!-- Course Dropdown -->
+      <form method="GET" action="{% url 'add_key_highlight' %}">
+        <div class="mb-3">
+          <label for="course" class="form-label">Select Course</label>
+          <select name="course" id="course" class="form-select" onchange="this.form.submit()">
+            <option value="">-- Select Course --</option>
+            {% for course in courses %}
+              <option value="{{ course.id }}" {% if selected_course and selected_course.id == course.id %}selected{% endif %}>
+                {{ course.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </form>
+
+      {% if selected_course %}
+      <form method="POST" enctype="multipart/form-data" action="{% url 'add_key_highlight' %}">
+        {% csrf_token %}
+        <input type="hidden" name="course" value="{{ selected_course.id }}">
+
+        <!-- Logo -->
+        <div class="mb-3">
+          <label for="logo" class="form-label">Logo</label>
+          <input type="file" class="form-control" id="logo" name="logo" accept="image/*" />
+          {% if existing_highlight and existing_highlight.logo %}
+            <img src="{{ existing_highlight.logo.url }}" alt="Logo" class="mt-2" style="height: 60px;">
+          {% endif %}
+        </div>
+
+        <!-- Text -->
+        <div class="mb-3">
+          <label for="text" class="form-label">Text</label>
+          <textarea class="form-control" id="text" name="text" rows="3" placeholder="Enter highlight text">
+            {% if existing_highlight %}{{ existing_highlight.text }}{% endif %}
+          </textarea>
+        </div>
+
+        <!-- Submit -->
+        <div class="text-end">
+          <button type="submit" class="btn btn-success px-4">Save</button>
+        </div>
+      </form>
+      {% endif %}
     </div>
   </div>
 </div>

@@ -9,4 +9,5 @@ urlpatterns = [
     path('courses/delete/<int:pk>/', views.delete_course, name='delete_course'),
     path('add-section/', views.add_section, name='add_section'),
     path('add-key-highlight/', views.add_key_highlight, name='add_key_highlight'),
+    path('add-accreditation-and-certification/', views.add_accreditation_and_certification, name='add_accreditation_and_certification'),
 ]

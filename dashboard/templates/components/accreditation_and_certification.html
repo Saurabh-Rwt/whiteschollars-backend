@@ -1,0 +1,114 @@
+<div class="container mt-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Accreditations & Certifications</h5>
+    </div>
+
+    <div class="card-body">
+      {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
+
+      {% include 'components/course_dropdown.html' %}
+      {% if selected_course %}
+      <form method="POST" enctype="multipart/form-data" action="{% url 'add_accreditation_and_certification' %}">
+        {% csrf_token %}
+        <input type="hidden" name="course" value="{{ selected_course.id }}" />
+
+        <!-- Accreditations Logos -->
+        <div class="mb-3">
+          <label class="form-label">Accreditations and Certification Logos</label>
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <input
+              type="file"
+              class="form-control"
+              id="accreditationLogo"
+              accept="image/*"
+            />
+            <button type="button" class="btn btn-outline-primary" id="addAccreditationLogo">Add</button>
+          </div>
+          <div id="accreditationLogoPreview" class="d-flex flex-wrap gap-2"></div>
+
+          <!-- ✅ Hidden input where all files will accumulate -->
+          <input type="file" name="certification_logo" id="hiddenLogos" multiple hidden />
+        </div>
+
+        <div class="text-end mt-3">
+          <button type="submit" class="btn btn-success px-4">Save</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function () {
+    const allFiles = [];
+
+    $('#addAccreditationLogo').on('click', function () {
+      const input = $('#accreditationLogo')[0];
+      const files = Array.from(input.files);
+      if (files.length === 0) return;
+
+      const preview = $('#accreditationLogoPreview');
+
+      files.forEach(file => {
+        allFiles.push(file); // ✅ Store in memory
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const logoContainer = $('<div>')
+            .addClass('position-relative d-inline-block')
+            .css({ width: '80px', height: '80px', margin: '5px' });
+
+          const img = $('<img>')
+            .attr('src', e.target.result)
+            .addClass('img-thumbnail')
+            .css({
+              width: '80px',
+              height: '80px',
+              objectFit: 'cover',
+              borderRadius: '5px'
+            });
+
+          const removeBtn = $('<button>')
+            .attr('type', 'button')
+            .html('&times;')
+            .addClass('btn btn-sm btn-danger position-absolute top-0 end-0 translate-middle rounded-circle removeAccreditationLogoBtn')
+            .data('filename', file.name)
+            .css({
+              width: '20px',
+              height: '20px',
+              padding: '0',
+              lineHeight: '1',
+              fontSize: '14px'
+            });
+
+          logoContainer.append(img).append(removeBtn);
+          preview.append(logoContainer);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // clear file input
+      $('#accreditationLogo').val('');
+      refreshHiddenInput();
+    });
+
+    // Remove logo from preview & list
+    $(document).on('click', '.removeAccreditationLogoBtn', function () {
+      const filename = $(this).data('filename');
+      const index = allFiles.findIndex(f => f.name === filename);
+      if (index > -1) allFiles.splice(index, 1);
+      $(this).closest('div.position-relative').remove();
+      refreshHiddenInput();
+    });
+
+    // ✅ Sync all selected files into hidden input for submission
+    function refreshHiddenInput() {
+      const dataTransfer = new DataTransfer();
+      allFiles.forEach(f => dataTransfer.items.add(f));
+      document.getElementById('hiddenLogos').files = dataTransfer.files;
+    }
+  });
+</script>

@@ -1,7 +1,7 @@
 <div class="container">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Add / Update Key Highlight</h5>
+      <h5 class="mb-0">Key Highlight</h5>
     </div>
     <div class="card-body">
 
@@ -10,19 +10,7 @@
       {% endif %}
 
       <!-- Course Dropdown -->
-      <form method="GET" action="{% url 'add_key_highlight' %}">
-        <div class="mb-3">
-          <label for="course" class="form-label">Select Course</label>
-          <select name="course" id="course" class="form-select" onchange="this.form.submit()">
-            <option value="">-- Select Course --</option>
-            {% for course in courses %}
-              <option value="{{ course.id }}" {% if selected_course and selected_course.id == course.id %}selected{% endif %}>
-                {{ course.name }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-      </form>
+       {% include 'components/course_dropdown.html' %}
 
       {% if selected_course %}
       <form method="POST" enctype="multipart/form-data" action="{% url 'add_key_highlight' %}">

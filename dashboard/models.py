@@ -42,3 +42,15 @@ class KeyHighlight(models.Model):
 
     def __str__(self):
         return f"{self.course.name} - {self.text[:30] if self.text else 'No text'}"
+
+
+class AccreditationsAndCertification(models.Model):
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='accreditations_certifications'
+    )
+    certification_logo = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        db_table = 'accreditationsandcertification'

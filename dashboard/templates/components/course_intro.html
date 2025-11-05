@@ -1,11 +1,16 @@
 <div class="container">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Add Section</h5>
+      <h5 class="mb-0">Add  Course Intro</h5>
     </div>
     <div class="card-body">
+      <!-- Course Dropdown -->
+      {% include 'components/course_dropdown.html' %}
+
+      {% if selected_course %}
       <form method="POST" enctype="multipart/form-data" action="{% url 'add_section' %}">
         {% csrf_token %}
+        <input type="hidden" name="course" value="{{ selected_course.id }}">
 
         <!-- Logo -->
         <div class="mb-3">
@@ -61,34 +66,28 @@
           <button type="submit" class="btn btn-success px-4">Submit</button>
         </div>
       </form>
+      {% endif %}
     </div>
   </div>
 </div>
 
 <script>
   $(document).ready(function () {
-
-    // ✅ Add new list text
     $(document).on('click', '.addListText', function () {
       const newField = `
-      <div class="input-group mb-2">
-        <input type="text" class="form-control" name="list_text[]" placeholder="Enter list item" />
-        <button type="button" class="btn btn-outline-danger removeListText">−</button>
-      </div>`;
+        <div class="input-group mb-2">
+          <input type="text" class="form-control" name="list_text[]" placeholder="Enter list item" />
+          <button type="button" class="btn btn-outline-danger removeListText">−</button>
+        </div>`;
       $('#listTextContainer').append(newField);
     });
-
-    // ✅ Remove list text
     $(document).on('click', '.removeListText', function () {
       $(this).closest('.input-group').remove();
     });
-
-    // ✅ Main Logo Preview + Remove
     $('#logo').on('change', function () {
       const file = this.files[0];
       const preview = $('#mainLogoPreview');
-      preview.empty(); // clear old preview
-
+      preview.empty();
       if (file) {
         const reader = new FileReader();
         reader.onload = function (event) {
@@ -105,7 +104,6 @@
               objectFit: 'cover',
               borderRadius: '5px'
             });
-
           const removeBtn = $('<button>')
             .attr('type', 'button')
             .html('&times;')
@@ -124,26 +122,21 @@
         reader.readAsDataURL(file);
       }
     });
-
-    // ✅ Remove selected main logo
     $(document).on('click', '.removeMainLogoBtn', function () {
       $('#logo').val(''); // reset file input
       $('#mainLogoPreview').empty();
     });
-
-    // ✅ Add collaboration logos with preview + remove
     $('#addCollabLogo').on('click', function () {
       const fileInput = $('#collabLogo')[0];
       const files = fileInput.files;
       if (files.length === 0) return;
-
       const preview = $('#logoPreview');
       Array.from(files).forEach(file => {
         const reader = new FileReader();
         reader.onload = function (event) {
           const logoContainer = $('<div>')
             .addClass('position-relative d-inline-block')
-            .css({ width: '80px', height: '80px' });
+            .css({ width: '80px', height: '80px', margin: '5px' });
 
           const img = $('<img>')
             .attr('src', event.target.result)
@@ -166,19 +159,27 @@
               lineHeight: '1',
               fontSize: '14px'
             });
+          const newInput = $('<input>')
+            .attr('type', 'file')
+            .attr('name', 'collaboration_logo[]')
+            .prop('files', createFileList(file))
+            .css('display', 'none');
 
-          logoContainer.append(img).append(removeBtn);
+          logoContainer.append(img).append(removeBtn).append(newInput);
           preview.append(logoContainer);
         };
         reader.readAsDataURL(file);
       });
-
-      $('#collabLogo').val(''); // reset for new selection
+      $('#collabLogo').val('');
     });
-
-    // ✅ Remove collaboration logo
     $(document).on('click', '.removeLogoBtn', function () {
       $(this).closest('div.position-relative').remove();
     });
+    function createFileList(file) {
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      return dataTransfer.files;
+    }
+
   });
 </script>

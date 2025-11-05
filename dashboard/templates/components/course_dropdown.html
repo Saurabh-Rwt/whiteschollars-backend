@@ -1,0 +1,14 @@
+<!-- Course Dropdown -->
+<form method="GET" action="{% url 'add_key_highlight' %}">
+    <div class="mb-3">
+        <label for="course" class="form-label">Select Course</label>
+        <select name="course" id="course" class="form-select" onchange="this.form.submit()">
+        <option value="">-- Select Course --</option>
+        {% for course in courses %}
+            <option value="{{ course.id }}" {% if selected_course and selected_course.id == course.id %}selected{% endif %}>
+            {{ course.name }}
+            </option>
+        {% endfor %}
+        </select>
+    </div>
+</form>

@@ -1,0 +1,53 @@
+<div class="container">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Why Choose</h5>
+    </div>
+    <div class="card-body">
+
+      {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
+
+      <!-- Course Dropdown -->
+      {% include 'components/course_dropdown.html' %}
+
+      {% if selected_course %}
+      <form method="POST" enctype="multipart/form-data" action="{% url 'add_why_choose' %}">
+        {% csrf_token %}
+        <input type="hidden" name="course" value="{{ selected_course.id }}">
+
+        <!-- Icon -->
+        <div class="mb-3">
+          <label for="icon" class="form-label">Icon</label>
+          <input type="file" class="form-control" id="icon" name="icon" accept="image/*" />
+          {% if existing_item and existing_item.icon %}
+            <img src="{{ existing_item.icon.url }}" alt="Icon" class="mt-2" style="height: 60px;">
+          {% endif %}
+        </div>
+
+        <!-- Heading -->
+        <div class="mb-3">
+          <label for="heading" class="form-label">Heading</label>
+          <input type="text" class="form-control" id="heading" name="heading"
+                 value="{% if existing_item %}{{ existing_item.heading }}{% endif %}"
+                 placeholder="Enter heading" />
+        </div>
+
+        <!-- Text -->
+        <div class="mb-3">
+          <label for="text" class="form-label">Text</label>
+          <textarea class="form-control" id="text" name="text" rows="3" placeholder="Enter description">
+            {% if existing_item %}{{ existing_item.text }}{% endif %}
+          </textarea>
+        </div>
+
+        <!-- Submit -->
+        <div class="text-end">
+          <button type="submit" class="btn btn-success px-4">Save</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>

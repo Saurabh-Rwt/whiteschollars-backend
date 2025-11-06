@@ -1,0 +1,91 @@
+<div class="container">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Add On-Campus Class</h5>
+    </div>
+    <div class="card-body">
+      {% include 'components/course_dropdown.html' %} {% if selected_course %}
+      <form method="POST">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="date" class="form-label">Date</label>
+            <input
+              type="date"
+              id="date"
+              name="date"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <div class="col-md-6">
+            <label for="time" class="form-label">Time</label>
+
+            <div class="d-flex align-items-center gap-2">
+              <input
+                type="time"
+                id="start_time"
+                class="form-control"
+                required
+              />
+              <span>–</span>
+              <input type="time" id="end_time" class="form-control" required />
+            </div>
+
+            <!-- Hidden field to store formatted time -->
+            <input type="hidden" id="time" name="time" />
+            <small class="text-muted">Example: 11:30 AM – 01:00 PM IST</small>
+          </div>
+
+          <div class="col-md-6">
+            <label for="batch_type" class="form-label">Batch Type</label>
+            <input
+              type="text"
+              id="batch_type"
+              name="batch_type"
+              class="form-control"
+              placeholder="Enter Batch Type"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="text-end mt-4">
+          <button type="submit" class="btn btn-success px-4">Save</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  function formatTime(timeStr) {
+    if (!timeStr) return "";
+    const [hour, minute] = timeStr.split(":");
+    let h = parseInt(hour);
+    const suffix = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    return `${h}:${minute} ${suffix}`;
+  }
+
+  function updateTimeField() {
+    const start = document.getElementById("start_time").value;
+    const end = document.getElementById("end_time").value;
+    const hiddenInput = document.getElementById("time");
+
+    if (start && end) {
+      const formatted = `${formatTime(start)} – ${formatTime(end)} IST`;
+      hiddenInput.value = formatted;
+    }
+  }
+
+  // ✅ Update the hidden time before submitting the form
+  document.querySelector("form").addEventListener("submit", function (e) {
+    updateTimeField(); // Ensure time is updated
+  });
+
+  document.getElementById("start_time").addEventListener("change", updateTimeField);
+  document.getElementById("end_time").addEventListener("change", updateTimeField);
+</script>

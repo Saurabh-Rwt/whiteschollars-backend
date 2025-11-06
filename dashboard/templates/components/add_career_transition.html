@@ -1,0 +1,79 @@
+<div class="container">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Add Career Transition</h5>
+    </div>
+    <div class="card-body">
+      {% include 'components/course_dropdown.html' %}
+
+      {% if selected_course %}
+      <form method="POST" enctype="multipart/form-data" action="{% url 'add_career_transition' %}">
+        {% csrf_token %}
+        <input type="hidden" name="course" value="{{ selected_course.id }}" />
+
+        <div class="mb-3">
+          <label class="form-label">Name</label>
+          <input
+            type="text"
+            name="name"
+            class="form-control"
+            placeholder="Enter name"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Designation</label>
+          <input
+            type="text"
+            name="designation"
+            class="form-control"
+            placeholder="Enter designation"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea
+            name="description"
+            rows="4"
+            class="form-control"
+            placeholder="Enter detailed description"
+          ></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Placed Company</label>
+          <input
+            type="text"
+            name="placed_company"
+            class="form-control"
+            placeholder="Enter company name"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Job Type</label>
+          <input
+            type="text"
+            name="job_type"
+            class="form-control"
+            placeholder="Enter job type"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">YouTube Testimonial Link</label>
+          <input
+            type="url"
+            name="youtube_testimonial_link"
+            class="form-control"
+            placeholder="https://youtube.com/..."
+          />
+        </div>
+        <div class="text-end">
+          <button type="submit" class="btn btn-success px-4">Save</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>

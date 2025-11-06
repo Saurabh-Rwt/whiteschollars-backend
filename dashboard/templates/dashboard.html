@@ -23,6 +23,13 @@
             <button class="nav-link active" id="v-pills-home-tab" data-bs-toggle="pill" data-bs-target="#v-pills-home" type="button" role="tab" aria-controls="v-pills-home" aria-selected="true">Course Intro</button>
             <button class="nav-link" id="key-highlight-tab" data-bs-toggle="pill" data-bs-target="#key-highlight" type="button" role="tab" aria-controls="key-highlight" aria-selected="true">key highlight</button>
             <button class="nav-link" id="accreditations-and-certification-tab" data-bs-toggle="pill" data-bs-target="#accreditations-and-certification" type="button" role="tab" aria-controls="accreditations-and-certification" aria-selected="true">Accreditations and Certification</button>
+            <button class="nav-link" id="why-choose-tab" data-bs-toggle="pill" data-bs-target="#why-choose" type="button" role="tab" aria-controls="why-choose" aria-selected="true">Why Choose</button>
+            <button class="nav-link" id="mentors-tab" data-bs-toggle="pill" data-bs-target="#mentors" type="button" role="tab" aria-controls="mentors" aria-selected="true">Mentors</button>
+            <button class="nav-link" id="program-highlights-tab" data-bs-toggle="pill" data-bs-target="#program-highlights" type="button" role="tab" aria-controls="program-highlights" aria-selected="true">Program Highlights</button>
+            <button class="nav-link" id="career-assistance-tab" data-bs-toggle="pill" data-bs-target="#career-assistance" type="button" role="tab" aria-controls="career-assistance" aria-selected="true">Career Assistance</button>
+            <button class="nav-link" id="career-transitions-tab" data-bs-toggle="pill" data-bs-target="#career-transitions" type="button" role="tab" aria-controls="career-transitions" aria-selected="true">Career Transitions</button>
+            <button class="nav-link" id="our-alumni-tab" data-bs-toggle="pill" data-bs-target="#our-alumni" type="button" role="tab" aria-controls="our-alumni" aria-selected="true">Our Alumni</button>
+            <button class="nav-link" id="on-campus-class-tab" data-bs-toggle="pill" data-bs-target="#on-campus-class" type="button" role="tab" aria-controls="on-campus-class" aria-selected="true">On-Campus Class</button>
           </div>
         </div>
       </div>
@@ -41,6 +48,34 @@
           <div class="tab-pane fade" id="accreditations-and-certification" role="tabpanel"
             aria-labelledby="accreditations-and-certification-tab" tabindex="0">
             {% include 'components/accreditation_and_certification.html' %}
+          </div>
+          <div class="tab-pane fade" id="why-choose" role="tabpanel"
+            aria-labelledby="why-choose-tab" tabindex="0">
+            {% include 'components/why_choose.html' %}
+          </div>
+          <div class="tab-pane fade" id="mentors" role="tabpanel"
+            aria-labelledby="mentors-tab" tabindex="0">
+            {% include 'components/add_mentor.html' %}
+          </div>
+          <div class="tab-pane fade" id="program-highlights" role="tabpanel"
+            aria-labelledby="program-highlights-tab" tabindex="0">
+            {% include 'components/add_program_highlight.html' %}
+          </div>
+          <div class="tab-pane fade" id="career-assistance" role="tabpanel"
+            aria-labelledby="career-assistance-tab" tabindex="0">
+            {% include 'components/add_career_assistance.html' %}
+          </div>
+          <div class="tab-pane fade" id="career-transitions" role="tabpanel"
+            aria-labelledby="career-transitions-tab" tabindex="0">
+            {% include 'components/add_career_transition.html' %}
+          </div>
+          <div class="tab-pane fade" id="our-alumni" role="tabpanel"
+            aria-labelledby="our-alumni-tab" tabindex="0">
+            {% include 'components/add_our_alumni.html' %}
+          </div>
+          <div class="tab-pane fade" id="on-campus-class" role="tabpanel"
+            aria-labelledby="on-campus-class-tab" tabindex="0">
+            {% include 'components/add_on_campus_class.html' %}
           </div>
         </div>
       </div>

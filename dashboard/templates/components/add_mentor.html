@@ -1,0 +1,58 @@
+<div class="container">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Add Mentor</h5>
+    </div>
+    <div class="card-body">
+
+      {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
+
+      <!-- Course Dropdown -->
+      {% include 'components/course_dropdown.html' %}
+
+      {% if selected_course %}
+      <form method="POST" enctype="multipart/form-data" action="{% url 'add_mentor' %}">
+        {% csrf_token %}
+        <input type="hidden" name="course" value="{{ selected_course.id }}">
+
+        <!-- Mentor Image -->
+        <div class="mb-3">
+          <label for="mentor_image" class="form-label">Mentor Image</label>
+          <input type="file" class="form-control" id="mentor_image" name="mentor_image" accept="image/*" />
+        </div>
+
+        <!-- Mentor Name -->
+        <div class="mb-3">
+          <label for="mentor_name" class="form-label">Mentor Name</label>
+          <input type="text" class="form-control" id="mentor_name" name="mentor_name" placeholder="Enter mentor name" required />
+        </div>
+
+        <!-- Designation Name -->
+        <div class="mb-3">
+          <label for="designation_name" class="form-label">Designation</label>
+          <input type="text" class="form-control" id="designation_name" name="designation_name" placeholder="Enter designation" required />
+        </div>
+
+        <!-- Experience Text -->
+        <div class="mb-3">
+          <label for="experience_text" class="form-label">Experience</label>
+          <textarea class="form-control" id="experience_text" name="experience_text" rows="4" placeholder="Enter experience details" required></textarea>
+        </div>
+
+        <!-- Company Logo -->
+        <div class="mb-3">
+          <label for="company_logo" class="form-label">Company Logo</label>
+          <input type="file" class="form-control" id="company_logo" name="company_logo" accept="image/*" />
+        </div>
+
+        <!-- Submit -->
+        <div class="text-end">
+          <button type="submit" class="btn btn-success px-4">Save</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>

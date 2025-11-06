@@ -1,7 +1,7 @@
 <div class="container">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Key Highlight</h5>
+      <h5 class="mb-0">Program Highlight</h5>
     </div>
     <div class="card-body">
 
@@ -10,28 +10,81 @@
       {% endif %}
 
       <!-- Course Dropdown -->
-       {% include 'components/course_dropdown.html' %}
+      {% include 'components/course_dropdown.html' %}
 
       {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_key_highlight' %}">
+      <form method="POST" enctype="multipart/form-data" action="{% url 'add_program_highlight' %}">
         {% csrf_token %}
         <input type="hidden" name="course" value="{{ selected_course.id }}">
 
-        <!-- Logo -->
+        <!-- Title -->
         <div class="mb-3">
-          <label for="logo" class="form-label">Logo</label>
-          <input type="file" class="form-control" id="logo" name="logo" accept="image/*" />
-          {% if existing_highlight and existing_highlight.logo %}
-            <img src="{{ existing_highlight.logo.url }}" alt="Logo" class="mt-2" style="height: 60px;">
-          {% endif %}
+          <label for="title" class="form-label">Title</label>
+          <input
+            type="text"
+            class="form-control"
+            id="title"
+            name="title"
+            placeholder="Enter title"
+            value="{% if existing_highlight %}{{ existing_highlight.title }}{% endif %}"
+          />
         </div>
 
-        <!-- Text -->
+        <!-- Heading -->
         <div class="mb-3">
-          <label for="text" class="form-label">Text</label>
-          <textarea class="form-control" id="text" name="text" rows="3" placeholder="Enter highlight text">
-            {% if existing_highlight %}{{ existing_highlight.text }}{% endif %}
-          </textarea>
+          <label for="heading" class="form-label">Heading</label>
+          <input
+            type="text"
+            class="form-control"
+            id="heading"
+            name="heading"
+            placeholder="Enter heading"
+            value="{% if existing_highlight %}{{ existing_highlight.heading }}{% endif %}"
+          />
+        </div>
+
+        <!-- Text List -->
+        <div class="mb-3">
+          <label class="form-label">Program Details (Text List)</label>
+
+          <div id="text-list">
+            {% if existing_highlight and existing_highlight.text %}
+              {% for item in existing_highlight.text %}
+              <div class="input-group mb-2 text-row">
+                <textarea class="form-control text-item" rows="3" placeholder="Enter text">{{ item }}</textarea>
+                <button class="btn btn-outline-danger remove-text" type="button">&times;</button>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="input-group mb-2 text-row">
+                <textarea class="form-control text-item" rows="3" placeholder="Enter text"></textarea>
+                <button class="btn btn-outline-danger remove-text d-none" type="button">&times;</button>
+              </div>
+            {% endif %}
+          </div>
+
+          <button type="button" id="add-text" class="btn btn-secondary btn-sm mt-2">Add More Text</button>
+          <input type="hidden" id="text" name="text" />
+        </div>
+
+        <!-- Image -->
+        <div class="mb-3">
+          <label for="image" class="form-label">Image</label>
+          <input
+            type="file"
+            class="form-control"
+            id="image"
+            name="image"
+            accept="image/*"
+          />
+          {% if existing_highlight and existing_highlight.image %}
+            <img
+              src="{{ existing_highlight.image.url }}"
+              alt="Image"
+              class="mt-2"
+              style="height: 60px;"
+            />
+          {% endif %}
         </div>
 
         <!-- Submit -->
@@ -43,3 +96,47 @@
     </div>
   </div>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+  $(function () {
+    // Add new text item
+    $("#add-text").click(function () {
+      const row = `
+        <div class="input-group mb-2 text-row">
+          <textarea class="form-control text-item" rows="3" placeholder="Enter text"></textarea>
+          <button class="btn btn-outline-danger remove-text" type="button">&times;</button>
+        </div>`;
+      $("#text-list").append(row);
+      toggleRemoveButtons();
+    });
+
+    // Remove a text item
+    $(document).on("click", ".remove-text", function () {
+      $(this).closest(".text-row").remove();
+      toggleRemoveButtons();
+    });
+
+    // Hide remove button if only one left
+    function toggleRemoveButtons() {
+      const rows = $("#text-list .text-row");
+      if (rows.length <= 1) {
+        rows.find(".remove-text").addClass("d-none");
+      } else {
+        rows.find(".remove-text").removeClass("d-none");
+      }
+    }
+
+    toggleRemoveButtons();
+
+    // On submit, collect all text items into JSON
+    $("form").on("submit", function () {
+      let texts = [];
+      $(".text-item").each(function () {
+        const val = $(this).val().trim();
+        if (val) texts.push(val);
+      });
+      $("#text").val(JSON.stringify(texts));
+    });
+  });
+</script>

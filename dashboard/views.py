@@ -1,10 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
-from .models import Course, Section, KeyHighlight, AccreditationsAndCertification
-from .forms import CourseForm, SectionForm, KeyHighlightForm, AccreditationsAndCertificationForm
+from .models import Course, Section, KeyHighlight, AccreditationsAndCertification, WhyChoose, Mentor, ProgramHighlight, CareerAssistance, CareerTransition, OurAlumni, OnCampusClass
+from .forms import CourseForm, SectionForm, KeyHighlightForm, AccreditationsAndCertificationForm, WhyChooseForm, MentorForm, ProgramHighlightForm, CareerAssistanceForm, CareerTransitionForm, OurAlumniForm, OnCampusClassForm
 import json, os
-
 
 # -------------------- DASHBOARD --------------------
 def dashboard(request):
@@ -193,3 +192,173 @@ def add_accreditation_and_certification(request):
         )
 
         return redirect('dashboard')
+
+# -------------------- WHY CHOOSE --------------------
+def add_why_choose(request):
+    if request.method == 'POST':
+        course_id = request.POST.get('course')
+        course = get_object_or_404(Course, id=course_id)
+        heading = request.POST.get('heading')
+        text = request.POST.get('text')
+        icon = request.FILES.get('icon')
+
+        why_choose, created = WhyChoose.objects.get_or_create(course=course)
+        why_choose.heading = heading
+        why_choose.text = text
+        if icon:
+            why_choose.icon = icon
+        why_choose.save()
+
+        return redirect('dashboard')
+
+    courses = Course.objects.all()
+    return render(request, 'add_why_choose.html', {'courses': courses})
+
+# -------------------- MENTOR --------------------
+def add_mentor(request):
+    if request.method == 'POST':
+        course_id = request.POST.get('course')
+        course = get_object_or_404(Course, id=course_id)
+        mentor_name = request.POST.get('mentor_name')
+        designation_name = request.POST.get('designation_name')
+        experience_text = request.POST.get('experience_text')
+        mentor_image = request.FILES.get('mentor_image')
+        company_logo = request.FILES.get('company_logo')
+
+        Mentor.objects.create(
+            course=course,
+            mentor_name=mentor_name,
+            designation_name=designation_name,
+            experience_text=experience_text,
+            mentor_image=mentor_image,
+            company_logo=company_logo
+        )
+
+        return redirect('dashboard')
+
+    courses = Course.objects.all()
+    return render(request, 'add_mentor.html', {'courses': courses})
+
+# -------------------- PROGRAM HIGHLIGHTS --------------------
+def add_program_highlight(request):
+    if request.method == 'POST':
+        form = ProgramHighlightForm(request.POST, request.FILES)
+        if form.is_valid():
+            text_data = form.cleaned_data.get('text')
+            if text_data:
+                try:
+                    text_data = json.loads(text_data)
+                except json.JSONDecodeError:
+                    text_data = [text_data]
+
+            highlight = form.save(commit=False)
+            highlight.text = text_data
+            highlight.save()
+            return redirect('dashboard')
+    else:
+        form = ProgramHighlightForm()
+
+    courses = Course.objects.all()
+    return render(request, 'add_program_highlight.html', {'form': form, 'courses': courses})
+
+
+# -------------------- CAREER ASSISTANCE --------------------
+def add_career_assistance(request):
+    courses = Course.objects.all()
+    selected_course = None
+    existing_assistance = None
+
+    course_id = request.GET.get('course')
+    if course_id:
+        selected_course = Course.objects.filter(id=course_id).first()
+        existing_assistance = CareerAssistance.objects.filter(course=selected_course).first()
+
+    if request.method == 'POST':
+        course_id = request.POST.get('course')
+        course = Course.objects.get(id=course_id)
+
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        image = request.FILES.get('image')
+        description_list = request.POST.getlist('description_list[]')
+
+        assistance, created = CareerAssistance.objects.update_or_create(
+            course=course,
+            defaults={
+                'title': title,
+                'description': description,
+                'description_list': description_list,
+                'image': image
+            }
+        )
+
+        return redirect('dashboard')
+
+    return render(request, 'add_career_assistance.html', {
+        'courses': courses,
+        'selected_course': selected_course,
+        'existing_assistance': existing_assistance
+    })
+
+# -------------------- CAREER TRANSITION --------------------
+def add_career_transition(request):
+    if request.method == 'POST':
+        form = CareerTransitionForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('dashboard')
+    else:
+        form = CareerTransitionForm()
+
+    courses = Course.objects.all()
+    return render(request, 'components/add_career_transition.html', {'form': form, 'courses': courses})
+
+# -------------------- OUR ALUMNI --------------------
+def add_our_alumni(request):
+    if request.method == 'POST':
+        course_id = request.POST.get('course')
+        course = Course.objects.get(id=course_id)
+        files = request.FILES.getlist('alumni_logo[]')  # multiple files input
+        logo_list = []
+
+        for file in files:
+            upload_dir = os.path.join(settings.MEDIA_ROOT, 'alumni_logos')
+            os.makedirs(upload_dir, exist_ok=True)
+            file_path = os.path.join(upload_dir, file.name)
+            with open(file_path, 'wb+') as destination:
+                for chunk in file.chunks():
+                    destination.write(chunk)
+            logo_list.append(f'alumni_logos/{file.name}')
+
+        OurAlumni.objects.create(course=course, alumni_logo=logo_list)
+        return redirect('dashboard')
+
+    courses = Course.objects.all()
+    return render(request, 'components/add_our_alumni.html', {'courses': courses})
+
+# -------------------- on campus classes --------------------
+def add_on_campus_class(request):
+    courses = Course.objects.all()
+    selected_course = request.GET.get('course')
+
+    if selected_course:
+        course = Course.objects.get(id=selected_course)
+
+        if request.method == 'POST':
+            date = request.POST.get('date')
+            time = request.POST.get('time')
+            batch_type = request.POST.get('batch_type')
+
+            if date and time and batch_type:
+                OnCampusClass.objects.create(
+                    course=course,
+                    date=date,
+                    time=time,
+                    batch_type=batch_type
+                )
+                return redirect(request.path_info + f'?course={selected_course}')
+
+    return render(request, 'components/add_on_campus_class.html', {
+        'courses': courses,
+        'selected_course': selected_course,
+    })

@@ -1,6 +1,5 @@
 from django.db import models
 
-
 class Course(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
@@ -54,3 +53,100 @@ class AccreditationsAndCertification(models.Model):
 
     class Meta:
         db_table = 'accreditationsandcertification'
+
+class WhyChoose(models.Model):
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='why_choose_items'
+    )
+    icon = models.ImageField(upload_to='why_choose_icons/', blank=True, null=True)
+    heading = models.CharField(max_length=255)
+    text = models.TextField()
+
+    def __str__(self):
+        return f"{self.course.name} - {self.heading}"
+
+    class Meta:
+        db_table = 'why_choose'
+
+class Mentor(models.Model):
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='mentors'
+    )
+    mentor_image = models.ImageField(upload_to='mentors/', blank=True, null=True)
+    mentor_name = models.CharField(max_length=255)
+    designation_name = models.CharField(max_length=255)
+    experience_text = models.TextField()
+    company_logo = models.ImageField(upload_to='mentor_company_logos/', blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.mentor_name} ({self.designation_name})"
+
+    class Meta:
+        db_table = 'mentors'
+
+class ProgramHighlight(models.Model):
+    course = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='program_highlights')
+    title = models.CharField(max_length=255)
+    heading = models.CharField(max_length=255)
+    text = models.JSONField(default=list, blank=True)
+    image = models.ImageField(upload_to='program_highlights/', blank=True, null=True)
+
+    class Meta:
+        db_table = 'program_highlights'
+
+    def __str__(self):
+        return self.title
+
+class CareerAssistance(models.Model):
+    course = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='career_assistances')
+    title = models.CharField(max_length=255)
+    description = models.TextField()  # long text
+    description_list = models.JSONField(default=list, blank=True)
+    image = models.ImageField(upload_to='career_assistance/', blank=True, null=True)
+
+    class Meta:
+        db_table = 'career_assistance'
+
+    def __str__(self):
+        return self.title
+
+class CareerTransition(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='career_transitions')
+    name = models.CharField(max_length=255)
+    designation = models.CharField(max_length=255)
+    description = models.TextField()
+    placed_company = models.CharField(max_length=255)
+    job_type = models.CharField(max_length=255)
+    youtube_testimonial_link = models.URLField(max_length=500, blank=True, null=True)
+
+    class Meta:
+        db_table = 'career_transitions'
+
+    def __str__(self):
+        return f"{self.name} - {self.placed_company}"
+
+class OurAlumni(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='our_alumni')
+    alumni_logo = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        db_table = 'our_alumni'
+
+    def __str__(self):
+        return f"Our Alumni - {self.course.name}"
+
+class OnCampusClass(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='on_campus_classes')
+    date = models.DateField()
+    time = models.CharField(max_length=100)
+    batch_type = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'on_campus_classes'
+
+    def __str__(self):
+        return f"{self.course.title} - {self.batch_type}"

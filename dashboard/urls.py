@@ -10,4 +10,11 @@ urlpatterns = [
     path('add-section/', views.add_section, name='add_section'),
     path('add-key-highlight/', views.add_key_highlight, name='add_key_highlight'),
     path('add-accreditation-and-certification/', views.add_accreditation_and_certification, name='add_accreditation_and_certification'),
+    path('add-why-choose/', views.add_why_choose, name='add_why_choose'),
+    path('add-mentor/', views.add_mentor, name='add_mentor'),
+    path('add-program-highlight/', views.add_program_highlight, name='add_program_highlight'),
+    path('add-career-assistance/', views.add_career_assistance, name='add_career_assistance'),
+    path('add-career-transition/', views.add_career_transition, name='add_career_transition'),
+    path('add-our-alumni/', views.add_our_alumni, name='add_our_alumni'),
+    path('add-on-campus-class/', views.add_on_campus_class, name='add_on_campus_class'),
 ]

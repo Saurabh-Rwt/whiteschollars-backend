@@ -1,0 +1,110 @@
+<div class="container">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Add Program Highlight</h5>
+    </div>
+
+    <div class="card-body">
+      <!-- Course Dropdown -->
+      {% include 'components/course_dropdown.html' %}
+
+      {% if selected_course %}
+      <form method="POST" enctype="multipart/form-data" action="{% url 'add_program_highlight' %}">
+        {% csrf_token %}
+        <input type="hidden" name="course" value="{{ selected_course.id }}">
+
+        <!-- Title -->
+        <div class="mb-3">
+          <label for="title" class="form-label">Title</label>
+          <input type="text" class="form-control" id="title" name="title"
+            value="{% if existing_highlight %}{{ existing_highlight.title }}{% endif %}"
+            placeholder="Enter program title" />
+        </div>
+
+        <!-- Heading -->
+        <div class="mb-3">
+          <label for="heading" class="form-label">Heading</label>
+          <input type="text" class="form-control" id="heading" name="heading"
+            value="{% if existing_highlight %}{{ existing_highlight.heading }}{% endif %}"
+            placeholder="Enter heading" />
+        </div>
+
+        <!-- Program Details -->
+        <div class="mb-3">
+          <label class="form-label">Program Details (Text List)</label>
+          <div class="input-group mb-2">
+            <input type="text" id="detailInput" class="form-control" placeholder="Enter detail" />
+            <button type="button" id="addDetailBtn" class="btn btn-outline-success">Add</button>
+          </div>
+          <ul id="detailList" class="list-group"></ul>
+          <input type="hidden" name="text" id="textField" />
+        </div>
+
+        <!-- Image -->
+        <div class="mb-3">
+          <label for="image" class="form-label">Image</label>
+          <input type="file" class="form-control" id="image" name="image" accept="image/*" />
+          <div id="imagePreview" class="mt-2"></div>
+
+          {% if existing_highlight and existing_highlight.image %}
+          <img src="{{ existing_highlight.image.url }}" alt="Image" class="mt-2 rounded" style="height: 100px;">
+          {% endif %}
+        </div>
+
+        <!-- Submit -->
+        <div class="text-end">
+          <button type="submit" class="btn btn-success px-4">Submit</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script>
+  $(document).ready(function () {
+    const details = [];
+
+    // Add program detail
+    $("#addDetailBtn").click(function () {
+      const detail = $("#detailInput").val().trim();
+      if (detail) {
+        details.push(detail);
+        $("#detailList").append(
+          `<li class="list-group-item d-flex justify-content-between align-items-center">
+            ${detail}
+            <button type="button" class="btn btn-sm btn-outline-danger removeDetailBtn">Remove</button>
+          </li>`
+        );
+        $("#detailInput").val("");
+        $("#textField").val(JSON.stringify(details)); // store list in hidden field
+      }
+    });
+
+    // Remove a program detail
+    $(document).on("click", ".removeDetailBtn", function () {
+      const text = $(this).parent().text().trim().replace("Remove", "").trim();
+      const index = details.indexOf(text);
+      if (index > -1) details.splice(index, 1);
+      $(this).parent().remove();
+      $("#textField").val(JSON.stringify(details));
+    });
+
+    // Image preview
+    $("#image").on("change", function () {
+      const file = this.files[0];
+      const preview = $("#imagePreview");
+      preview.empty();
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          preview.append(
+            `<img src="${e.target.result}" class="img-thumbnail rounded" style="height: 100px; width: auto;">`
+          );
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  });
+</script>

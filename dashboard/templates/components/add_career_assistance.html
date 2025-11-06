@@ -1,0 +1,84 @@
+<div class="container">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Add Career Assistance</h5>
+    </div>
+    <div class="card-body">
+      {% include 'components/course_dropdown.html' %}
+
+      {% if selected_course %}
+      <form method="POST" enctype="multipart/form-data" action="{% url 'add_career_assistance' %}">
+        {% csrf_token %}
+        <input type="hidden" name="course" value="{{ selected_course.id }}">
+
+        <!-- Title -->
+        <div class="mb-3">
+          <label for="title" class="form-label">Title</label>
+          <input type="text" class="form-control" id="title" name="title"
+            placeholder="Enter title" value="{{ existing_assistance.title|default:'' }}">
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3">
+          <label for="description" class="form-label">Description</label>
+          <textarea class="form-control" id="description" name="description" rows="4"
+            placeholder="Enter detailed description">{{ existing_assistance.description|default:'' }}</textarea>
+        </div>
+
+        <!-- Description List -->
+        <div class="mb-3">
+          <label class="form-label">Description List</label>
+          <div id="descListContainer">
+            {% if existing_assistance and existing_assistance.description_list %}
+              {% for item in existing_assistance.description_list %}
+                <div class="input-group mb-2">
+                  <input type="text" class="form-control" name="description_list[]" value="{{ item }}"
+                    placeholder="Enter list item" />
+                  <button type="button" class="btn btn-outline-danger removeDescBtn">−</button>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="input-group mb-2">
+                <input type="text" class="form-control" name="description_list[]" placeholder="Enter list item" />
+                <button type="button" class="btn btn-outline-success addDescBtn">+</button>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Image -->
+        <div class="mb-3">
+          <label for="image" class="form-label">Image</label>
+          <input type="file" class="form-control" id="image" name="image" accept="image/*" />
+          {% if existing_assistance and existing_assistance.image %}
+            <img src="{{ existing_assistance.image.url }}" alt="Image" class="mt-2 rounded" style="height: 100px;" />
+          {% endif %}
+        </div>
+
+        <div class="text-end">
+          <button type="submit" class="btn btn-success px-4">Save</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+
+<script>
+  $(document).ready(function () {
+    // Add/remove description fields
+    $(document).on('click', '.addDescBtn', function () {
+      const newField = `
+        <div class="input-group mb-2">
+          <input type="text" class="form-control" name="description_list[]" placeholder="Enter list item" />
+          <button type="button" class="btn btn-outline-danger removeDescBtn">−</button>
+        </div>`;
+      $('#descListContainer').append(newField);
+    });
+
+    $(document).on('click', '.removeDescBtn', function () {
+      $(this).closest('.input-group').remove();
+    });
+  });
+</script>

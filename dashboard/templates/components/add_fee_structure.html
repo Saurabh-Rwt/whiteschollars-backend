@@ -1,0 +1,95 @@
+<div class="container mt-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Add Fee Structure</h5>
+    </div>
+
+    <div class="card-body">
+      {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
+
+      {% include 'components/course_dropdown.html' %}
+
+      {% if selected_course %}
+      <form method="POST" enctype="multipart/form-data" action="{% url 'add_fee_structure' %}">
+        {% csrf_token %}
+        <input type="hidden" name="course_id" value="{{ selected_course.id }}" />
+
+        <!-- Title -->
+        <div class="mb-3">
+          <label for="title" class="form-label">Title</label>
+          <input type="text" class="form-control" id="title" name="title"
+                 placeholder="Enter fee structure title" required />
+        </div>
+
+        <!-- Mode of Training -->
+        <div class="mb-3">
+          <label for="mode_of_training" class="form-label">Mode of Training</label>
+          <input type="text" class="form-control" id="mode_of_training" name="mode_of_training"
+                 placeholder="e.g. Online / Offline" required />
+        </div>
+
+        <!-- Batch Date -->
+        <div class="mb-3">
+          <label for="batch_date" class="form-label">Batch Date</label>
+          <input type="date" class="form-control" id="batch_date" name="batch_date"
+                 placeholder="e.g. 15th Jan 2025" required />
+        </div>
+
+        <!-- Description / List Text -->
+        <div class="mb-3">
+          <label class="form-label">Description / List Text</label>
+          <div id="courseListTextContainer">
+            <div class="d-flex align-items-center mb-2">
+              <input
+                type="text"
+                class="form-control me-2"
+                name="list_text[]"
+                placeholder="Enter detail"
+              />
+              <button type="button" class="btn btn-outline-success addListTextBtn">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prices -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="original_price" class="form-label">Original Price</label>
+            <input type="number" step="0.01" class="form-control" id="original_price" name="original_price"
+                   placeholder="Enter original price" required />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="discount_price" class="form-label">Discount Price</label>
+            <input type="number" step="0.01" class="form-control" id="discount_price" name="discount_price"
+                   placeholder="Enter discount price" required />
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="text-end">
+          <button type="submit" class="btn btn-success px-4">Save</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function () {
+    $(document).on("click", ".addListTextBtn", function () {
+      const newField = `
+        <div class="d-flex align-items-center mb-2">
+          <input type="text" class="form-control me-2" name="list_text[]" placeholder="Enter detail" />
+          <button type="button" class="btn btn-outline-danger removeListTextBtn">Remove</button>
+        </div>
+      `;
+      $("#courseListTextContainer").append(newField);
+    });
+    $(document).on("click", ".removeListTextBtn", function () {
+      $(this).parent().remove();
+    });
+  });
+</script>

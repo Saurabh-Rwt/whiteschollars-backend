@@ -1,0 +1,90 @@
+<div class="container mt-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Add "Why WhiteScholars is the Best"</h5>
+    </div>
+
+    <div class="card-body">
+      {% include 'components/course_dropdown.html' %}
+
+      {% if selected_course %}
+      <form method="POST" enctype="multipart/form-data" action="{% url 'add_why_white_scholars' %}">
+        {% csrf_token %}
+        <input type="hidden" name="course_id" value="{{ selected_course.id }}" />
+
+        <!-- Description -->
+        <div class="mb-3">
+          <label for="description" class="form-label">Description</label>
+          <textarea class="form-control" id="description" name="description"
+                    placeholder="Enter why WhiteScholars is the best"
+                    rows="3" required></textarea>
+        </div>
+
+        <!-- Image Upload -->
+        <div class="mb-3">
+          <label class="form-label">Images</label>
+          <div id="imageInputs">
+            <div class="input-group mb-2 image-input">
+              <input type="file" class="form-control" name="images[]" accept="image/*" onchange="previewImage(event, this)">
+              <button type="button" class="btn btn-danger" onclick="removeImageInput(this)">Remove</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="addImageInput()">+ Add More</button>
+        </div>
+
+        <!-- Image Preview -->
+        <div id="imagePreview" class="d-flex flex-wrap gap-2"></div>
+
+        <!-- Submit -->
+        <div class="text-end mt-3">
+          <button type="submit" class="btn btn-success px-4">Save</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function addImageInput() {
+  const container = document.getElementById('imageInputs');
+  const div = document.createElement('div');
+  div.className = 'input-group mb-2 image-input';
+  div.innerHTML = `
+    <input type="file" class="form-control" name="images[]" accept="image/*" onchange="previewImage(event, this)">
+    <button type="button" class="btn btn-danger" onclick="removeImageInput(this)">Remove</button>
+  `;
+  container.appendChild(div);
+}
+
+function removeImageInput(button) {
+  const div = button.closest('.image-input');
+  const fileInput = div.querySelector('input[type="file"]');
+  if (fileInput.dataset.previewId) {
+    document.getElementById(fileInput.dataset.previewId)?.remove();
+  }
+  div.remove();
+}
+
+function previewImage(event, input) {
+  const previewContainer = document.getElementById('imagePreview');
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = document.createElement('img');
+    const id = 'preview-' + Math.random().toString(36).substr(2, 9);
+    img.id = id;
+    input.dataset.previewId = id;
+    img.src = e.target.result;
+    img.style.width = '120px';
+    img.style.height = '120px';
+    img.style.objectFit = 'cover';
+    img.style.border = '1px solid #ddd';
+    img.style.borderRadius = '6px';
+    previewContainer.appendChild(img);
+  }
+  reader.readAsDataURL(file);
+}
+</script>

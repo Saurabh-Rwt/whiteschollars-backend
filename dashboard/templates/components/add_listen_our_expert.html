@@ -1,0 +1,60 @@
+<div class="container mt-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Add Listen Our Expert</h5>
+    </div>
+
+    <div class="card-body">
+      {% include 'components/course_dropdown.html' %}
+
+      {% if selected_course %}
+      <form method="POST" enctype="multipart/form-data" action="{% url 'add_listen_our_expert' %}">
+        {% csrf_token %}
+        <input type="hidden" name="course_id" value="{{ selected_course.id }}" />
+
+        <!-- Title -->
+        <div class="mb-3">
+          <label for="title" class="form-label">Title</label>
+          <input type="text" class="form-control" id="title" name="title" placeholder="Enter section title" required />
+        </div>
+
+        <!-- YouTube Links -->
+        <div class="mb-3">
+          <label class="form-label">YouTube Links</label>
+          <div id="youtubeLinksContainer">
+            <div class="d-flex align-items-center mb-2">
+              <input type="text" class="form-control me-2" name="youtube_links[]" placeholder="Enter YouTube link" required />
+              <button type="button" class="btn btn-outline-success addLinkBtn">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="text-end">
+          <button type="submit" class="btn btn-success px-4">Save</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function () {
+    // Add a new YouTube link field
+    $(document).on("click", ".addLinkBtn", function () {
+      const newField = `
+        <div class="d-flex align-items-center mb-2">
+          <input type="text" class="form-control me-2" name="youtube_links[]" placeholder="Enter YouTube link" required />
+          <button type="button" class="btn btn-outline-danger removeLinkBtn">Remove</button>
+        </div>
+      `;
+      $("#youtubeLinksContainer").append(newField);
+    });
+
+    // Remove a YouTube link field
+    $(document).on("click", ".removeLinkBtn", function () {
+      $(this).parent().remove();
+    });
+  });
+</script>

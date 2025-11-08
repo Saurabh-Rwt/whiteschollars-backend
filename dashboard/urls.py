@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import CourseListAPIView, CourseDetailAPIView
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
@@ -17,4 +18,11 @@ urlpatterns = [
     path('add-career-transition/', views.add_career_transition, name='add_career_transition'),
     path('add-our-alumni/', views.add_our_alumni, name='add_our_alumni'),
     path('add-on-campus-class/', views.add_on_campus_class, name='add_on_campus_class'),
+    path('add-fee-structure/', views.add_fee_structure, name='add_fee_structure'),
+    path('add-program-for/', views.add_program_for, name='add_program_for'),
+    path('add-why-white-scholars/', views.add_why_white_scholars, name='add_why_white_scholars'),
+    path('add-listen-our-expert/', views.add_listen_our_expert, name='add_listen_our_expert'),
+
+    path('api/courses/', CourseListAPIView.as_view(), name='course-list'),
+    path('api/courses/<slug:slug>/', CourseDetailAPIView.as_view(), name='course-detail'),
 ]

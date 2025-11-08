@@ -4,50 +4,34 @@
       <h5 class="mb-0">Add On-Campus Class</h5>
     </div>
     <div class="card-body">
-      {% include 'components/course_dropdown.html' %} {% if selected_course %}
-      <form method="POST">
+      {% include 'components/course_dropdown.html' %} 
+      
+      {% if selected_course %}
+      <form method="POST" enctype="multipart/form-data" action="{% url 'add_on_campus_class' %}">
         {% csrf_token %}
+        
+        <!-- Include selected course -->
+        <input type="hidden" name="course" value="{{ selected_course.id }}">
+
         <div class="row g-3">
           <div class="col-md-6">
             <label for="date" class="form-label">Date</label>
-            <input
-              type="date"
-              id="date"
-              name="date"
-              class="form-control"
-              required
-            />
+            <input type="date" id="date" name="date" class="form-control" required />
           </div>
-
           <div class="col-md-6">
             <label for="time" class="form-label">Time</label>
-
             <div class="d-flex align-items-center gap-2">
-              <input
-                type="time"
-                id="start_time"
-                class="form-control"
-                required
-              />
+              <input type="time" id="start_time" class="form-control" required />
               <span>–</span>
               <input type="time" id="end_time" class="form-control" required />
             </div>
-
-            <!-- Hidden field to store formatted time -->
             <input type="hidden" id="time" name="time" />
             <small class="text-muted">Example: 11:30 AM – 01:00 PM IST</small>
           </div>
 
           <div class="col-md-6">
             <label for="batch_type" class="form-label">Batch Type</label>
-            <input
-              type="text"
-              id="batch_type"
-              name="batch_type"
-              class="form-control"
-              placeholder="Enter Batch Type"
-              required
-            />
+            <input type="text" id="batch_type" name="batch_type" class="form-control" placeholder="Enter Batch Type" required />
           </div>
         </div>
 
@@ -56,6 +40,7 @@
         </div>
       </form>
       {% endif %}
+
     </div>
   </div>
 </div>
@@ -76,16 +61,15 @@
     const hiddenInput = document.getElementById("time");
 
     if (start && end) {
-      const formatted = `${formatTime(start)} – ${formatTime(end)} IST`;
-      hiddenInput.value = formatted;
+      hiddenInput.value = `${formatTime(start)} – ${formatTime(end)} IST`;
     }
   }
 
-  // ✅ Update the hidden time before submitting the form
-  document.querySelector("form").addEventListener("submit", function (e) {
-    updateTimeField(); // Ensure time is updated
-  });
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("form");
+    form.addEventListener("submit", updateTimeField);
 
-  document.getElementById("start_time").addEventListener("change", updateTimeField);
-  document.getElementById("end_time").addEventListener("change", updateTimeField);
+    document.getElementById("start_time").addEventListener("change", updateTimeField);
+    document.getElementById("end_time").addEventListener("change", updateTimeField);
+  });
 </script>

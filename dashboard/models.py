@@ -150,3 +150,61 @@ class OnCampusClass(models.Model):
 
     def __str__(self):
         return f"{self.course.title} - {self.batch_type}"
+        
+class FeeStructure(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='fee_structures')
+    title = models.CharField(max_length=255)
+    mode_of_training = models.CharField(max_length=255) 
+    list_text = models.JSONField(default=list, blank=True)
+    batch_date = models.CharField(max_length=255)
+    original_price = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        db_table = 'fee_structures'
+
+    def __str__(self):
+        return f"{self.title} - {self.mode_of_training}"
+
+
+class ProgramFor(models.Model):
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='program_for'
+    )
+    image = models.ImageField(upload_to='program_for_images/', blank=True, null=True)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+
+    class Meta:
+        db_table = 'program_for'
+
+    def __str__(self):
+        return f"{self.course.title} - {self.title}"
+
+class WhyWhiteScholars(models.Model):
+    course = models.ForeignKey(
+        'Course',
+        on_delete=models.CASCADE,
+        related_name='why_white_scholars'
+    )
+    description = models.TextField()
+    images = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        db_table = 'why_white_scholars'
+
+    def __str__(self):
+        return f"{self.course.title} - Why WhiteScholars"
+
+class ListenOurExpert(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='listen_our_experts')
+    title = models.CharField(max_length=255)
+    youtube_links = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        db_table = 'listen_our_expert'
+
+    def __str__(self):
+        return f"{self.course.title} - {self.title}"

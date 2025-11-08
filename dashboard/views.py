@@ -1,9 +1,23 @@
+from rest_framework import generics, permissions
+from .serializers import CourseSerializer
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
-from .models import Course, Section, KeyHighlight, AccreditationsAndCertification, WhyChoose, Mentor, ProgramHighlight, CareerAssistance, CareerTransition, OurAlumni, OnCampusClass
+from .models import Course, Section, KeyHighlight, AccreditationsAndCertification, WhyChoose, Mentor, ProgramHighlight, CareerAssistance, CareerTransition, OurAlumni, OnCampusClass, FeeStructure, ProgramFor, WhyWhiteScholars, ListenOurExpert
 from .forms import CourseForm, SectionForm, KeyHighlightForm, AccreditationsAndCertificationForm, WhyChooseForm, MentorForm, ProgramHighlightForm, CareerAssistanceForm, CareerTransitionForm, OurAlumniForm, OnCampusClassForm
 import json, os
+
+# -------------------- API View --------------------
+class CourseListAPIView(generics.ListAPIView):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class CourseDetailAPIView(generics.RetrieveAPIView):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+    lookup_field = 'slug'
+    permission_classes = [permissions.IsAuthenticated]
 
 # -------------------- DASHBOARD --------------------
 def dashboard(request):
@@ -48,7 +62,6 @@ def dashboard(request):
         'existing_highlight': existing_highlight,
         'form': form
     })
-
 
 # -------------------- COURSE CRUD --------------------
 def course_list(request):
@@ -341,24 +354,154 @@ def add_on_campus_class(request):
     courses = Course.objects.all()
     selected_course = request.GET.get('course')
 
-    if selected_course:
-        course = Course.objects.get(id=selected_course)
+    if request.method == 'POST':
+        course_id = request.POST.get('course')
+        date = request.POST.get('date')
+        time = request.POST.get('time')
+        batch_type = request.POST.get('batch_type')
 
-        if request.method == 'POST':
-            date = request.POST.get('date')
-            time = request.POST.get('time')
-            batch_type = request.POST.get('batch_type')
+        print("DEBUG:", course_id, date, time, batch_type)
 
-            if date and time and batch_type:
-                OnCampusClass.objects.create(
-                    course=course,
-                    date=date,
-                    time=time,
-                    batch_type=batch_type
-                )
-                return redirect(request.path_info + f'?course={selected_course}')
+        if course_id and date and time and batch_type:
+            course = Course.objects.get(id=course_id)
+            OnCampusClass.objects.create(
+                course=course,
+                date=date,
+                time=time,
+                batch_type=batch_type
+            )
+        return redirect('dashboard')
 
     return render(request, 'components/add_on_campus_class.html', {
         'courses': courses,
+        'selected_course': selected_course
+    })
+
+# -------------------- fee structure --------------------
+def add_fee_structure(request):
+    courses = Course.objects.all()
+    selected_course_id = request.GET.get('course') or request.POST.get('course_id')
+    selected_course = None
+
+    if selected_course_id:
+        selected_course = get_object_or_404(Course, id=selected_course_id)
+
+        if request.method == 'POST':
+            title = request.POST.get('title')
+            mode_of_training = request.POST.get('mode_of_training')
+            batch_date = request.POST.get('batch_date')
+            list_text = request.POST.getlist('list_text[]')
+            original_price = request.POST.get('original_price')
+            discount_price = request.POST.get('discount_price')
+
+            FeeStructure.objects.create(
+                course=selected_course,
+                title=title,
+                mode_of_training=mode_of_training,
+                list_text=list_text,
+                batch_date=batch_date,
+                original_price=original_price,
+                discount_price=discount_price
+            )
+
+            return redirect('dashboard')
+
+    return render(request, 'components/add_fee_structure.html', {
+        'courses': courses,
+        'selected_course': selected_course
+    })
+
+# --------------------  Program for --------------------
+def add_program_for(request):
+    courses = Course.objects.all()
+    selected_course_id = request.GET.get('course') or request.POST.get('course_id')
+    selected_course = None
+
+    if selected_course_id:
+        selected_course = get_object_or_404(Course, id=selected_course_id)
+
+        if request.method == 'POST':
+            title = request.POST.get('title')
+            description = request.POST.get('description')
+            image = request.FILES.get('image')
+
+            if title and description:
+                ProgramFor.objects.create(
+                    course=selected_course,
+                    image=image,
+                    title=title,
+                    description=description
+                )
+                return redirect('dashboard')
+
+    return render(request, 'components/add_program_for.html', {
+        'courses': courses,
+        'selected_course': selected_course
+    })
+
+# -------------------- why white scholars --------------------
+def add_why_white_scholars(request):
+    courses = Course.objects.all()
+    selected_course_id = request.GET.get('course') or request.POST.get('course_id')
+    selected_course = None
+
+    if selected_course_id:
+        selected_course = get_object_or_404(Course, id=selected_course_id)
+
+        if request.method == 'POST':
+            description = request.POST.get('description')
+            images = request.FILES.getlist('images[]')
+
+            image_paths = []
+            for image in images:
+                image_path = os.path.join('why_white_scholars_images', image.name)
+                full_path = os.path.join(settings.MEDIA_ROOT, image_path)
+
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                with open(full_path, 'wb+') as destination:
+                    for chunk in image.chunks():
+                        destination.write(chunk)
+
+                image_paths.append(image_path)
+
+            WhyWhiteScholars.objects.create(
+                course=selected_course,
+                description=description,
+                images=image_paths
+            )
+
+            return redirect('dashboard')
+
+    return render(request, 'components/add_why_white_scholars.html', {
+        'courses': courses,
+        'selected_course': selected_course
+    })
+
+# -------------------- Listen Our Expert --------------------
+def add_listen_our_expert(request):
+    courses = Course.objects.all()
+    selected_course = None
+    experts = None
+
+    course_id = request.GET.get('course')
+    if course_id:
+        selected_course = Course.objects.get(id=course_id)
+        experts = ListenOurExpert.objects.filter(course=selected_course)
+
+    if request.method == 'POST':
+        course_id = request.POST.get('course_id')
+        title = request.POST.get('title')
+        youtube_links = request.POST.getlist('youtube_links[]')
+
+        ListenOurExpert.objects.create(
+            course_id=course_id,
+            title=title,
+            youtube_links=youtube_links
+        )
+        return redirect('dashboard')
+
+    return render(request, 'listen_our_expert.html', {
+        'courses': courses,
         'selected_course': selected_course,
+        'experts': experts
     })

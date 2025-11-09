@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import CourseListAPIView, CourseDetailAPIView
+from .views import CourseListAPIView, get_course_full_data
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
@@ -24,5 +24,5 @@ urlpatterns = [
     path('add-listen-our-expert/', views.add_listen_our_expert, name='add_listen_our_expert'),
 
     path('api/courses/', CourseListAPIView.as_view(), name='course-list'),
-    path('api/courses/<slug:slug>/', CourseDetailAPIView.as_view(), name='course-detail'),
+    path('api/courses/<slug:slug>', get_course_full_data, name='course-full-data'),
 ]

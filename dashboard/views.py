@@ -1,23 +1,49 @@
-from rest_framework import generics, permissions
-from .serializers import CourseSerializer
-from django.shortcuts import render, redirect, get_object_or_404
+from rest_framework.response import Response
+from rest_framework import status, generics, permissions
+from rest_framework.decorators import api_view, permission_classes
+
+from django.shortcuts import get_object_or_404, render, redirect
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
-from .models import Course, Section, KeyHighlight, AccreditationsAndCertification, WhyChoose, Mentor, ProgramHighlight, CareerAssistance, CareerTransition, OurAlumni, OnCampusClass, FeeStructure, ProgramFor, WhyWhiteScholars, ListenOurExpert
-from .forms import CourseForm, SectionForm, KeyHighlightForm, AccreditationsAndCertificationForm, WhyChooseForm, MentorForm, ProgramHighlightForm, CareerAssistanceForm, CareerTransitionForm, OurAlumniForm, OnCampusClassForm
+
+from .serializers import CourseSerializer, CourseFullDetailSerializer
+from .models import (
+    Course, Section, KeyHighlight, AccreditationsAndCertification, 
+    WhyChoose, Mentor, ProgramHighlight, CareerAssistance, 
+    CareerTransition, OurAlumni, OnCampusClass, FeeStructure, 
+    ProgramFor, WhyWhiteScholars, ListenOurExpert
+)
+from .forms import (
+    CourseForm, SectionForm, KeyHighlightForm, AccreditationsAndCertificationForm, 
+    WhyChooseForm, MentorForm, ProgramHighlightForm, CareerAssistanceForm, 
+    CareerTransitionForm, OurAlumniForm, OnCampusClassForm
+)
 import json, os
 
-# -------------------- API View --------------------
+
+# -------------------- API View: List all courses --------------------
 class CourseListAPIView(generics.ListAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-class CourseDetailAPIView(generics.RetrieveAPIView):
-    queryset = Course.objects.all()
-    serializer_class = CourseSerializer
-    lookup_field = 'slug'
-    permission_classes = [permissions.IsAuthenticated]
+
+# -------------------- API View: Get full course details by slug --------------------
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_course_full_data(request, slug):
+    """
+    Retrieve complete course data including related sections, highlights,
+    mentors, etc. by course slug.
+    """
+    try:
+        course = Course.objects.get(slug=slug)
+    except Course.DoesNotExist:
+        return Response({'error': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = CourseFullDetailSerializer(course)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 # -------------------- DASHBOARD --------------------
 def dashboard(request):
@@ -100,45 +126,32 @@ def delete_course(request, pk):
 
 # -------------------- SECTION --------------------
 def add_section(request):
-    if request.method == 'POST':
-        list_text = request.POST.getlist('list_text[]')
-        post_data = request.POST.copy()
-        post_data['list_text'] = json.dumps(list_text)
+    selected_course_id = request.POST.get('course')
 
-        form = SectionForm(post_data, request.FILES)
+    if request.method == 'POST':
+        form = SectionForm(request.POST, request.FILES)
+
         if form.is_valid():
             section = form.save(commit=False)
+            section.course = Course.objects.get(id=selected_course_id)
 
-            course_id = request.POST.get('course')
-            if not course_id:
-                return render(request, 'dashboard.html', {
-                    'form': form,
-                    'error': 'Please select a course first.'
-                })
-            selected_course = get_object_or_404(Course, id=course_id)
-            section.course = selected_course
+            # ✅ Handle list_text correctly
+            list_text = request.POST.getlist('list_text[]')
+            section.list_text = list_text if list_text else []
+
+            # ✅ text should remain plain text (don’t convert or JSON dump)
+            section.text = request.POST.get('text', '').strip()
 
             # ✅ Handle collaboration logos
-            uploaded_files = []
-            if request.FILES.getlist('collaboration_logo[]'):
-                for file in request.FILES.getlist('collaboration_logo[]'):
-                    file_path = os.path.join('collaboration_logos', file.name)
-                    full_path = os.path.join(settings.MEDIA_ROOT, file_path)
-                    os.makedirs(os.path.dirname(full_path), exist_ok=True)
-                    with open(full_path, 'wb+') as destination:
-                        for chunk in file.chunks():
-                            destination.write(chunk)
-                    uploaded_files.append(file_path)
-            section.collaboration_logo = uploaded_files
+            collab_files = request.FILES.getlist('collaboration_logo[]')
+            if collab_files:
+                section.collaboration_logo = [file.name for file in collab_files]
 
             section.save()
-            return redirect('/')
-        else:
-            print("Form errors:", form.errors.as_json())
+            return redirect('dashboard')
     else:
         form = SectionForm()
-    return render(request, 'dashboard.html', {'form': form})
-
+    return render(request, 'add_section.html', {'form': form})
 
 # -------------------- KEY HIGHLIGHT --------------------
 def add_key_highlight(request):
@@ -279,40 +292,32 @@ def add_program_highlight(request):
 def add_career_assistance(request):
     courses = Course.objects.all()
     selected_course = None
-    existing_assistance = None
-
+    
     course_id = request.GET.get('course')
     if course_id:
-        selected_course = Course.objects.filter(id=course_id).first()
-        existing_assistance = CareerAssistance.objects.filter(course=selected_course).first()
+        selected_course = get_object_or_404(Course, id=course_id)
 
     if request.method == 'POST':
         course_id = request.POST.get('course')
-        course = Course.objects.get(id=course_id)
+        course = get_object_or_404(Course, id=course_id)
 
         title = request.POST.get('title')
         description = request.POST.get('description')
         image = request.FILES.get('image')
         description_list = request.POST.getlist('description_list[]')
 
-        assistance, created = CareerAssistance.objects.update_or_create(
+        CareerAssistance.objects.create(
             course=course,
-            defaults={
-                'title': title,
-                'description': description,
-                'description_list': description_list,
-                'image': image
-            }
+            title=title,
+            description=description,
+            description_list=description_list,
+            image=image
         )
-
         return redirect('dashboard')
-
     return render(request, 'add_career_assistance.html', {
         'courses': courses,
-        'selected_course': selected_course,
-        'existing_assistance': existing_assistance
+        'selected_course': selected_course
     })
-
 # -------------------- CAREER TRANSITION --------------------
 def add_career_transition(request):
     if request.method == 'POST':

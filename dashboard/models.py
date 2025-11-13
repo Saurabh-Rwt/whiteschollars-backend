@@ -141,6 +141,7 @@ class OurAlumni(models.Model):
 
 class OnCampusClass(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='on_campus_classes')
+    class_title = models.CharField(max_length=200, null=True, blank=True)
     date = models.DateField()
     time = models.CharField(max_length=100)
     batch_type = models.CharField(max_length=100)
@@ -149,7 +150,7 @@ class OnCampusClass(models.Model):
         db_table = 'on_campus_classes'
 
     def __str__(self):
-        return f"{self.course.title} - {self.batch_type}"
+        return f"{self.course.title} - {self.class_title} ({self.batch_type})"
         
 class FeeStructure(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='fee_structures')

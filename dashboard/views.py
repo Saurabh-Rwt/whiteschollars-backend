@@ -1,11 +1,11 @@
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 from rest_framework.decorators import api_view, permission_classes
-
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
-
+from django.contrib.auth import authenticate, login, logout
 from .serializers import CourseSerializer, CourseFullDetailSerializer
 from .models import (
     Course, Section, KeyHighlight, AccreditationsAndCertification, 
@@ -45,7 +45,25 @@ def get_course_full_data(request, slug):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# -------------------- AUTH --------------------
+def user_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            return render(request, 'login.html', {'error': 'Invalid username or password'})
+    return render(request, 'login.html')
+
+def user_logout(request):
+    logout(request)
+    return redirect('login')
+
 # -------------------- DASHBOARD --------------------
+@login_required(login_url='login')
 def dashboard(request):
     courses = Course.objects.all()
     selected_course = None
@@ -90,11 +108,12 @@ def dashboard(request):
     })
 
 # -------------------- COURSE CRUD --------------------
+@login_required(login_url='login')
 def course_list(request):
     courses = Course.objects.all()
     return render(request, 'course/course_list.html', {'courses': courses})
 
-
+@login_required(login_url='login')
 def add_course(request):
     if request.method == 'POST':
         form = CourseForm(request.POST)
@@ -105,7 +124,7 @@ def add_course(request):
         form = CourseForm()
     return render(request, 'course/course_form.html', {'form': form, 'title': 'Add Course'})
 
-
+@login_required(login_url='login')
 def edit_course(request, pk):
     course = get_object_or_404(Course, pk=pk)
     if request.method == 'POST':
@@ -117,7 +136,7 @@ def edit_course(request, pk):
         form = CourseForm(instance=course)
     return render(request, 'course/course_form.html', {'form': form, 'title': 'Edit Course'})
 
-
+@login_required(login_url='login')
 def delete_course(request, pk):
     course = get_object_or_404(Course, pk=pk)
     course.delete()
@@ -125,6 +144,7 @@ def delete_course(request, pk):
 
 
 # -------------------- SECTION --------------------
+@login_required(login_url='login')
 def add_section(request):
     selected_course_id = request.POST.get('course')
 
@@ -154,6 +174,7 @@ def add_section(request):
     return render(request, 'add_section.html', {'form': form})
 
 # -------------------- KEY HIGHLIGHT --------------------
+@login_required(login_url='login')
 def add_key_highlight(request):
     courses = Course.objects.all()
     selected_course = None
@@ -197,6 +218,7 @@ def add_key_highlight(request):
 
 
 # -------------------- ACCREDITATIONS & CERTIFICATIONS --------------------
+@login_required(login_url='login')
 def add_accreditation_and_certification(request):
     if request.method == 'POST':
         course_id = request.POST.get('course')
@@ -220,6 +242,7 @@ def add_accreditation_and_certification(request):
         return redirect('dashboard')
 
 # -------------------- WHY CHOOSE --------------------
+@login_required(login_url='login')
 def add_why_choose(request):
     if request.method == 'POST':
         course_id = request.POST.get('course')
@@ -241,6 +264,7 @@ def add_why_choose(request):
     return render(request, 'add_why_choose.html', {'courses': courses})
 
 # -------------------- MENTOR --------------------
+@login_required(login_url='login')
 def add_mentor(request):
     if request.method == 'POST':
         course_id = request.POST.get('course')
@@ -266,6 +290,7 @@ def add_mentor(request):
     return render(request, 'add_mentor.html', {'courses': courses})
 
 # -------------------- PROGRAM HIGHLIGHTS --------------------
+@login_required(login_url='login')
 def add_program_highlight(request):
     if request.method == 'POST':
         form = ProgramHighlightForm(request.POST, request.FILES)
@@ -289,6 +314,7 @@ def add_program_highlight(request):
 
 
 # -------------------- CAREER ASSISTANCE --------------------
+@login_required(login_url='login')
 def add_career_assistance(request):
     courses = Course.objects.all()
     selected_course = None
@@ -319,6 +345,7 @@ def add_career_assistance(request):
         'selected_course': selected_course
     })
 # -------------------- CAREER TRANSITION --------------------
+@login_required(login_url='login')
 def add_career_transition(request):
     if request.method == 'POST':
         form = CareerTransitionForm(request.POST)
@@ -332,6 +359,7 @@ def add_career_transition(request):
     return render(request, 'components/add_career_transition.html', {'form': form, 'courses': courses})
 
 # -------------------- OUR ALUMNI --------------------
+@login_required(login_url='login')
 def add_our_alumni(request):
     if request.method == 'POST':
         course_id = request.POST.get('course')
@@ -355,22 +383,25 @@ def add_our_alumni(request):
     return render(request, 'components/add_our_alumni.html', {'courses': courses})
 
 # -------------------- on campus classes --------------------
+@login_required(login_url='login')
 def add_on_campus_class(request):
     courses = Course.objects.all()
     selected_course = request.GET.get('course')
 
     if request.method == 'POST':
         course_id = request.POST.get('course')
+        class_title = request.POST.get('class_title')
         date = request.POST.get('date')
         time = request.POST.get('time')
         batch_type = request.POST.get('batch_type')
 
-        print("DEBUG:", course_id, date, time, batch_type)
+        print("DEBUG:", course_id, class_title, date, time, batch_type)
 
-        if course_id and date and time and batch_type:
+        if course_id and class_title and date and time and batch_type:
             course = Course.objects.get(id=course_id)
             OnCampusClass.objects.create(
                 course=course,
+                class_title=class_title,
                 date=date,
                 time=time,
                 batch_type=batch_type
@@ -383,6 +414,7 @@ def add_on_campus_class(request):
     })
 
 # -------------------- fee structure --------------------
+@login_required(login_url='login')
 def add_fee_structure(request):
     courses = Course.objects.all()
     selected_course_id = request.GET.get('course') or request.POST.get('course_id')
@@ -417,6 +449,7 @@ def add_fee_structure(request):
     })
 
 # --------------------  Program for --------------------
+@login_required(login_url='login')
 def add_program_for(request):
     courses = Course.objects.all()
     selected_course_id = request.GET.get('course') or request.POST.get('course_id')
@@ -445,6 +478,7 @@ def add_program_for(request):
     })
 
 # -------------------- why white scholars --------------------
+@login_required(login_url='login')
 def add_why_white_scholars(request):
     courses = Course.objects.all()
     selected_course_id = request.GET.get('course') or request.POST.get('course_id')
@@ -483,6 +517,7 @@ def add_why_white_scholars(request):
     })
 
 # -------------------- Listen Our Expert --------------------
+@login_required(login_url='login')
 def add_listen_our_expert(request):
     courses = Course.objects.all()
     selected_course = None

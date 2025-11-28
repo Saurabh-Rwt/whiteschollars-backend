@@ -3,7 +3,11 @@ from django.db import models
 class Course(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
-    description = models.TextField(blank=True, null=True)
+    meta_title = models.CharField(max_length=255, blank=True, null=True)
+    meta_description = models.TextField(blank=True, null=True)
+    meta_keywords = models.CharField(max_length=500, blank=True, null=True)
+    meta_og_image = models.ImageField(upload_to='seo_images/', blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

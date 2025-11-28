@@ -46,23 +46,12 @@
         <!-- Text List -->
         <div class="mb-3">
           <label class="form-label">Program Details (Text List)</label>
-
           <div id="text-list">
-            {% if existing_highlight and existing_highlight.text %}
-              {% for item in existing_highlight.text %}
-              <div class="input-group mb-2 text-row">
-                <textarea class="form-control text-item" rows="3" placeholder="Enter text">{{ item }}</textarea>
-                <button class="btn btn-outline-danger remove-text" type="button">&times;</button>
-              </div>
-              {% endfor %}
-            {% else %}
-              <div class="input-group mb-2 text-row">
-                <textarea class="form-control text-item" rows="3" placeholder="Enter text"></textarea>
-                <button class="btn btn-outline-danger remove-text d-none" type="button">&times;</button>
-              </div>
-            {% endif %}
+            <div class="input-group mb-2 text-row">
+              <textarea class="form-control text-item" rows="3" placeholder="Enter text"></textarea>
+              <button class="btn btn-outline-danger remove-text d-none" type="button">&times;</button>
+            </div>
           </div>
-
           <button type="button" id="add-text" class="btn btn-secondary btn-sm mt-2">Add More Text</button>
           <input type="hidden" id="text" name="text" />
         </div>

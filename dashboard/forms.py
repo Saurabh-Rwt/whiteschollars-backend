@@ -16,8 +16,14 @@ from .models import (
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
-        fields = ['name', 'slug', 'description']
-
+        fields = [
+            'name',
+            'slug',
+            'meta_title',
+            'meta_description',
+            'meta_keywords',
+            'meta_og_image',
+        ]
 
 class SectionForm(forms.ModelForm):
     list_text = forms.CharField(required=False, widget=forms.HiddenInput())

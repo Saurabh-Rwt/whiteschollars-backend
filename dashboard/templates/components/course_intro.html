@@ -1,21 +1,29 @@
 <div class="container">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Add  Course Intro</h5>
+      <h5 class="mb-0">Add Course Intro</h5>
     </div>
     <div class="card-body">
       <!-- Course Dropdown -->
-      {% include 'components/course_dropdown.html' %}
-
-      {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_section' %}">
+      {% include 'components/course_dropdown.html' %} {% if selected_course %}
+      <form
+        method="POST"
+        enctype="multipart/form-data"
+        action="{% url 'add_section' %}"
+      >
         {% csrf_token %}
-        <input type="hidden" name="course" value="{{ selected_course.id }}">
+        <input type="hidden" name="course" value="{{ selected_course.id }}" />
 
         <!-- Logo -->
         <div class="mb-3">
           <label for="logo" class="form-label">Logo</label>
-          <input type="file" class="form-control" id="logo" name="logo" accept="image/*" />
+          <input
+            type="file"
+            class="form-control"
+            id="logo"
+            name="logo"
+            accept="image/*"
+          />
           <!-- Logo Preview -->
           <div id="mainLogoPreview" class="mt-2"></div>
         </div>
@@ -23,14 +31,24 @@
         <!-- Section Heading -->
         <div class="mb-3">
           <label for="sectionHeading" class="form-label">Section Heading</label>
-          <input type="text" class="form-control" id="sectionHeading" name="section_heading"
-            placeholder="Enter section heading" />
+          <input
+            type="text"
+            class="form-control"
+            id="sectionHeading"
+            name="section_heading"
+            placeholder="Enter section heading"
+          />
         </div>
 
         <!-- Text -->
         <div class="mb-3">
           <label for="text" class="form-label">Text</label>
-          <textarea class="form-control" name="text" rows="3" placeholder="Enter section text"></textarea>
+          <textarea
+            class="form-control"
+            name="text"
+            rows="3"
+            placeholder="Enter section text"
+          ></textarea>
         </div>
 
         <!-- List Text -->
@@ -38,8 +56,15 @@
           <label class="form-label">List Text</label>
           <div id="listTextContainer">
             <div class="input-group mb-2">
-              <input type="text" class="form-control" name="list_text[]" placeholder="Enter list item" />
-              <button type="button" class="btn btn-outline-success addListText">+</button>
+              <input
+                type="text"
+                class="form-control"
+                name="list_text[]"
+                placeholder="Enter list item"
+              />
+              <button type="button" class="btn btn-outline-success addListText">
+                +
+              </button>
             </div>
           </div>
         </div>
@@ -48,17 +73,37 @@
         <div class="mb-3">
           <label class="form-label">Collaboration Logos</label>
           <div class="d-flex align-items-center gap-2 mb-2">
-            <input type="file" class="form-control" id="collabLogo" name="collaboration_logo[]" accept="image/*" multiple />
-            <button type="button" class="btn btn-outline-primary" id="addCollabLogo">Add</button>
+            <input
+              type="file"
+              class="form-control"
+              id="collabLogo"
+              name="collaboration_logo[]"
+              accept="image/*"
+              multiple
+            />
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              id="addCollabLogo"
+            >
+              Add
+            </button>
           </div>
           <div id="logoPreview" class="d-flex flex-wrap gap-2"></div>
         </div>
 
         <!-- YouTube Video Link -->
         <div class="mb-3">
-          <label for="videoLink" class="form-label">Course YouTube Video Link</label>
-          <input type="url" class="form-control" id="videoLink" name="youtube_video"
-            placeholder="https://www.youtube.com/watch?v=example" />
+          <label for="videoLink" class="form-label"
+            >Course YouTube Video Link</label
+          >
+          <input
+            type="url"
+            class="form-control"
+            id="videoLink"
+            name="youtube_video"
+            placeholder="https://www.youtube.com/watch?v=example"
+          />
         </div>
 
         <!-- Submit Button -->
@@ -66,6 +111,71 @@
           <button type="submit" class="btn btn-success px-4">Submit</button>
         </div>
       </form>
+      {% endif %} {% if selected_course %}
+      <hr />
+
+      <h5 class="mt-4">Existing Sections</h5>
+      <table class="table table-bordered mt-3">
+        <thead>
+          <tr>
+            <th>Logo</th>
+            <th>Heading</th>
+            <th>Text</th>
+            <th>List Text</th>
+            <th>YouTube Video</th>
+            <th>Collab Logos</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sec in sections %}
+          <tr>
+            <td>
+              {% if sec.logo %}
+              <img
+                src="{{ sec.logo.url }}"
+                width="60"
+                height="60"
+                class="img-thumbnail"
+              />
+              {% else %}-{% endif %}
+            </td>
+            <td>{{ sec.section_heading }}</td>
+            <td>{{ sec.text|default:"-" }}</td>
+            <td>
+              {% for item in sec.list_text %} • {{ item }} <br />
+              {% endfor %}
+            </td>
+            <td>{{ sec.youtube_video|default:"-" }}</td>
+            <td>
+              {% for logo in sec.collaboration_logo %}
+              <img
+                src="/media/{{ logo }}"
+                width="50"
+                height="50"
+                class="img-thumbnail me-1"
+              />
+              {% endfor %}
+            </td>
+            <td>
+              <a
+                href="{% url 'edit_section' sec.id %}"
+                class="btn btn-sm btn-primary"
+                >Edit</a
+              >
+              <a
+                href="{% url 'delete_section' sec.id %}"
+                class="btn btn-sm btn-danger"
+                onclick="return confirm('Delete this section?')"
+              >
+                Delete
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
       {% endif %}
     </div>
   </div>
@@ -73,47 +183,49 @@
 
 <script>
   $(document).ready(function () {
-    $(document).on('click', '.addListText', function () {
+    $(document).on("click", ".addListText", function () {
       const newField = `
         <div class="input-group mb-2">
           <input type="text" class="form-control" name="list_text[]" placeholder="Enter list item" />
           <button type="button" class="btn btn-outline-danger removeListText">−</button>
         </div>`;
-      $('#listTextContainer').append(newField);
+      $("#listTextContainer").append(newField);
     });
-    $(document).on('click', '.removeListText', function () {
-      $(this).closest('.input-group').remove();
+    $(document).on("click", ".removeListText", function () {
+      $(this).closest(".input-group").remove();
     });
-    $('#logo').on('change', function () {
+    $("#logo").on("change", function () {
       const file = this.files[0];
-      const preview = $('#mainLogoPreview');
+      const preview = $("#mainLogoPreview");
       preview.empty();
       if (file) {
         const reader = new FileReader();
         reader.onload = function (event) {
-          const logoContainer = $('<div>')
-            .addClass('position-relative d-inline-block')
-            .css({ width: '100px', height: '100px' });
+          const logoContainer = $("<div>")
+            .addClass("position-relative d-inline-block")
+            .css({ width: "100px", height: "100px" });
 
-          const img = $('<img>')
-            .attr('src', event.target.result)
-            .addClass('img-thumbnail')
+          const img = $("<img>")
+            .attr("src", event.target.result)
+            .addClass("img-thumbnail")
             .css({
-              width: '100px',
-              height: '100px',
-              objectFit: 'cover',
-              borderRadius: '5px'
+              width: "100px",
+              height: "100px",
+              objectFit: "cover",
+              borderRadius: "5px",
             });
-          const removeBtn = $('<button>')
-            .attr('type', 'button')
-            .html('&times;')
-            .addClass('btn btn-sm btn-danger position-absolute top-0 end-0 translate-middle rounded-circle removeMainLogoBtn')
+          const removeBtn = $("<button>")
+            .attr("type", "button")
+            .html("&times;")
+            .addClass(
+              "btn btn-sm btn-danger position-absolute top-0 end-0 translate-middle rounded-circle removeMainLogoBtn"
+            )
             .css({
-              width: '22px',
-              height: '22px',
-              padding: '0',
-              lineHeight: '1',
-              fontSize: '14px'
+              width: "22px",
+              height: "22px",
+              padding: "0",
+              lineHeight: "1",
+              fontSize: "14px",
             });
 
           logoContainer.append(img).append(removeBtn);
@@ -122,64 +234,65 @@
         reader.readAsDataURL(file);
       }
     });
-    $(document).on('click', '.removeMainLogoBtn', function () {
-      $('#logo').val(''); // reset file input
-      $('#mainLogoPreview').empty();
+    $(document).on("click", ".removeMainLogoBtn", function () {
+      $("#logo").val(""); // reset file input
+      $("#mainLogoPreview").empty();
     });
-    $('#addCollabLogo').on('click', function () {
-      const fileInput = $('#collabLogo')[0];
+    $("#addCollabLogo").on("click", function () {
+      const fileInput = $("#collabLogo")[0];
       const files = fileInput.files;
       if (files.length === 0) return;
-      const preview = $('#logoPreview');
-      Array.from(files).forEach(file => {
+      const preview = $("#logoPreview");
+      Array.from(files).forEach((file) => {
         const reader = new FileReader();
         reader.onload = function (event) {
-          const logoContainer = $('<div>')
-            .addClass('position-relative d-inline-block')
-            .css({ width: '80px', height: '80px', margin: '5px' });
+          const logoContainer = $("<div>")
+            .addClass("position-relative d-inline-block")
+            .css({ width: "80px", height: "80px", margin: "5px" });
 
-          const img = $('<img>')
-            .attr('src', event.target.result)
-            .addClass('img-thumbnail')
+          const img = $("<img>")
+            .attr("src", event.target.result)
+            .addClass("img-thumbnail")
             .css({
-              width: '80px',
-              height: '80px',
-              objectFit: 'cover',
-              borderRadius: '5px'
+              width: "80px",
+              height: "80px",
+              objectFit: "cover",
+              borderRadius: "5px",
             });
 
-          const removeBtn = $('<button>')
-            .attr('type', 'button')
-            .html('&times;')
-            .addClass('btn btn-sm btn-danger position-absolute top-0 end-0 translate-middle rounded-circle removeLogoBtn')
+          const removeBtn = $("<button>")
+            .attr("type", "button")
+            .html("&times;")
+            .addClass(
+              "btn btn-sm btn-danger position-absolute top-0 end-0 translate-middle rounded-circle removeLogoBtn"
+            )
             .css({
-              width: '20px',
-              height: '20px',
-              padding: '0',
-              lineHeight: '1',
-              fontSize: '14px'
+              width: "20px",
+              height: "20px",
+              padding: "0",
+              lineHeight: "1",
+              fontSize: "14px",
             });
-          const newInput = $('<input>')
-            .attr('type', 'file')
-            .attr('name', 'collaboration_logo[]')
-            .prop('files', createFileList(file))
-            .css('display', 'none');
+          const newInput = $("<input>")
+            .attr("type", "file")
+            .attr("name", "collaboration_logo[]")
+            .prop("files", createFileList(file))
+            .css("display", "none");
 
           logoContainer.append(img).append(removeBtn).append(newInput);
           preview.append(logoContainer);
         };
         reader.readAsDataURL(file);
       });
-      $('#collabLogo').val('');
+      $("#collabLogo").val("");
     });
-    $(document).on('click', '.removeLogoBtn', function () {
-      $(this).closest('div.position-relative').remove();
+    $(document).on("click", ".removeLogoBtn", function () {
+      $(this).closest("div.position-relative").remove();
     });
     function createFileList(file) {
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
       return dataTransfer.files;
     }
-
   });
 </script>

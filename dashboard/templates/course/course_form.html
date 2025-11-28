@@ -34,7 +34,10 @@
       margin-bottom: 1.2rem;
     }
 
-    /* Input and Select Styling */
+    form p label{
+      display: block;
+    }
+
     input[type="text"],
     input[type="email"],
     input[type="number"],
@@ -109,7 +112,7 @@
           <h4>{{ title }}</h4>
         </div>
         <div class="card-body p-4">
-          <form method="POST" novalidate>
+          <form method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             {{ form.as_p }}
             <div class="d-flex justify-content-between mt-4">

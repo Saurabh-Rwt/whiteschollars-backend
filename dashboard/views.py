@@ -69,13 +69,28 @@ def dashboard(request):
     selected_course = None
     existing_highlight = None
     form = None
-
-    # Handle form submission
+    tabs = [
+        {"id": "course-intro", "icon": "bi-book", "label": "Course Intro", "template": "components/course_intro.html"},
+        {"id": "key-highlight", "icon": "bi-stars", "label": "Key Highlight", "template": "components/key_highlight.html"},
+        {"id": "accreditations-and-certification", "icon": "bi-award", "label": "Accreditations", "template": "components/accreditation_and_certification.html"},
+        {"id": "why-choose", "icon": "bi-lightbulb", "label": "Why Choose", "template": "components/why_choose.html"},
+        {"id": "mentors", "icon": "bi-person-badge", "label": "Mentors", "template": "components/add_mentor.html"},
+        {"id": "program-highlights", "icon": "bi-graph-up", "label": "Program Highlights", "template": "components/add_program_highlight.html"},
+        {"id": "career-assistance", "icon": "bi-briefcase", "label": "Career Assistance", "template": "components/add_career_assistance.html"},
+        {"id": "career-transitions", "icon": "bi-shuffle", "label": "Career Transitions", "template": "components/add_career_transition.html"},
+        {"id": "our-alumni", "icon": "bi-people", "label": "Our Alumni", "template": "components/add_our_alumni.html"},
+        {"id": "on-campus-class", "icon": "bi-building", "label": "On-Campus Class", "template": "components/add_on_campus_class.html"},
+        {"id": "fee-structure", "icon": "bi-cash-stack", "label": "Fee Structure", "template": "components/add_fee_structure.html"},
+        {"id": "program-for", "icon": "bi-person-lines-fill", "label": "Program For", "template": "components/add_program_for.html"},
+        {"id": "why-white-scholars", "icon": "bi-question-circle", "label": "Why WhiteScholars", "template": "components/add_why_white_scholars.html"},
+        {"id": "listen-our-expert", "icon": "bi-headphones", "label": "Listen Our Expert", "template": "components/add_listen_our_expert.html"},
+    ]
     if request.method == 'POST':
         course_id = request.POST.get('course')
         if not course_id:
             return render(request, 'dashboard.html', {
                 'courses': courses,
+                'tabs': tabs,
                 'error': 'Please select a course first.'
             })
 
@@ -104,7 +119,8 @@ def dashboard(request):
         'courses': courses,
         'selected_course': selected_course,
         'existing_highlight': existing_highlight,
-        'form': form
+        'form': form,
+        'tabs': tabs
     })
 
 # -------------------- COURSE CRUD --------------------
@@ -176,46 +192,29 @@ def add_section(request):
 # -------------------- KEY HIGHLIGHT --------------------
 @login_required(login_url='login')
 def add_key_highlight(request):
-    courses = Course.objects.all()
-    selected_course = None
-    existing_highlight = None
-
     if request.method == 'POST':
         course_id = request.POST.get('course')
+
         if not course_id:
-            return render(request, 'key_highlight.html', {
-                'courses': courses,
-                'error': 'Please select a course first.'
-            })
+            return redirect('/dashboard?tab=program-highlight&error=no_course')
 
         selected_course = get_object_or_404(Course, id=course_id)
         existing_highlight = KeyHighlight.objects.filter(course=selected_course).first()
 
         form = KeyHighlightForm(request.POST, request.FILES, instance=existing_highlight)
+
         if form.is_valid():
             highlight = form.save(commit=False)
             highlight.course = selected_course
             highlight.save()
-            return redirect('add_key_highlight')
+
+            # ⭐ FIX: Preserve selected course + active tab
+            return redirect(f'/dashboard?tab=program-highlight&course={course_id}')
         else:
-            print(form.errors)
+            return redirect(f'/dashboard?tab=program-highlight&course={course_id}&error=form_invalid')
 
-    else:
-        course_id = request.GET.get('course')
-        if course_id:
-            selected_course = get_object_or_404(Course, id=course_id)
-            existing_highlight = KeyHighlight.objects.filter(course=selected_course).first()
-            form = KeyHighlightForm(instance=existing_highlight)
-        else:
-            form = KeyHighlightForm()
-
-    return render(request, 'dashboard.html', {
-        'form': form,
-        'courses': courses,
-        'selected_course': selected_course,
-        'existing_highlight': existing_highlight,
-    })
-
+    # GET is handled in dashboard
+    return redirect('/dashboard?tab=program-highlight')
 
 # -------------------- ACCREDITATIONS & CERTIFICATIONS --------------------
 @login_required(login_url='login')

@@ -81,6 +81,13 @@ class ListenOurExpertSerializer(serializers.ModelSerializer):
 # ----------------- Course Serializers -----------------
 
 class CourseSerializer(serializers.ModelSerializer):
+    description = serializers.CharField(
+        source='meta_description',
+        allow_blank=True,
+        allow_null=True,
+        required=False
+    )
+
     class Meta:
         model = Course
         fields = ['id', 'name', 'slug', 'description', 'created_at']
@@ -89,6 +96,12 @@ class CourseSerializer(serializers.ModelSerializer):
 # ----------------- Full Course Detail Serializer -----------------
 
 class CourseFullDetailSerializer(serializers.ModelSerializer):
+    description = serializers.CharField(
+        source='meta_description',
+        allow_blank=True,
+        allow_null=True,
+        required=False
+    )
     sections = SectionSerializer(many=True, read_only=True)
     key_highlights = KeyHighlightSerializer(many=True, read_only=True)
     accreditations_certifications = AccreditationsAndCertificationSerializer(many=True, read_only=True)

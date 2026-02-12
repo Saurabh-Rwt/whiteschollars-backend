@@ -1,53 +1,139 @@
-<div class="container">
+<div class="container" id="why-choose-panel">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
       <h5 class="mb-0">Why Choose</h5>
     </div>
     <div class="card-body">
-
-      {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-      {% endif %}
-
-      <!-- Course Dropdown -->
-      {% include 'components/course_dropdown.html' %}
+      {% include 'components/course_dropdown.html' with dropdown_id='why-choose-course' %}
 
       {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_why_choose' %}">
-        {% csrf_token %}
-        <input type="hidden" name="course" value="{{ selected_course.id }}">
+      <div class="editor-grid">
+        <div class="editor-card">
+          <div class="editor-step">
+            <div class="editor-step-number">2</div>
+            <div>
+              <div class="editor-step-title">Add a compelling reason</div>
+              <p class="editor-helper">Use a short title and a helpful explanation.</p>
+            </div>
+          </div>
 
-        <!-- Icon -->
-        <div class="mb-3">
-          <label for="icon" class="form-label">Icon</label>
-          <input type="file" class="form-control" id="icon" name="icon" accept="image/*" />
-          {% if existing_item and existing_item.icon %}
-            <img src="{{ existing_item.icon.url }}" alt="Icon" class="mt-2" style="height: 60px;">
-          {% endif %}
+          <form method="POST" enctype="multipart/form-data" action="{% url 'add_why_choose' %}" id="why-choose-form">
+            {% csrf_token %}
+            <input type="hidden" name="course" value="{{ selected_course.id }}" />
+
+            <div class="mb-3">
+              <label for="why-choose-icon" class="form-label">Icon</label>
+              <input type="file" class="form-control" id="why-choose-icon" name="icon" accept="image/*" />
+              <div id="why-choose-icon-preview" class="preview-stack mt-2">
+                {% if existing_why_choose and existing_why_choose.icon %}
+                  <img src="{{ existing_why_choose.icon.url }}" alt="Icon" class="preview-image" />
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="why-choose-heading" class="form-label">Heading</label>
+              <input
+                type="text"
+                class="form-control"
+                id="why-choose-heading"
+                name="heading"
+                value="{% if existing_why_choose %}{{ existing_why_choose.heading }}{% endif %}"
+                placeholder="Enter heading"
+                required
+              />
+            </div>
+
+            <div class="mb-3">
+              <label for="why-choose-text" class="form-label">Description</label>
+              <textarea
+                class="form-control"
+                id="why-choose-text"
+                name="text"
+                rows="3"
+                placeholder="Enter description"
+                required
+              >{% if existing_why_choose %}{{ existing_why_choose.text }}{% endif %}</textarea>
+            </div>
+
+            <div class="text-end">
+              <button type="submit" class="btn btn-success px-4">Save Reason</button>
+            </div>
+          </form>
         </div>
 
-        <!-- Heading -->
-        <div class="mb-3">
-          <label for="heading" class="form-label">Heading</label>
-          <input type="text" class="form-control" id="heading" name="heading"
-                 value="{% if existing_item %}{{ existing_item.heading }}{% endif %}"
-                 placeholder="Enter heading" />
+        <div class="preview-card" id="why-choose-preview">
+          <div class="preview-title">Live Preview</div>
+          <div class="preview-stack mb-3">
+            <img id="why-choose-preview-icon" class="preview-image" alt="Icon preview" {% if existing_why_choose and existing_why_choose.icon %}src="{{ existing_why_choose.icon.url }}"{% endif %} />
+            <span id="why-choose-preview-icon-empty" class="preview-empty">Icon preview will appear here.</span>
+          </div>
+          <h6 id="why-choose-preview-heading">{% if existing_why_choose %}{{ existing_why_choose.heading }}{% else %}Heading will appear here{% endif %}</h6>
+          <p id="why-choose-preview-text" class="preview-muted">{% if existing_why_choose %}{{ existing_why_choose.text }}{% else %}Description will appear here.{% endif %}</p>
         </div>
-
-        <!-- Text -->
-        <div class="mb-3">
-          <label for="text" class="form-label">Text</label>
-          <textarea class="form-control" id="text" name="text" rows="3" placeholder="Enter description">
-            {% if existing_item %}{{ existing_item.text }}{% endif %}
-          </textarea>
-        </div>
-
-        <!-- Submit -->
-        <div class="text-end">
-          <button type="submit" class="btn btn-success px-4">Save</button>
-        </div>
-      </form>
+      </div>
+      {% else %}
+        <div class="editor-card">Select a course to add a Why Choose entry.</div>
       {% endif %}
     </div>
   </div>
 </div>
+
+<script>
+  (function () {
+    const container = document.getElementById("why-choose-panel");
+    if (!container) return;
+
+    const form = container.querySelector("#why-choose-form");
+    if (!form) return;
+
+    const headingInput = form.querySelector("#why-choose-heading");
+    const textInput = form.querySelector("#why-choose-text");
+    const iconInput = form.querySelector("#why-choose-icon");
+
+    const previewHeading = container.querySelector("#why-choose-preview-heading");
+    const previewText = container.querySelector("#why-choose-preview-text");
+    const previewIcon = container.querySelector("#why-choose-preview-icon");
+    const previewIconEmpty = container.querySelector("#why-choose-preview-icon-empty");
+    const iconPreview = container.querySelector("#why-choose-icon-preview");
+
+    const updateTextPreview = () => {
+      previewHeading.textContent = headingInput.value.trim() || "Heading will appear here";
+      previewText.textContent = textInput.value.trim() || "Description will appear here.";
+    };
+
+    const updateIconPreview = (file) => {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        previewIcon.src = event.target.result;
+        previewIcon.classList.remove("d-none");
+        if (previewIconEmpty) {
+          previewIconEmpty.style.display = "none";
+        }
+        if (iconPreview) {
+          iconPreview.innerHTML = `<img src='${event.target.result}' class='preview-image' alt='Icon preview' />`;
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+
+    headingInput.addEventListener("input", updateTextPreview);
+    textInput.addEventListener("input", updateTextPreview);
+    iconInput.addEventListener("change", (event) => {
+      updateIconPreview(event.target.files[0]);
+    });
+
+    updateTextPreview();
+
+    const hasIcon = previewIcon && previewIcon.getAttribute("src");
+    if (hasIcon) {
+      if (previewIconEmpty) {
+        previewIconEmpty.style.display = "none";
+      }
+    } else if (previewIconEmpty) {
+      previewIconEmpty.style.display = "block";
+      previewIcon.classList.add("d-none");
+    }
+  })();
+</script>

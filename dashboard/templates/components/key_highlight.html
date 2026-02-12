@@ -1,131 +1,128 @@
-<div class="container">
+<div class="container" id="key-highlight-panel">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Program Highlight</h5>
+      <h5 class="mb-0">Key Highlight</h5>
     </div>
     <div class="card-body">
-
-      {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-      {% endif %}
-
-      <!-- Course Dropdown -->
-      {% include 'components/course_dropdown.html' %}
+      {% include 'components/course_dropdown.html' with dropdown_id='key-highlight-course' %}
 
       {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_program_highlight' %}">
-        {% csrf_token %}
-        <input type="hidden" name="course" value="{{ selected_course.id }}">
-
-        <!-- Title -->
-        <div class="mb-3">
-          <label for="title" class="form-label">Title</label>
-          <input
-            type="text"
-            class="form-control"
-            id="title"
-            name="title"
-            placeholder="Enter title"
-            value="{% if existing_highlight %}{{ existing_highlight.title }}{% endif %}"
-          />
-        </div>
-
-        <!-- Heading -->
-        <div class="mb-3">
-          <label for="heading" class="form-label">Heading</label>
-          <input
-            type="text"
-            class="form-control"
-            id="heading"
-            name="heading"
-            placeholder="Enter heading"
-            value="{% if existing_highlight %}{{ existing_highlight.heading }}{% endif %}"
-          />
-        </div>
-
-        <!-- Text List -->
-        <div class="mb-3">
-          <label class="form-label">Program Details (Text List)</label>
-          <div id="text-list">
-            <div class="input-group mb-2 text-row">
-              <textarea class="form-control text-item" rows="3" placeholder="Enter text"></textarea>
-              <button class="btn btn-outline-danger remove-text d-none" type="button">&times;</button>
+      <div class="editor-grid">
+        <div class="editor-card">
+          <div class="editor-step">
+            <div class="editor-step-number">2</div>
+            <div>
+              <div class="editor-step-title">Add the key highlight</div>
+              <p class="editor-helper">This appears near the top of the course page to summarize the main highlight.</p>
             </div>
           </div>
-          <button type="button" id="add-text" class="btn btn-secondary btn-sm mt-2">Add More Text</button>
-          <input type="hidden" id="text" name="text" />
+
+          <form method="POST" enctype="multipart/form-data" action="{% url 'add_key_highlight' %}" id="key-highlight-form">
+            {% csrf_token %}
+            <input type="hidden" name="course" value="{{ selected_course.id }}" />
+
+            <div class="mb-3">
+              <label for="key-highlight-logo" class="form-label">Highlight Icon</label>
+              <input
+                type="file"
+                class="form-control"
+                id="key-highlight-logo"
+                name="logo"
+                accept="image/*"
+              />
+              <div id="key-highlight-logo-preview" class="preview-stack mt-2">
+                {% if existing_key_highlight and existing_key_highlight.logo %}
+                  <img src="{{ existing_key_highlight.logo.url }}" alt="Current logo" class="preview-image" />
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="key-highlight-text" class="form-label">Highlight Text</label>
+              <textarea
+                class="form-control"
+                id="key-highlight-text"
+                name="text"
+                rows="3"
+                placeholder="Enter the key highlight text"
+                required
+              >{% if existing_key_highlight %}{{ existing_key_highlight.text }}{% endif %}</textarea>
+            </div>
+
+            <div class="text-end">
+              <button type="submit" class="btn btn-success px-4">Save Highlight</button>
+            </div>
+          </form>
         </div>
 
-        <!-- Image -->
-        <div class="mb-3">
-          <label for="image" class="form-label">Image</label>
-          <input
-            type="file"
-            class="form-control"
-            id="image"
-            name="image"
-            accept="image/*"
-          />
-          {% if existing_highlight and existing_highlight.image %}
-            <img
-              src="{{ existing_highlight.image.url }}"
-              alt="Image"
-              class="mt-2"
-              style="height: 60px;"
-            />
-          {% endif %}
+        <div class="preview-card" id="key-highlight-preview">
+          <div class="preview-title">Live Preview</div>
+          <div class="preview-stack mb-3">
+            <img id="key-highlight-preview-logo" class="preview-image" alt="Highlight icon" {% if existing_key_highlight and existing_key_highlight.logo %}src="{{ existing_key_highlight.logo.url }}"{% endif %} />
+            <span id="key-highlight-preview-logo-empty" class="preview-empty">Icon preview will appear here.</span>
+          </div>
+          <div id="key-highlight-preview-text" class="preview-muted">{% if existing_key_highlight %}{{ existing_key_highlight.text }}{% else %}Highlight text will appear here.{% endif %}</div>
         </div>
-
-        <!-- Submit -->
-        <div class="text-end">
-          <button type="submit" class="btn btn-success px-4">Save</button>
-        </div>
-      </form>
+      </div>
+      {% else %}
+        <div class="editor-card">Select a course to add a key highlight.</div>
       {% endif %}
     </div>
   </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
-  $(function () {
-    // Add new text item
-    $("#add-text").click(function () {
-      const row = `
-        <div class="input-group mb-2 text-row">
-          <textarea class="form-control text-item" rows="3" placeholder="Enter text"></textarea>
-          <button class="btn btn-outline-danger remove-text" type="button">&times;</button>
-        </div>`;
-      $("#text-list").append(row);
-      toggleRemoveButtons();
+  (function () {
+    const container = document.getElementById("key-highlight-panel");
+    if (!container) return;
+
+    const form = container.querySelector("#key-highlight-form");
+    if (!form) return;
+
+    const textInput = form.querySelector("#key-highlight-text");
+    const logoInput = form.querySelector("#key-highlight-logo");
+
+    const previewText = container.querySelector("#key-highlight-preview-text");
+    const previewLogo = container.querySelector("#key-highlight-preview-logo");
+    const previewLogoEmpty = container.querySelector("#key-highlight-preview-logo-empty");
+    const logoPreview = container.querySelector("#key-highlight-logo-preview");
+
+    const updateTextPreview = () => {
+      const value = textInput.value.trim();
+      previewText.textContent = value || "Highlight text will appear here.";
+    };
+
+    const updateLogoPreview = (file) => {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        previewLogo.src = event.target.result;
+        previewLogo.classList.remove("d-none");
+        if (previewLogoEmpty) {
+          previewLogoEmpty.style.display = "none";
+        }
+        if (logoPreview) {
+          logoPreview.innerHTML = `<img src='${event.target.result}' class='preview-image' alt='Highlight icon' />`;
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+
+    textInput.addEventListener("input", updateTextPreview);
+    logoInput.addEventListener("change", (event) => {
+      updateLogoPreview(event.target.files[0]);
     });
 
-    // Remove a text item
-    $(document).on("click", ".remove-text", function () {
-      $(this).closest(".text-row").remove();
-      toggleRemoveButtons();
-    });
+    updateTextPreview();
 
-    // Hide remove button if only one left
-    function toggleRemoveButtons() {
-      const rows = $("#text-list .text-row");
-      if (rows.length <= 1) {
-        rows.find(".remove-text").addClass("d-none");
-      } else {
-        rows.find(".remove-text").removeClass("d-none");
+    const hasLogo = previewLogo && previewLogo.getAttribute("src");
+    if (hasLogo) {
+      if (previewLogoEmpty) {
+        previewLogoEmpty.style.display = "none";
       }
+    } else if (previewLogoEmpty) {
+      previewLogoEmpty.style.display = "block";
+      previewLogo.classList.add("d-none");
     }
-
-    toggleRemoveButtons();
-
-    // On submit, collect all text items into JSON
-    $("form").on("submit", function () {
-      let texts = [];
-      $(".text-item").each(function () {
-        const val = $(this).val().trim();
-        if (val) texts.push(val);
-      });
-      $("#text").val(JSON.stringify(texts));
-    });
-  });
+  })();
 </script>

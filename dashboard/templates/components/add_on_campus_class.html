@@ -1,79 +1,151 @@
-<div class="container">
+<div class="container" id="on-campus-panel">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Add On-Campus Class</h5>
+      <h5 class="mb-0">On-Campus Class</h5>
     </div>
     <div class="card-body">
-      {% include 'components/course_dropdown.html' %} 
-      
+      {% include 'components/course_dropdown.html' with dropdown_id='on-campus-course' %}
+
       {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_on_campus_class' %}">
-        {% csrf_token %}
-        
-        <!-- Include selected course -->
-        <input type="hidden" name="course" value="{{ selected_course.id }}">
-
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label for="class_title" class="form-label">Class Title</label>
-            <input type="text" id="class_title" name="class_title" class="form-control" placeholder="Enter Class Title" required />
-          </div>
-          <div class="col-md-6">
-            <label for="date" class="form-label">Date</label>
-            <input type="date" id="date" name="date" class="form-control" required />
-          </div>
-          <div class="col-md-6">
-            <label for="time" class="form-label">Time</label>
-            <div class="d-flex align-items-center gap-2">
-              <input type="time" id="start_time" class="form-control" required />
-              <span>–</span>
-              <input type="time" id="end_time" class="form-control" required />
+      <div class="editor-grid">
+        <div class="editor-card">
+          <div class="editor-step">
+            <div class="editor-step-number">2</div>
+            <div>
+              <div class="editor-step-title">Schedule a class</div>
+              <p class="editor-helper">Add the class title, date, and time range.</p>
             </div>
-            <input type="hidden" id="time" name="time" />
-            <small class="text-muted">Example: 11:30 AM – 01:00 PM IST</small>
           </div>
 
-          <div class="col-md-6">
-            <label for="batch_type" class="form-label">Batch Type</label>
-            <input type="text" id="batch_type" name="batch_type" class="form-control" placeholder="Enter Batch Type" required />
-          </div>
+          <form method="POST" action="{% url 'add_on_campus_class' %}" id="on-campus-form">
+            {% csrf_token %}
+            <input type="hidden" name="course" value="{{ selected_course.id }}" />
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="on-campus-title" class="form-label">Class Title</label>
+                <input type="text" id="on-campus-title" name="class_title" class="form-control" placeholder="Enter class title" required />
+              </div>
+              <div class="col-md-6">
+                <label for="on-campus-date" class="form-label">Date</label>
+                <input type="date" id="on-campus-date" name="date" class="form-control" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Time Range</label>
+                <div class="d-flex align-items-center gap-2">
+                  <input type="time" id="on-campus-start" class="form-control" required />
+                  <span>-</span>
+                  <input type="time" id="on-campus-end" class="form-control" required />
+                </div>
+                <input type="hidden" id="on-campus-time" name="time" />
+                <small class="text-muted">Example: 11:30 AM - 1:00 PM IST</small>
+              </div>
+              <div class="col-md-6">
+                <label for="on-campus-batch" class="form-label">Batch Type</label>
+                <input type="text" id="on-campus-batch" name="batch_type" class="form-control" placeholder="Weekday / Weekend" required />
+              </div>
+            </div>
+
+            <div class="text-end mt-4">
+              <button type="submit" class="btn btn-success px-4">Save Class</button>
+            </div>
+          </form>
         </div>
 
-        <div class="text-end mt-4">
-          <button type="submit" class="btn btn-success px-4">Save</button>
+        <div class="preview-card" id="on-campus-preview">
+          <div class="preview-title">Live Preview</div>
+          <h6 id="on-campus-preview-title">Class title</h6>
+          <div id="on-campus-preview-date" class="preview-muted">Date</div>
+          <div id="on-campus-preview-time" class="preview-muted">Time range</div>
+          <div id="on-campus-preview-batch" class="preview-muted">Batch type</div>
         </div>
-      </form>
+      </div>
+
+      {% if on_campus_classes %}
+        <div class="editor-card mt-4">
+          <h6 class="mb-3">Scheduled Classes</h6>
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Batch Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in on_campus_classes %}
+                  <tr>
+                    <td>{{ item.class_title }}</td>
+                    <td>{{ item.date }}</td>
+                    <td>{{ item.time }}</td>
+                    <td>{{ item.batch_type }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
       {% endif %}
-
+      {% else %}
+        <div class="editor-card">Select a course to add on-campus classes.</div>
+      {% endif %}
     </div>
   </div>
 </div>
 
 <script>
-  function formatTime(timeStr) {
-    if (!timeStr) return "";
-    const [hour, minute] = timeStr.split(":");
-    let h = parseInt(hour);
-    const suffix = h >= 12 ? "PM" : "AM";
-    h = h % 12 || 12;
-    return `${h}:${minute} ${suffix}`;
-  }
+  (function () {
+    const container = document.getElementById("on-campus-panel");
+    if (!container) return;
 
-  function updateTimeField() {
-    const start = document.getElementById("start_time").value;
-    const end = document.getElementById("end_time").value;
-    const hiddenInput = document.getElementById("time");
+    const form = container.querySelector("#on-campus-form");
+    if (!form) return;
 
-    if (start && end) {
-      hiddenInput.value = `${formatTime(start)} – ${formatTime(end)} IST`;
-    }
-  }
+    const titleInput = form.querySelector("#on-campus-title");
+    const dateInput = form.querySelector("#on-campus-date");
+    const startInput = form.querySelector("#on-campus-start");
+    const endInput = form.querySelector("#on-campus-end");
+    const batchInput = form.querySelector("#on-campus-batch");
+    const timeHidden = form.querySelector("#on-campus-time");
 
-  document.addEventListener("DOMContentLoaded", function () {
-    const form = document.querySelector("form");
+    const previewTitle = container.querySelector("#on-campus-preview-title");
+    const previewDate = container.querySelector("#on-campus-preview-date");
+    const previewTime = container.querySelector("#on-campus-preview-time");
+    const previewBatch = container.querySelector("#on-campus-preview-batch");
+
+    const formatTime = (timeStr) => {
+      if (!timeStr) return "";
+      const [hour, minute] = timeStr.split(":");
+      let h = parseInt(hour, 10);
+      const suffix = h >= 12 ? "PM" : "AM";
+      h = h % 12 || 12;
+      return `${h}:${minute} ${suffix}`;
+    };
+
+    const updateTimeField = () => {
+      const start = startInput.value;
+      const end = endInput.value;
+      if (start && end) {
+        timeHidden.value = `${formatTime(start)} - ${formatTime(end)} IST`;
+      }
+    };
+
+    const updatePreview = () => {
+      previewTitle.textContent = titleInput.value.trim() || "Class title";
+      previewDate.textContent = dateInput.value ? `Date: ${dateInput.value}` : "Date";
+      updateTimeField();
+      previewTime.textContent = timeHidden.value || "Time range";
+      previewBatch.textContent = batchInput.value.trim() || "Batch type";
+    };
+
     form.addEventListener("submit", updateTimeField);
+    [titleInput, dateInput, startInput, endInput, batchInput].forEach((input) => {
+      input.addEventListener("input", updatePreview);
+      input.addEventListener("change", updatePreview);
+    });
 
-    document.getElementById("start_time").addEventListener("change", updateTimeField);
-    document.getElementById("end_time").addEventListener("change", updateTimeField);
-  });
+    updatePreview();
+  })();
 </script>

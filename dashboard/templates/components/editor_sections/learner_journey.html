@@ -1,0 +1,22 @@
+<div class="form-section">
+  <div class="form-section-title">Learner Journey</div>
+  <p class="editor-note">Upload the journey infographic image.</p>
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_learner_journey" />
+    <input type="hidden" name="course" value="{{ selected_course.id }}" />
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Journey Image</label>
+        <input type="file" class="form-control" name="image" accept="image/*" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Image Alt Text</label>
+        <input type="text" class="form-control" name="image_alt" value="{{ learner_journey.image_alt|default:'' }}" />
+      </div>
+    </div>
+    <div class="mt-3 text-end">
+      <button class="btn btn-primary" type="submit">Save Journey</button>
+    </div>
+  </form>
+</div>

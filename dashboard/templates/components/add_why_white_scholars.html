@@ -1,90 +1,150 @@
-<div class="container mt-4">
+<div class="container" id="why-white-scholars-panel">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Add "Why WhiteScholars is the Best"</h5>
+      <h5 class="mb-0">Why WhiteScholars</h5>
     </div>
 
     <div class="card-body">
-      {% include 'components/course_dropdown.html' %}
+      {% include 'components/course_dropdown.html' with dropdown_id='why-white-scholars-course' %}
 
       {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_why_white_scholars' %}">
-        {% csrf_token %}
-        <input type="hidden" name="course_id" value="{{ selected_course.id }}" />
-
-        <!-- Description -->
-        <div class="mb-3">
-          <label for="description" class="form-label">Description</label>
-          <textarea class="form-control" id="description" name="description"
-                    placeholder="Enter why WhiteScholars is the best"
-                    rows="3" required></textarea>
-        </div>
-
-        <!-- Image Upload -->
-        <div class="mb-3">
-          <label class="form-label">Images</label>
-          <div id="imageInputs">
-            <div class="input-group mb-2 image-input">
-              <input type="file" class="form-control" name="images[]" accept="image/*" onchange="previewImage(event, this)">
-              <button type="button" class="btn btn-danger" onclick="removeImageInput(this)">Remove</button>
+      <div class="editor-grid">
+        <div class="editor-card">
+          <div class="editor-step">
+            <div class="editor-step-number">2</div>
+            <div>
+              <div class="editor-step-title">Describe why WhiteScholars is best</div>
+              <p class="editor-helper">Add a short list of points and supporting images.</p>
             </div>
           </div>
-          <button type="button" class="btn btn-outline-primary btn-sm" onclick="addImageInput()">+ Add More</button>
+
+          <form method="POST" enctype="multipart/form-data" action="{% url 'add_why_white_scholars' %}" id="why-white-scholars-form">
+            {% csrf_token %}
+            <input type="hidden" name="course_id" value="{{ selected_course.id }}" />
+
+            <div class="mb-3">
+              <label for="why-white-scholars-description" class="form-label">Description (one point per line)</label>
+              <textarea
+                class="form-control"
+                id="why-white-scholars-description"
+                name="description"
+                rows="4"
+                placeholder="Enter each point on a new line"
+                required
+              ></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label for="why-white-scholars-images" class="form-label">Images</label>
+              <input type="file" class="form-control" id="why-white-scholars-images" name="images[]" accept="image/*" multiple />
+              <div id="why-white-scholars-preview" class="preview-stack mt-2"></div>
+            </div>
+
+            <div class="text-end">
+              <button type="submit" class="btn btn-success px-4">Save Section</button>
+            </div>
+          </form>
         </div>
 
-        <!-- Image Preview -->
-        <div id="imagePreview" class="d-flex flex-wrap gap-2"></div>
-
-        <!-- Submit -->
-        <div class="text-end mt-3">
-          <button type="submit" class="btn btn-success px-4">Save</button>
+        <div class="preview-card" id="why-white-scholars-preview-panel">
+          <div class="preview-title">Live Preview</div>
+          <ul id="why-white-scholars-preview-list" class="preview-list"></ul>
+          <div id="why-white-scholars-preview-images" class="preview-stack mt-3">
+            <span class="preview-empty">Images will appear here.</span>
+          </div>
         </div>
-      </form>
+      </div>
+
+      {% if why_white_scholars_entries %}
+        <div class="editor-card mt-4">
+          <h6 class="mb-3">Saved Entries</h6>
+          <div class="row g-3">
+            {% for entry in why_white_scholars_entries %}
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <strong>Entry {{ forloop.counter }}</strong>
+                    <div class="preview-muted">{{ entry.description }}</div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      {% else %}
+        <div class="editor-card">Select a course to add this section.</div>
       {% endif %}
     </div>
   </div>
 </div>
 
 <script>
-function addImageInput() {
-  const container = document.getElementById('imageInputs');
-  const div = document.createElement('div');
-  div.className = 'input-group mb-2 image-input';
-  div.innerHTML = `
-    <input type="file" class="form-control" name="images[]" accept="image/*" onchange="previewImage(event, this)">
-    <button type="button" class="btn btn-danger" onclick="removeImageInput(this)">Remove</button>
-  `;
-  container.appendChild(div);
-}
+  (function () {
+    const container = document.getElementById("why-white-scholars-panel");
+    if (!container) return;
 
-function removeImageInput(button) {
-  const div = button.closest('.image-input');
-  const fileInput = div.querySelector('input[type="file"]');
-  if (fileInput.dataset.previewId) {
-    document.getElementById(fileInput.dataset.previewId)?.remove();
-  }
-  div.remove();
-}
+    const form = container.querySelector("#why-white-scholars-form");
+    if (!form) return;
 
-function previewImage(event, input) {
-  const previewContainer = document.getElementById('imagePreview');
-  const file = event.target.files[0];
-  if (!file) return;
+    const descriptionInput = form.querySelector("#why-white-scholars-description");
+    const imagesInput = form.querySelector("#why-white-scholars-images");
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const img = document.createElement('img');
-    const id = 'preview-' + Math.random().toString(36).substr(2, 9);
-    img.id = id;
-    input.dataset.previewId = id;
-    img.src = e.target.result;
-    img.style.width = '120px';
-    img.style.height = '120px';
-    img.style.objectFit = 'cover';
-    img.style.border = '1px solid #ddd';
-    img.style.borderRadius = '6px';
-    previewContainer.appendChild(img);
-  }
-  reader.readAsDataURL(file);
-}
+    const previewList = container.querySelector("#why-white-scholars-preview-list");
+    const previewImages = container.querySelector("#why-white-scholars-preview-images");
+    const formPreview = container.querySelector("#why-white-scholars-preview");
+
+    const updateListPreview = () => {
+      const lines = descriptionInput.value
+        .split("
+")
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      previewList.innerHTML = "";
+      if (!lines.length) {
+        previewList.innerHTML = "<li class='preview-empty'>Points will appear here.</li>";
+        return;
+      }
+
+      lines.forEach((line) => {
+        const li = document.createElement("li");
+        li.textContent = line;
+        previewList.appendChild(li);
+      });
+    };
+
+    const updateImagePreview = (files) => {
+      previewImages.innerHTML = "";
+      if (formPreview) {
+        formPreview.innerHTML = "";
+      }
+      if (!files || !files.length) {
+        previewImages.innerHTML = "<span class='preview-empty'>Images will appear here.</span>";
+        return;
+      }
+
+      Array.from(files).forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = document.createElement("img");
+          img.src = event.target.result;
+          img.alt = "Why WhiteScholars";
+          img.className = "preview-image";
+          previewImages.appendChild(img.cloneNode(true));
+          if (formPreview) {
+            formPreview.appendChild(img);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    };
+
+    descriptionInput.addEventListener("input", updateListPreview);
+    imagesInput.addEventListener("change", (event) => {
+      updateImagePreview(event.target.files);
+    });
+
+    updateListPreview();
+  })();
 </script>

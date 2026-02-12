@@ -1,110 +1,191 @@
-<div class="container">
+<div class="container" id="program-highlight-panel">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Add Program Highlight</h5>
+      <h5 class="mb-0">Program Highlights</h5>
     </div>
 
     <div class="card-body">
-      <!-- Course Dropdown -->
-      {% include 'components/course_dropdown.html' %}
+      {% include 'components/course_dropdown.html' with dropdown_id='program-highlight-course' %}
 
       {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_program_highlight' %}">
-        {% csrf_token %}
-        <input type="hidden" name="course" value="{{ selected_course.id }}">
-
-        <!-- Title -->
-        <div class="mb-3">
-          <label for="title" class="form-label">Title</label>
-          <input type="text" class="form-control" id="title" name="title"
-            value="{% if existing_highlight %}{{ existing_highlight.title }}{% endif %}"
-            placeholder="Enter program title" />
-        </div>
-
-        <!-- Heading -->
-        <div class="mb-3">
-          <label for="heading" class="form-label">Heading</label>
-          <input type="text" class="form-control" id="heading" name="heading"
-            value="{% if existing_highlight %}{{ existing_highlight.heading }}{% endif %}"
-            placeholder="Enter heading" />
-        </div>
-
-        <!-- Program Details -->
-        <div class="mb-3">
-          <label class="form-label">Program Details (Text List)</label>
-          <div class="input-group mb-2">
-            <input type="text" id="detailInput" class="form-control" placeholder="Enter detail" />
-            <button type="button" id="addDetailBtn" class="btn btn-outline-success">Add</button>
+      <div class="editor-grid">
+        <div class="editor-card">
+          <div class="editor-step">
+            <div class="editor-step-number">2</div>
+            <div>
+              <div class="editor-step-title">Add a program highlight</div>
+              <p class="editor-helper">Use a title, heading, and 3-6 bullet points.</p>
+            </div>
           </div>
-          <ul id="detailList" class="list-group"></ul>
-          <input type="hidden" name="text" id="textField" />
+
+          <form method="POST" enctype="multipart/form-data" action="{% url 'add_program_highlight' %}" id="program-highlight-form">
+            {% csrf_token %}
+            <input type="hidden" name="course" value="{{ selected_course.id }}" />
+
+            <div class="mb-3">
+              <label for="program-highlight-title" class="form-label">Title</label>
+              <input type="text" class="form-control" id="program-highlight-title" name="title" placeholder="Enter title" required />
+            </div>
+
+            <div class="mb-3">
+              <label for="program-highlight-heading" class="form-label">Heading</label>
+              <input type="text" class="form-control" id="program-highlight-heading" name="heading" placeholder="Enter heading" required />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Program Details</label>
+              <div class="input-group mb-2">
+                <input type="text" id="program-highlight-detail" class="form-control" placeholder="Enter detail" />
+                <button type="button" id="program-highlight-add-detail" class="btn btn-outline-success">Add</button>
+              </div>
+              <ul id="program-highlight-detail-list" class="list-group"></ul>
+              <input type="hidden" name="text" id="program-highlight-text" />
+              <div class="preview-muted mt-1">Add one detail at a time and click Add.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="program-highlight-image" class="form-label">Image</label>
+              <input type="file" class="form-control" id="program-highlight-image" name="image" accept="image/*" />
+              <div id="program-highlight-image-preview" class="preview-stack mt-2"></div>
+            </div>
+
+            <div class="text-end">
+              <button type="submit" class="btn btn-success px-4">Save Highlight</button>
+            </div>
+          </form>
         </div>
 
-        <!-- Image -->
-        <div class="mb-3">
-          <label for="image" class="form-label">Image</label>
-          <input type="file" class="form-control" id="image" name="image" accept="image/*" />
-          <div id="imagePreview" class="mt-2"></div>
-
-          {% if existing_highlight and existing_highlight.image %}
-          <img src="{{ existing_highlight.image.url }}" alt="Image" class="mt-2 rounded" style="height: 100px;">
-          {% endif %}
+        <div class="preview-card" id="program-highlight-preview">
+          <div class="preview-title">Live Preview</div>
+          <div class="preview-stack mb-3">
+            <img id="program-highlight-preview-image" class="preview-image" alt="Highlight image" />
+            <span id="program-highlight-preview-image-empty" class="preview-empty">Image preview will appear here.</span>
+          </div>
+          <h6 id="program-highlight-preview-title">Title</h6>
+          <div id="program-highlight-preview-heading" class="preview-muted">Heading</div>
+          <ul id="program-highlight-preview-list" class="preview-list mt-3"></ul>
         </div>
+      </div>
 
-        <!-- Submit -->
-        <div class="text-end">
-          <button type="submit" class="btn btn-success px-4">Submit</button>
+      {% if program_highlights %}
+        <div class="editor-card mt-4">
+          <h6 class="mb-3">Saved Program Highlights</h6>
+          <div class="row g-3">
+            {% for highlight in program_highlights %}
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <strong>{{ highlight.title }}</strong>
+                    <div class="preview-muted">{{ highlight.heading }}</div>
+                    {% if highlight.text %}
+                      <ul class="mt-2 mb-0">
+                        {% for item in highlight.text %}
+                          <li>{{ item }}</li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
         </div>
-      </form>
+      {% endif %}
+      {% else %}
+        <div class="editor-card">Select a course to add program highlights.</div>
       {% endif %}
     </div>
   </div>
 </div>
 
-<!-- Scripts -->
 <script>
-  $(document).ready(function () {
+  (function () {
+    const container = document.getElementById("program-highlight-panel");
+    if (!container) return;
+
+    const form = container.querySelector("#program-highlight-form");
+    if (!form) return;
+
+    const titleInput = form.querySelector("#program-highlight-title");
+    const headingInput = form.querySelector("#program-highlight-heading");
+    const detailInput = form.querySelector("#program-highlight-detail");
+    const addDetailBtn = form.querySelector("#program-highlight-add-detail");
+    const detailList = form.querySelector("#program-highlight-detail-list");
+    const hiddenText = form.querySelector("#program-highlight-text");
+    const imageInput = form.querySelector("#program-highlight-image");
+    const imagePreview = container.querySelector("#program-highlight-image-preview");
+
+    const previewTitle = container.querySelector("#program-highlight-preview-title");
+    const previewHeading = container.querySelector("#program-highlight-preview-heading");
+    const previewList = container.querySelector("#program-highlight-preview-list");
+    const previewImage = container.querySelector("#program-highlight-preview-image");
+    const previewImageEmpty = container.querySelector("#program-highlight-preview-image-empty");
+
     const details = [];
 
-    // Add program detail
-    $("#addDetailBtn").click(function () {
-      const detail = $("#detailInput").val().trim();
-      if (detail) {
-        details.push(detail);
-        $("#detailList").append(
-          `<li class="list-group-item d-flex justify-content-between align-items-center">
-            ${detail}
-            <button type="button" class="btn btn-sm btn-outline-danger removeDetailBtn">Remove</button>
-          </li>`
-        );
-        $("#detailInput").val("");
-        $("#textField").val(JSON.stringify(details)); // store list in hidden field
+    const syncDetails = () => {
+      hiddenText.value = JSON.stringify(details);
+      previewList.innerHTML = "";
+
+      if (!details.length) {
+        previewList.innerHTML = "<li class='preview-empty'>Program details will appear here.</li>";
+        return;
       }
+
+      details.forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        previewList.appendChild(li);
+      });
+    };
+
+    addDetailBtn.addEventListener("click", () => {
+      const detail = detailInput.value.trim();
+      if (!detail) return;
+      details.push(detail);
+      const li = document.createElement("li");
+      li.className = "list-group-item d-flex justify-content-between align-items-center";
+      li.innerHTML = `${detail}<button type='button' class='btn btn-sm btn-outline-danger program-highlight-remove'>Remove</button>`;
+      detailList.appendChild(li);
+      detailInput.value = "";
+      syncDetails();
     });
 
-    // Remove a program detail
-    $(document).on("click", ".removeDetailBtn", function () {
-      const text = $(this).parent().text().trim().replace("Remove", "").trim();
-      const index = details.indexOf(text);
-      if (index > -1) details.splice(index, 1);
-      $(this).parent().remove();
-      $("#textField").val(JSON.stringify(details));
+    detailList.addEventListener("click", (event) => {
+      if (!event.target.classList.contains("program-highlight-remove")) return;
+      const itemText = event.target.closest("li").firstChild.textContent.trim();
+      const index = details.indexOf(itemText);
+      if (index > -1) {
+        details.splice(index, 1);
+      }
+      event.target.closest("li").remove();
+      syncDetails();
     });
 
-    // Image preview
-    $("#image").on("change", function () {
-      const file = this.files[0];
-      const preview = $("#imagePreview");
-      preview.empty();
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          preview.append(
-            `<img src="${e.target.result}" class="img-thumbnail rounded" style="height: 100px; width: auto;">`
-          );
-        };
-        reader.readAsDataURL(file);
-      }
+    const updateTextPreview = () => {
+      previewTitle.textContent = titleInput.value.trim() || "Title";
+      previewHeading.textContent = headingInput.value.trim() || "Heading";
+    };
+
+    titleInput.addEventListener("input", updateTextPreview);
+    headingInput.addEventListener("input", updateTextPreview);
+
+    imageInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        previewImage.classList.remove("d-none");
+        if (previewImageEmpty) {
+          previewImageEmpty.style.display = "none";
+        }
+        imagePreview.innerHTML = `<img src='${e.target.result}' class='preview-image' alt='Highlight image' />`;
+      };
+      reader.readAsDataURL(file);
     });
-  });
+
+    updateTextPreview();
+    syncDetails();
+  })();
 </script>

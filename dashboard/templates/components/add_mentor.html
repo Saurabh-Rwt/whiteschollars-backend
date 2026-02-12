@@ -1,58 +1,159 @@
-<div class="container">
+<div class="container" id="mentor-panel">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Add Mentor</h5>
+      <h5 class="mb-0">Mentors</h5>
     </div>
     <div class="card-body">
-
-      {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-      {% endif %}
-
-      <!-- Course Dropdown -->
-      {% include 'components/course_dropdown.html' %}
+      {% include 'components/course_dropdown.html' with dropdown_id='mentor-course' %}
 
       {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_mentor' %}">
-        {% csrf_token %}
-        <input type="hidden" name="course" value="{{ selected_course.id }}">
+      <div class="editor-grid">
+        <div class="editor-card">
+          <div class="editor-step">
+            <div class="editor-step-number">2</div>
+            <div>
+              <div class="editor-step-title">Add a mentor profile</div>
+              <p class="editor-helper">Upload the mentor photo and provide role details.</p>
+            </div>
+          </div>
 
-        <!-- Mentor Image -->
-        <div class="mb-3">
-          <label for="mentor_image" class="form-label">Mentor Image</label>
-          <input type="file" class="form-control" id="mentor_image" name="mentor_image" accept="image/*" />
+          <form method="POST" enctype="multipart/form-data" action="{% url 'add_mentor' %}" id="mentor-form">
+            {% csrf_token %}
+            <input type="hidden" name="course" value="{{ selected_course.id }}" />
+
+            <div class="mb-3">
+              <label for="mentor-image" class="form-label">Mentor Image</label>
+              <input type="file" class="form-control" id="mentor-image" name="mentor_image" accept="image/*" />
+              <div id="mentor-image-preview" class="preview-stack mt-2"></div>
+            </div>
+
+            <div class="mb-3">
+              <label for="mentor-name" class="form-label">Mentor Name</label>
+              <input type="text" class="form-control" id="mentor-name" name="mentor_name" placeholder="Enter mentor name" required />
+            </div>
+
+            <div class="mb-3">
+              <label for="mentor-designation" class="form-label">Designation</label>
+              <input type="text" class="form-control" id="mentor-designation" name="designation_name" placeholder="Enter designation" required />
+            </div>
+
+            <div class="mb-3">
+              <label for="mentor-experience" class="form-label">Experience Summary</label>
+              <textarea class="form-control" id="mentor-experience" name="experience_text" rows="3" placeholder="Enter experience details" required></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label for="mentor-company-logo" class="form-label">Company Logo</label>
+              <input type="file" class="form-control" id="mentor-company-logo" name="company_logo" accept="image/*" />
+              <div id="mentor-company-preview" class="preview-stack mt-2"></div>
+            </div>
+
+            <div class="text-end">
+              <button type="submit" class="btn btn-success px-4">Save Mentor</button>
+            </div>
+          </form>
         </div>
 
-        <!-- Mentor Name -->
-        <div class="mb-3">
-          <label for="mentor_name" class="form-label">Mentor Name</label>
-          <input type="text" class="form-control" id="mentor_name" name="mentor_name" placeholder="Enter mentor name" required />
+        <div class="preview-card" id="mentor-preview">
+          <div class="preview-title">Live Preview</div>
+          <div class="preview-stack mb-3">
+            <img id="mentor-preview-image" class="preview-image" alt="Mentor photo" />
+            <span id="mentor-preview-image-empty" class="preview-empty">Mentor photo will appear here.</span>
+          </div>
+          <h6 id="mentor-preview-name">Mentor name</h6>
+          <div id="mentor-preview-designation" class="preview-muted">Designation</div>
+          <p id="mentor-preview-experience" class="preview-muted">Experience summary will appear here.</p>
+          <div class="preview-stack mt-3">
+            <img id="mentor-preview-company" class="preview-image" alt="Company logo" />
+            <span id="mentor-preview-company-empty" class="preview-empty">Company logo preview.</span>
+          </div>
         </div>
+      </div>
 
-        <!-- Designation Name -->
-        <div class="mb-3">
-          <label for="designation_name" class="form-label">Designation</label>
-          <input type="text" class="form-control" id="designation_name" name="designation_name" placeholder="Enter designation" required />
+      {% if mentors %}
+        <div class="editor-card mt-4">
+          <h6 class="mb-3">Saved Mentors</h6>
+          <div class="preview-stack">
+            {% for mentor in mentors %}
+              <div class="card" style="width: 220px;">
+                {% if mentor.mentor_image %}
+                  <img src="{{ mentor.mentor_image.url }}" class="card-img-top" alt="Mentor" />
+                {% endif %}
+                <div class="card-body">
+                  <strong>{{ mentor.mentor_name }}</strong>
+                  <div class="preview-muted">{{ mentor.designation_name }}</div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
         </div>
-
-        <!-- Experience Text -->
-        <div class="mb-3">
-          <label for="experience_text" class="form-label">Experience</label>
-          <textarea class="form-control" id="experience_text" name="experience_text" rows="4" placeholder="Enter experience details" required></textarea>
-        </div>
-
-        <!-- Company Logo -->
-        <div class="mb-3">
-          <label for="company_logo" class="form-label">Company Logo</label>
-          <input type="file" class="form-control" id="company_logo" name="company_logo" accept="image/*" />
-        </div>
-
-        <!-- Submit -->
-        <div class="text-end">
-          <button type="submit" class="btn btn-success px-4">Save</button>
-        </div>
-      </form>
+      {% endif %}
+      {% else %}
+        <div class="editor-card">Select a course to add mentors.</div>
       {% endif %}
     </div>
   </div>
 </div>
+
+<script>
+  (function () {
+    const container = document.getElementById("mentor-panel");
+    if (!container) return;
+
+    const form = container.querySelector("#mentor-form");
+    if (!form) return;
+
+    const nameInput = form.querySelector("#mentor-name");
+    const designationInput = form.querySelector("#mentor-designation");
+    const experienceInput = form.querySelector("#mentor-experience");
+    const imageInput = form.querySelector("#mentor-image");
+    const companyInput = form.querySelector("#mentor-company-logo");
+
+    const previewName = container.querySelector("#mentor-preview-name");
+    const previewDesignation = container.querySelector("#mentor-preview-designation");
+    const previewExperience = container.querySelector("#mentor-preview-experience");
+    const previewImage = container.querySelector("#mentor-preview-image");
+    const previewImageEmpty = container.querySelector("#mentor-preview-image-empty");
+    const previewCompany = container.querySelector("#mentor-preview-company");
+    const previewCompanyEmpty = container.querySelector("#mentor-preview-company-empty");
+
+    const imagePreview = container.querySelector("#mentor-image-preview");
+    const companyPreview = container.querySelector("#mentor-company-preview");
+
+    const updateTextPreview = () => {
+      previewName.textContent = nameInput.value.trim() || "Mentor name";
+      previewDesignation.textContent = designationInput.value.trim() || "Designation";
+      previewExperience.textContent = experienceInput.value.trim() || "Experience summary will appear here.";
+    };
+
+    const updateImagePreview = (file, targetImage, targetEmpty, containerPreview) => {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        targetImage.src = event.target.result;
+        targetImage.classList.remove("d-none");
+        if (targetEmpty) {
+          targetEmpty.style.display = "none";
+        }
+        if (containerPreview) {
+          containerPreview.innerHTML = `<img src='${event.target.result}' class='preview-image' alt='Preview' />`;
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+
+    nameInput.addEventListener("input", updateTextPreview);
+    designationInput.addEventListener("input", updateTextPreview);
+    experienceInput.addEventListener("input", updateTextPreview);
+
+    imageInput.addEventListener("change", (event) => {
+      updateImagePreview(event.target.files[0], previewImage, previewImageEmpty, imagePreview);
+    });
+
+    companyInput.addEventListener("change", (event) => {
+      updateImagePreview(event.target.files[0], previewCompany, previewCompanyEmpty, companyPreview);
+    });
+
+    updateTextPreview();
+  })();
+</script>

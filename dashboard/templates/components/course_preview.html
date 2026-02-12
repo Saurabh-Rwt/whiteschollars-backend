@@ -1,0 +1,344 @@
+<div class="preview-content" data-preview-content>
+  {% for section in course_sections %}
+    <div class="preview-section {% if not section.is_enabled %}is-disabled{% endif %}" data-section-key="{{ section.key }}">
+      <div class="preview-section-header">
+        <span class="preview-section-title">{{ section.label }}</span>
+        <span class="preview-disabled-badge">Disabled</span>
+      </div>
+      <div class="preview-section-body">
+        {% if section.key == 'hero' %}
+          {% if hero %}
+            <div class="preview-row"><strong>Heading:</strong> {{ hero.heading }}</div>
+            {% if hero.subheading %}<div class="preview-row"><strong>Subheading:</strong> {{ hero.subheading }}</div>{% endif %}
+            {% if hero.description_html %}<div class="preview-row"><strong>Description:</strong> {{ hero.description_html|striptags|truncatechars:160 }}</div>{% endif %}
+            {% if hero.badge_text %}<div class="preview-row"><strong>Badge:</strong> {{ hero.badge_text }}</div>{% endif %}
+            {% if hero.badge_icon %}
+              <div class="preview-row">
+                <strong>Badge Icon:</strong>
+                <div class="media-preview">
+                  <img src="{{ hero.badge_icon.url }}" alt="{{ hero.badge_icon_alt|default:'Badge icon' }}" />
+                  <small class="text-muted">{{ hero.badge_icon_alt|default:'Badge icon' }}</small>
+                </div>
+              </div>
+            {% endif %}
+            {% if hero.award_text %}<div class="preview-row"><strong>Award:</strong> {{ hero.award_text }}</div>{% endif %}
+            {% if hero.award_logo %}
+              <div class="preview-row">
+                <strong>Award Logo:</strong>
+                <div class="media-preview">
+                  <img src="{{ hero.award_logo.url }}" alt="{{ hero.award_logo_alt|default:'Award logo' }}" />
+                  <small class="text-muted">{{ hero.award_logo_alt|default:'Award logo' }}</small>
+                </div>
+              </div>
+            {% endif %}
+            <div class="preview-row"><strong>Media:</strong> {{ hero.media_type|default:'image' }}</div>
+            {% if hero.hero_image %}
+              <div class="preview-row">
+                <strong>Hero Image:</strong>
+                <div class="media-preview">
+                  <img src="{{ hero.hero_image.url }}" alt="{{ hero.hero_image_alt|default:'Hero image' }}" />
+                  <small class="text-muted">{{ hero.hero_image_alt|default:'Hero image' }}</small>
+                </div>
+              </div>
+            {% endif %}
+            {% if hero.hero_video_thumbnail %}
+              <div class="preview-row">
+                <strong>Video Thumbnail:</strong>
+                <div class="media-preview">
+                  <img src="{{ hero.hero_video_thumbnail.url }}" alt="{{ hero.hero_video_thumbnail_alt|default:'Video thumbnail' }}" />
+                  <small class="text-muted">{{ hero.hero_video_thumbnail_alt|default:'Video thumbnail' }}</small>
+                </div>
+              </div>
+            {% endif %}
+            {% if hero.collaboration_heading %}<div class="preview-row"><strong>Collaboration Heading:</strong> {{ hero.collaboration_heading }}</div>{% endif %}
+            <div class="preview-row"><strong>Highlights:</strong> {{ hero_highlights|length }}</div>
+            <div class="preview-row"><strong>CTA Buttons:</strong> {{ hero_buttons|length }}</div>
+            <div class="preview-row"><strong>Logos:</strong> {{ hero_logos|length }}</div>
+          {% else %}
+            <div class="text-muted">No hero content yet.</div>
+          {% endif %}
+        {% elif section.key == 'key_highlights' %}
+          <div class="preview-row"><strong>Total highlights:</strong> {{ key_highlights|length }}</div>
+          {% if key_highlights %}
+            <ul class="preview-list-inline">
+              {% for item in key_highlights|slice:":3" %}
+                <li>{{ item.text }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted">No highlights added.</div>
+          {% endif %}
+        {% elif section.key == 'accreditations' %}
+          <div class="preview-row"><strong>Accreditation logos:</strong> {{ accreditation_logos|length }}</div>
+          {% if accreditation_logos %}
+            <ul class="preview-list-inline">
+              {% for item in accreditation_logos|slice:":5" %}
+                <li>{{ item.image_alt|default:'Logo' }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted">No accreditation logos yet.</div>
+          {% endif %}
+        {% elif section.key == 'why_choose' %}
+          <div class="preview-row"><strong>Cards:</strong> {{ why_choose_items|length }}</div>
+          {% if why_choose_items %}
+            <ul class="preview-list-inline">
+              {% for item in why_choose_items|slice:":4" %}
+                <li>{{ item.heading }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted">No cards added.</div>
+          {% endif %}
+        {% elif section.key == 'live_demo' %}
+          {% if live_demo_cta %}
+            <div class="preview-row"><strong>Heading:</strong> {{ live_demo_cta.heading }}</div>
+            <div class="preview-row"><strong>Button:</strong> {{ live_demo_cta.button_label }}</div>
+          {% else %}
+            <div class="text-muted">No live demo CTA configured.</div>
+          {% endif %}
+        {% elif section.key == 'course_overview' %}
+          {% if course_overview %}
+            {% if course_overview.intro_html %}
+              <div class="preview-row"><strong>Intro:</strong> {{ course_overview.intro_html|striptags|truncatechars:160 }}</div>
+            {% endif %}
+            <div class="preview-row"><strong>Questions:</strong> {{ course_overview_items|length }}</div>
+            {% if course_overview_items %}
+              <ul class="preview-list-inline">
+                {% for item in course_overview_items|slice:":3" %}
+                  <li>{{ item.question }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          {% else %}
+            <div class="text-muted">No course overview yet.</div>
+          {% endif %}
+        {% elif section.key == 'mentors' %}
+          <div class="preview-row"><strong>Mentors:</strong> {{ mentors|length }}</div>
+          {% if mentors %}
+            <ul class="preview-list-inline">
+              {% for item in mentors|slice:":4" %}
+                <li>{{ item.mentor_name }} - {{ item.designation_name }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted">No mentors added.</div>
+          {% endif %}
+        {% elif section.key == 'program_highlights' %}
+          <div class="preview-row"><strong>Tabs:</strong> {{ program_highlights|length }}</div>
+          {% if program_highlights %}
+            <ul class="preview-list-inline">
+              {% for item in program_highlights|slice:":4" %}
+                <li>{{ item.title }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted">No program highlights yet.</div>
+          {% endif %}
+        {% elif section.key == 'learner_journey' %}
+          {% if learner_journey %}
+            <div class="preview-row"><strong>Journey image:</strong> {{ learner_journey.image_alt|default:'Image uploaded' }}</div>
+          {% else %}
+            <div class="text-muted">No learner journey image yet.</div>
+          {% endif %}
+        {% elif section.key == 'curriculum' %}
+          {% if curriculum_section %}
+            {% if curriculum_section.call_us_title %}
+              <div class="preview-row"><strong>Call Us Title:</strong> {{ curriculum_section.call_us_title }}</div>
+            {% endif %}
+            {% if curriculum_section.call_us_phone %}
+              <div class="preview-row"><strong>Phone:</strong> {{ curriculum_section.call_us_phone }}</div>
+            {% endif %}
+          {% endif %}
+          <div class="preview-row"><strong>Modules:</strong> {{ curriculum_modules|length }}</div>
+          {% if curriculum_modules %}
+            <ul class="preview-list-inline">
+              {% for item in curriculum_modules|slice:":4" %}
+                <li>{{ item.title }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% elif section.key == 'career_assistance' %}
+          <div class="preview-row"><strong>Blocks:</strong> {{ career_assistances|length }}</div>
+          {% if career_assistances %}
+            <ul class="preview-list-inline">
+              {% for item in career_assistances|slice:":3" %}
+                <li>{{ item.title }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted">No career assistance blocks yet.</div>
+          {% endif %}
+        {% elif section.key == 'career_transitions' %}
+          <div class="preview-row"><strong>Stories:</strong> {{ career_transitions|length }}</div>
+          {% if career_transitions %}
+            <ul class="preview-list-inline">
+              {% for item in career_transitions|slice:":3" %}
+                <li>{{ item.name }} - {{ item.placed_company }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          <div class="preview-row"><strong>Stats:</strong> {{ career_transition_stats|length }}</div>
+        {% elif section.key == 'alumni' %}
+          <div class="preview-row"><strong>Alumni logos:</strong> {{ alumni_logos|length }}</div>
+          {% if alumni_logos %}
+            <ul class="preview-list-inline">
+              {% for item in alumni_logos|slice:":5" %}
+                <li>{{ item.image_alt|default:'Logo' }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% elif section.key == 'on_campus' %}
+          <div class="preview-row"><strong>Class entries:</strong> {{ on_campus_classes|length }}</div>
+          {% if on_campus_classes %}
+            <ul class="preview-list-inline">
+              {% for item in on_campus_classes|slice:":3" %}
+                <li>{{ item.class_title }} ({{ item.batch_type }})</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          {% if on_campus_section and on_campus_section.bottom_cta_text %}
+            <div class="preview-row"><strong>Bottom CTA:</strong> {{ on_campus_section.bottom_cta_text }}</div>
+          {% endif %}
+        {% elif section.key == 'fee_structure' %}
+          <div class="preview-row"><strong>Fee cards:</strong> {{ fee_structures|length }}</div>
+          {% if fee_structures %}
+            <ul class="preview-list-inline">
+              {% for item in fee_structures|slice:":3" %}
+                <li>{{ item.title }} - {{ item.currency }} {{ item.discount_price }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% elif section.key == 'program_for' %}
+          <div class="preview-row"><strong>Audience cards:</strong> {{ program_for_items|length }}</div>
+          {% if program_for_items %}
+            <ul class="preview-list-inline">
+              {% for item in program_for_items|slice:":4" %}
+                <li>{{ item.title }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% elif section.key == 'why_white_scholars' %}
+          <div class="preview-row"><strong>Bullets:</strong> {{ why_white_bullets|length }}</div>
+          {% if why_white_bullets %}
+            <ul class="preview-list-inline">
+              {% for item in why_white_bullets|slice:":3" %}
+                <li>{{ item.text }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          <div class="preview-row"><strong>Images:</strong> {{ why_white_images|length }}</div>
+        {% elif section.key == 'expert_talks' %}
+          <div class="preview-row"><strong>Videos:</strong> {{ expert_talks|length }}</div>
+          {% if expert_talks %}
+            <ul class="preview-list-inline">
+              {% for item in expert_talks|slice:":3" %}
+                <li>{{ item.youtube_url|truncatechars:40 }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% elif section.key == 'salary_trends' %}
+          {% if salary_trend_section and salary_trend_section.description %}
+            <div class="preview-row"><strong>Description:</strong> {{ salary_trend_section.description|striptags|truncatechars:140 }}</div>
+          {% endif %}
+          <div class="preview-row"><strong>Designations:</strong> {{ salary_designations|length }}</div>
+          {% if salary_designations %}
+            <ul class="preview-list-inline">
+              {% for item in salary_designations|slice:":3" %}
+                <li>{{ item.name }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          <div class="preview-row"><strong>Hiring logos:</strong> {{ hiring_logos|length }}</div>
+        {% elif section.key == 'scope' %}
+          {% if scope_section and scope_section.intro_html %}
+            <div class="preview-row"><strong>Intro:</strong> {{ scope_section.intro_html|striptags|truncatechars:160 }}</div>
+          {% endif %}
+          <div class="preview-row"><strong>Bullets:</strong> {{ scope_bullets|length }}</div>
+          {% if scope_bullets %}
+            <ul class="preview-list-inline">
+              {% for item in scope_bullets|slice:":3" %}
+                <li>{{ item.text }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% elif section.key == 'related_articles' %}
+          <div class="preview-row"><strong>Articles:</strong> {{ related_articles|length }}</div>
+          {% if related_articles %}
+            <ul class="preview-list-inline">
+              {% for item in related_articles|slice:":3" %}
+                <li>{{ item.title }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          {% if related_articles_section and related_articles_section.load_more_label %}
+            <div class="preview-row"><strong>Load more:</strong> {{ related_articles_section.load_more_label }}</div>
+          {% endif %}
+        {% elif section.key == 'certifications' %}
+          <div class="preview-row"><strong>Certification items:</strong> {{ certifications|length }}</div>
+          {% if certifications %}
+            <ul class="preview-list-inline">
+              {% for item in certifications|slice:":3" %}
+                <li>{{ item.caption|default:'Certificate' }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% elif section.key == 'reviews' %}
+          {% if review_section %}
+            <div class="preview-row"><strong>Rating:</strong> {{ review_section.rating_value|default:'-' }}</div>
+            <div class="preview-row"><strong>Total reviews:</strong> {{ review_section.total_reviews|default:'-' }}</div>
+          {% endif %}
+          <div class="preview-row"><strong>Review cards:</strong> {{ review_items|length }}</div>
+          {% if review_items %}
+            <ul class="preview-list-inline">
+              {% for item in review_items|slice:":3" %}
+                <li>{{ item.name }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% elif section.key == 'faqs' %}
+          {% if faq_section and faq_section.intro_text %}
+            <div class="preview-row"><strong>Intro:</strong> {{ faq_section.intro_text|truncatechars:140 }}</div>
+          {% endif %}
+          <div class="preview-row"><strong>FAQ items:</strong> {{ faq_items|length }}</div>
+          {% if faq_items %}
+            <ul class="preview-list-inline">
+              {% for item in faq_items|slice:":3" %}
+                <li>{{ item.question }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% elif section.key == 'cta_ready' %}
+          {% if lead_ctas.ready %}
+            <div class="preview-row"><strong>Heading:</strong> {{ lead_ctas.ready.heading }}</div>
+            {% if lead_ctas.ready.description_html %}
+              <div class="preview-row"><strong>Description:</strong> {{ lead_ctas.ready.description_html|striptags|truncatechars:120 }}</div>
+            {% endif %}
+          {% else %}
+            <div class="text-muted">No CTA content yet.</div>
+          {% endif %}
+        {% elif section.key == 'cta_discover' %}
+          {% if lead_ctas.discover %}
+            <div class="preview-row"><strong>Heading:</strong> {{ lead_ctas.discover.heading }}</div>
+            {% if lead_ctas.discover.description_html %}
+              <div class="preview-row"><strong>Description:</strong> {{ lead_ctas.discover.description_html|striptags|truncatechars:120 }}</div>
+            {% endif %}
+          {% else %}
+            <div class="text-muted">No CTA content yet.</div>
+          {% endif %}
+        {% elif section.key == 'cta_confused' %}
+          {% if lead_ctas.confused %}
+            <div class="preview-row"><strong>Heading:</strong> {{ lead_ctas.confused.heading }}</div>
+            {% if lead_ctas.confused.description_html %}
+              <div class="preview-row"><strong>Description:</strong> {{ lead_ctas.confused.description_html|striptags|truncatechars:120 }}</div>
+            {% endif %}
+          {% else %}
+            <div class="text-muted">No CTA content yet.</div>
+          {% endif %}
+        {% else %}
+          <div class="text-muted">No preview details configured.</div>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</div>

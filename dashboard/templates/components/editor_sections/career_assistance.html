@@ -1,0 +1,77 @@
+<div class="form-section">
+  <div class="form-section-title">Career Assistance Blocks</div>
+  <p class="editor-note">Each block has a title, description, bullet list, and image.</p>
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_career_assistance" />
+    <input type="hidden" name="course" value="{{ selected_course.id }}" />
+    <input type="hidden" name="item_id" value="{% if editing.career_assistance %}{{ editing.career_assistance.id }}{% endif %}" />
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Title</label>
+        <input type="text" class="form-control" name="title" value="{% if editing.career_assistance %}{{ editing.career_assistance.title }}{% endif %}" required />
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" name="description" rows="2" required>{% if editing.career_assistance %}{{ editing.career_assistance.description }}{% endif %}</textarea>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Image</label>
+        <input type="file" class="form-control" name="image" accept="image/*" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Image Alt Text</label>
+        <input type="text" class="form-control" name="image_alt" value="{% if editing.career_assistance %}{{ editing.career_assistance.image_alt }}{% endif %}" />
+      </div>
+    </div>
+    <div class="mt-3">
+      <label class="form-label">Bullet Points</label>
+      <div id="career-assistance-bullets">
+        {% if editing.career_assistance and editing.career_assistance.description_list %}
+          {% for bullet in editing.career_assistance.description_list %}
+            <div class="input-group mb-2" data-list-item>
+              <input type="text" class="form-control" name="bullets[]" value="{{ bullet }}" />
+              <button class="btn btn-outline-danger" type="button" data-list-remove>Remove</button>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="input-group mb-2" data-list-item>
+            <input type="text" class="form-control" name="bullets[]" placeholder="Add a bullet" />
+            <button class="btn btn-outline-danger" type="button" data-list-remove>Remove</button>
+          </div>
+        {% endif %}
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-list-add="#career-assistance-bullets" data-template="#career-assistance-template">Add Bullet</button>
+      <template id="career-assistance-template">
+        <div class="input-group mb-2" data-list-item>
+          <input type="text" class="form-control" name="bullets[]" placeholder="Add a bullet" />
+          <button class="btn btn-outline-danger" type="button" data-list-remove>Remove</button>
+        </div>
+      </template>
+    </div>
+    <div class="mt-3 text-end">
+      <button class="btn btn-outline-primary" type="submit">{% if editing.career_assistance %}Update{% else %}Add Block{% endif %}</button>
+    </div>
+  </form>
+  <div class="row g-2 mt-3">
+    {% for item in career_assistances %}
+      <div class="col-md-6">
+        <div class="border rounded p-2 d-flex align-items-center justify-content-between">
+          <span class="text-truncate">{{ item.title }}</span>
+          <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=career_assistance&edit_key=career_assistance&edit_id={{ item.id }}">Edit</a>
+            <form method="POST" action="{% url 'dashboard' %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_career_assistance" />
+              <input type="hidden" name="course" value="{{ selected_course.id }}" />
+              <input type="hidden" name="item_id" value="{{ item.id }}" />
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-muted">No career assistance blocks yet.</div>
+    {% endfor %}
+  </div>
+</div>

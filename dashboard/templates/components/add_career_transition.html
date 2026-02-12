@@ -1,79 +1,127 @@
-<div class="container">
+<div class="container" id="career-transition-panel">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Add Career Transition</h5>
+      <h5 class="mb-0">Career Transitions</h5>
     </div>
     <div class="card-body">
-      {% include 'components/course_dropdown.html' %}
+      {% include 'components/course_dropdown.html' with dropdown_id='career-transition-course' %}
 
       {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_career_transition' %}">
-        {% csrf_token %}
-        <input type="hidden" name="course" value="{{ selected_course.id }}" />
+      <div class="editor-grid">
+        <div class="editor-card">
+          <div class="editor-step">
+            <div class="editor-step-number">2</div>
+            <div>
+              <div class="editor-step-title">Add a career transition story</div>
+              <p class="editor-helper">Capture the name, role, and placement details.</p>
+            </div>
+          </div>
 
-        <div class="mb-3">
-          <label class="form-label">Name</label>
-          <input
-            type="text"
-            name="name"
-            class="form-control"
-            placeholder="Enter name"
-            required
-          />
+          <form method="POST" action="{% url 'add_career_transition' %}" id="career-transition-form">
+            {% csrf_token %}
+            <input type="hidden" name="course" value="{{ selected_course.id }}" />
+
+            <div class="mb-3">
+              <label for="career-transition-name" class="form-label">Name</label>
+              <input type="text" name="name" class="form-control" id="career-transition-name" placeholder="Enter name" required />
+            </div>
+            <div class="mb-3">
+              <label for="career-transition-designation" class="form-label">Designation</label>
+              <input type="text" name="designation" class="form-control" id="career-transition-designation" placeholder="Enter designation" required />
+            </div>
+            <div class="mb-3">
+              <label for="career-transition-description" class="form-label">Description</label>
+              <textarea name="description" rows="3" class="form-control" id="career-transition-description" placeholder="Enter detailed description"></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="career-transition-company" class="form-label">Placed Company</label>
+              <input type="text" name="placed_company" class="form-control" id="career-transition-company" placeholder="Enter company name" required />
+            </div>
+            <div class="mb-3">
+              <label for="career-transition-job-type" class="form-label">Job Type</label>
+              <input type="text" name="job_type" class="form-control" id="career-transition-job-type" placeholder="Enter job type" required />
+            </div>
+            <div class="mb-3">
+              <label for="career-transition-link" class="form-label">YouTube Testimonial Link</label>
+              <input type="url" name="youtube_testimonial_link" class="form-control" id="career-transition-link" placeholder="https://youtube.com/..." />
+            </div>
+            <div class="text-end">
+              <button type="submit" class="btn btn-success px-4">Save Transition</button>
+            </div>
+          </form>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Designation</label>
-          <input
-            type="text"
-            name="designation"
-            class="form-control"
-            placeholder="Enter designation"
-            required
-          />
+
+        <div class="preview-card" id="career-transition-preview">
+          <div class="preview-title">Live Preview</div>
+          <h6 id="career-transition-preview-name">Name</h6>
+          <div id="career-transition-preview-designation" class="preview-muted">Designation</div>
+          <p id="career-transition-preview-description" class="preview-muted">Description preview will appear here.</p>
+          <div class="preview-muted" id="career-transition-preview-company">Placed company</div>
+          <div class="preview-muted" id="career-transition-preview-job">Job type</div>
+          <div class="preview-muted" id="career-transition-preview-link"></div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Description</label>
-          <textarea
-            name="description"
-            rows="4"
-            class="form-control"
-            placeholder="Enter detailed description"
-          ></textarea>
+      </div>
+
+      {% if career_transitions %}
+        <div class="editor-card mt-4">
+          <h6 class="mb-3">Saved Career Transitions</h6>
+          <div class="row g-3">
+            {% for item in career_transitions %}
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <strong>{{ item.name }}</strong>
+                    <div class="preview-muted">{{ item.designation }} | {{ item.placed_company }}</div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Placed Company</label>
-          <input
-            type="text"
-            name="placed_company"
-            class="form-control"
-            placeholder="Enter company name"
-            required
-          />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Job Type</label>
-          <input
-            type="text"
-            name="job_type"
-            class="form-control"
-            placeholder="Enter job type"
-            required
-          />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">YouTube Testimonial Link</label>
-          <input
-            type="url"
-            name="youtube_testimonial_link"
-            class="form-control"
-            placeholder="https://youtube.com/..."
-          />
-        </div>
-        <div class="text-end">
-          <button type="submit" class="btn btn-success px-4">Save</button>
-        </div>
-      </form>
+      {% endif %}
+      {% else %}
+        <div class="editor-card">Select a course to add career transitions.</div>
       {% endif %}
     </div>
   </div>
 </div>
+
+<script>
+  (function () {
+    const container = document.getElementById("career-transition-panel");
+    if (!container) return;
+
+    const form = container.querySelector("#career-transition-form");
+    if (!form) return;
+
+    const nameInput = form.querySelector("#career-transition-name");
+    const designationInput = form.querySelector("#career-transition-designation");
+    const descriptionInput = form.querySelector("#career-transition-description");
+    const companyInput = form.querySelector("#career-transition-company");
+    const jobInput = form.querySelector("#career-transition-job-type");
+    const linkInput = form.querySelector("#career-transition-link");
+
+    const previewName = container.querySelector("#career-transition-preview-name");
+    const previewDesignation = container.querySelector("#career-transition-preview-designation");
+    const previewDescription = container.querySelector("#career-transition-preview-description");
+    const previewCompany = container.querySelector("#career-transition-preview-company");
+    const previewJob = container.querySelector("#career-transition-preview-job");
+    const previewLink = container.querySelector("#career-transition-preview-link");
+
+    const updatePreview = () => {
+      previewName.textContent = nameInput.value.trim() || "Name";
+      previewDesignation.textContent = designationInput.value.trim() || "Designation";
+      previewDescription.textContent = descriptionInput.value.trim() || "Description preview will appear here.";
+      previewCompany.textContent = companyInput.value.trim() || "Placed company";
+      previewJob.textContent = jobInput.value.trim() || "Job type";
+      const linkValue = linkInput.value.trim();
+      previewLink.textContent = linkValue ? `Video: ${linkValue}` : "";
+    };
+
+    [nameInput, designationInput, descriptionInput, companyInput, jobInput, linkInput].forEach((input) => {
+      input.addEventListener("input", updatePreview);
+    });
+
+    updatePreview();
+  })();
+</script>

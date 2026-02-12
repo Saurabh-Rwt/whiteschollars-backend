@@ -1,0 +1,81 @@
+<div class="form-section">
+  <div class="form-section-title">Why WhiteScholars Bullet List</div>
+  <form method="POST" action="{% url 'dashboard' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_why_white_bullet" />
+    <input type="hidden" name="course" value="{{ selected_course.id }}" />
+    <input type="hidden" name="item_id" value="{% if editing.why_white_bullet %}{{ editing.why_white_bullet.id }}{% endif %}" />
+    <div class="row g-3 align-items-end">
+      <div class="col-md-10">
+        <label class="form-label">Bullet Text</label>
+        <input type="text" class="form-control" name="text" value="{% if editing.why_white_bullet %}{{ editing.why_white_bullet.text }}{% endif %}" required />
+      </div>
+      <div class="col-md-2 text-end">
+        <button class="btn btn-outline-primary" type="submit">{% if editing.why_white_bullet %}Update{% else %}Add{% endif %}</button>
+      </div>
+    </div>
+  </form>
+  <ul class="list-group list-group-flush mt-3">
+    {% for item in why_white_bullets %}
+      <li class="list-group-item d-flex align-items-center justify-content-between">
+        <span class="text-truncate">{{ item.text }}</span>
+        <div class="d-flex gap-2">
+          <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=why_white_scholars&edit_key=why_white_bullet&edit_id={{ item.id }}">Edit</a>
+          <form method="POST" action="{% url 'dashboard' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_why_white_bullet" />
+            <input type="hidden" name="course" value="{{ selected_course.id }}" />
+            <input type="hidden" name="item_id" value="{{ item.id }}" />
+            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+          </form>
+        </div>
+      </li>
+    {% empty %}
+      <li class="list-group-item text-muted">No bullets yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="form-section">
+  <div class="form-section-title">Why WhiteScholars Images</div>
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_why_white_image" />
+    <input type="hidden" name="course" value="{{ selected_course.id }}" />
+    <input type="hidden" name="item_id" value="{% if editing.why_white_image %}{{ editing.why_white_image.id }}{% endif %}" />
+    <div class="row g-3 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label">Image</label>
+        <input type="file" class="form-control" name="image" accept="image/*" {% if not editing.why_white_image %}required{% endif %} />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Alt Text</label>
+        <input type="text" class="form-control" name="image_alt" value="{% if editing.why_white_image %}{{ editing.why_white_image.image_alt }}{% endif %}" />
+      </div>
+      <div class="col-md-2 text-end">
+        <button class="btn btn-outline-primary" type="submit">{% if editing.why_white_image %}Update{% else %}Add{% endif %}</button>
+      </div>
+    </div>
+  </form>
+  <div class="row g-2 mt-3">
+    {% for item in why_white_images %}
+      <div class="col-md-6">
+        <div class="border rounded p-2 d-flex align-items-center justify-content-between">
+          <span class="text-truncate">{{ item.image_alt|default:'Image' }}</span>
+          <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=why_white_scholars&edit_key=why_white_image&edit_id={{ item.id }}">Edit</a>
+            <form method="POST" action="{% url 'dashboard' %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_why_white_image" />
+              <input type="hidden" name="course" value="{{ selected_course.id }}" />
+              <input type="hidden" name="item_id" value="{{ item.id }}" />
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-muted">No images yet.</div>
+    {% endfor %}
+  </div>
+</div>

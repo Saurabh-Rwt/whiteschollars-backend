@@ -1,0 +1,30 @@
+<div class="form-section">
+  <div class="form-section-title">{{ cta_label }} CTA</div>
+  <p class="editor-note">Lead form is handled on frontend; only this layout and image are stored.</p>
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_lead_cta" />
+    <input type="hidden" name="course" value="{{ selected_course.id }}" />
+    <input type="hidden" name="cta_key" value="{{ cta_key }}" />
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Heading</label>
+        <input type="text" class="form-control" name="heading" value="{{ cta_instance.heading|default:'' }}" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Image</label>
+        <input type="file" class="form-control" name="image" accept="image/*" />
+        <label class="form-label mt-2">Image Alt Text</label>
+        <input type="text" class="form-control" name="image_alt" value="{{ cta_instance.image_alt|default:'' }}" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Description</label>
+        <input type="hidden" name="description_html" id="cta-{{ cta_key }}-desc" value="{{ cta_instance.description_html|default:'' }}" />
+        <div class="form-control" style="padding: 0;" data-quill data-target="cta-{{ cta_key }}-desc"></div>
+      </div>
+    </div>
+    <div class="mt-3 text-end">
+      <button class="btn btn-outline-primary" type="submit">Save CTA</button>
+    </div>
+  </form>
+</div>

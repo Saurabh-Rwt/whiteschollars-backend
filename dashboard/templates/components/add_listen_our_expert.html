@@ -1,60 +1,143 @@
-<div class="container mt-4">
+<div class="container" id="listen-expert-panel">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Add Listen Our Expert</h5>
+      <h5 class="mb-0">Listen Our Expert</h5>
     </div>
 
     <div class="card-body">
-      {% include 'components/course_dropdown.html' %}
+      {% include 'components/course_dropdown.html' with dropdown_id='listen-expert-course' %}
 
       {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_listen_our_expert' %}">
-        {% csrf_token %}
-        <input type="hidden" name="course_id" value="{{ selected_course.id }}" />
-
-        <!-- Title -->
-        <div class="mb-3">
-          <label for="title" class="form-label">Title</label>
-          <input type="text" class="form-control" id="title" name="title" placeholder="Enter section title" required />
-        </div>
-
-        <!-- YouTube Links -->
-        <div class="mb-3">
-          <label class="form-label">YouTube Links</label>
-          <div id="youtubeLinksContainer">
-            <div class="d-flex align-items-center mb-2">
-              <input type="text" class="form-control me-2" name="youtube_links[]" placeholder="Enter YouTube link" required />
-              <button type="button" class="btn btn-outline-success addLinkBtn">+</button>
+      <div class="editor-grid">
+        <div class="editor-card">
+          <div class="editor-step">
+            <div class="editor-step-number">2</div>
+            <div>
+              <div class="editor-step-title">Add expert video links</div>
+              <p class="editor-helper">Paste YouTube links, one per line or add more fields.</p>
             </div>
           </div>
+
+          <form method="POST" action="{% url 'add_listen_our_expert' %}" id="listen-expert-form">
+            {% csrf_token %}
+            <input type="hidden" name="course_id" value="{{ selected_course.id }}" />
+
+            <div class="mb-3">
+              <label for="listen-expert-title" class="form-label">Title</label>
+              <input type="text" class="form-control" id="listen-expert-title" name="title" placeholder="Enter section title" required />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">YouTube Links</label>
+              <div id="listen-expert-links">
+                <div class="d-flex align-items-center mb-2">
+                  <input type="url" class="form-control me-2" name="youtube_links[]" placeholder="Enter YouTube link" required />
+                  <button type="button" class="btn btn-outline-danger listen-expert-remove" disabled>Remove</button>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline-success btn-sm" id="listen-expert-add">Add another link</button>
+            </div>
+
+            <div class="text-end">
+              <button type="submit" class="btn btn-success px-4">Save Videos</button>
+            </div>
+          </form>
         </div>
 
-        <!-- Submit -->
-        <div class="text-end">
-          <button type="submit" class="btn btn-success px-4">Save</button>
+        <div class="preview-card" id="listen-expert-preview">
+          <div class="preview-title">Live Preview</div>
+          <h6 id="listen-expert-preview-title">Title</h6>
+          <ul id="listen-expert-preview-list" class="preview-list"></ul>
         </div>
-      </form>
+      </div>
+
+      {% if listen_our_experts %}
+        <div class="editor-card mt-4">
+          <h6 class="mb-3">Saved Expert Videos</h6>
+          <div class="row g-3">
+            {% for entry in listen_our_experts %}
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <strong>{{ entry.title }}</strong>
+                    <ul class="mt-2">
+                      {% for link in entry.youtube_links %}
+                        <li>{{ link }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      {% else %}
+        <div class="editor-card">Select a course to add expert videos.</div>
       {% endif %}
     </div>
   </div>
 </div>
 
 <script>
-  $(document).ready(function () {
-    // Add a new YouTube link field
-    $(document).on("click", ".addLinkBtn", function () {
-      const newField = `
-        <div class="d-flex align-items-center mb-2">
-          <input type="text" class="form-control me-2" name="youtube_links[]" placeholder="Enter YouTube link" required />
-          <button type="button" class="btn btn-outline-danger removeLinkBtn">Remove</button>
-        </div>
-      `;
-      $("#youtubeLinksContainer").append(newField);
+  (function () {
+    const container = document.getElementById("listen-expert-panel");
+    if (!container) return;
+
+    const form = container.querySelector("#listen-expert-form");
+    if (!form) return;
+
+    const titleInput = form.querySelector("#listen-expert-title");
+    const linksContainer = form.querySelector("#listen-expert-links");
+    const addBtn = form.querySelector("#listen-expert-add");
+
+    const previewTitle = container.querySelector("#listen-expert-preview-title");
+    const previewList = container.querySelector("#listen-expert-preview-list");
+
+    const updatePreview = () => {
+      previewTitle.textContent = titleInput.value.trim() || "Title";
+      const links = Array.from(linksContainer.querySelectorAll("input[name='youtube_links[]']"))
+        .map((input) => input.value.trim())
+        .filter(Boolean);
+
+      previewList.innerHTML = "";
+      if (!links.length) {
+        previewList.innerHTML = "<li class='preview-empty'>Links will appear here.</li>";
+        return;
+      }
+
+      links.forEach((link) => {
+        const li = document.createElement("li");
+        li.textContent = link;
+        previewList.appendChild(li);
+      });
+    };
+
+    addBtn.addEventListener("click", () => {
+      const row = document.createElement("div");
+      row.className = "d-flex align-items-center mb-2";
+      row.innerHTML = "<input type='url' class='form-control me-2' name='youtube_links[]' placeholder='Enter YouTube link' required /><button type='button' class='btn btn-outline-danger listen-expert-remove'>Remove</button>";
+      linksContainer.appendChild(row);
+      updatePreview();
     });
 
-    // Remove a YouTube link field
-    $(document).on("click", ".removeLinkBtn", function () {
-      $(this).parent().remove();
+    linksContainer.addEventListener("click", (event) => {
+      if (!event.target.classList.contains("listen-expert-remove")) return;
+      const row = event.target.closest(".d-flex");
+      if (row && linksContainer.children.length > 1) {
+        row.remove();
+        updatePreview();
+      }
     });
-  });
+
+    linksContainer.addEventListener("input", (event) => {
+      if (event.target.matches("input[name='youtube_links[]']")) {
+        updatePreview();
+      }
+    });
+
+    titleInput.addEventListener("input", updatePreview);
+
+    updatePreview();
+  })();
 </script>

@@ -1,0 +1,44 @@
+<div class="form-section">
+  <div class="form-section-title">Accreditations & Certifications</div>
+  <p class="editor-note">Upload partner logos with alt text.</p>
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_accreditation_logo" />
+    <input type="hidden" name="course" value="{{ selected_course.id }}" />
+    <input type="hidden" name="item_id" value="{% if editing.accreditation_logo %}{{ editing.accreditation_logo.id }}{% endif %}" />
+    <div class="row g-3 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label">Logo Image</label>
+        <input type="file" class="form-control" name="image" accept="image/*" {% if not editing.accreditation_logo %}required{% endif %} />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Alt Text</label>
+        <input type="text" class="form-control" name="image_alt" value="{% if editing.accreditation_logo %}{{ editing.accreditation_logo.image_alt }}{% endif %}" />
+      </div>
+      <div class="col-md-2 text-end">
+        <button class="btn btn-outline-primary" type="submit">{% if editing.accreditation_logo %}Update{% else %}Add{% endif %}</button>
+      </div>
+    </div>
+  </form>
+  <div class="row g-2 mt-3">
+    {% for item in accreditation_logos %}
+      <div class="col-md-6">
+        <div class="border rounded p-2 d-flex align-items-center justify-content-between">
+          <span class="text-truncate">{{ item.image_alt|default:'Logo' }}</span>
+          <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=accreditations&edit_key=accreditation_logo&edit_id={{ item.id }}">Edit</a>
+            <form method="POST" action="{% url 'dashboard' %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_accreditation_logo" />
+              <input type="hidden" name="course" value="{{ selected_course.id }}" />
+              <input type="hidden" name="item_id" value="{{ item.id }}" />
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-muted">No accreditation logos yet.</div>
+    {% endfor %}
+  </div>
+</div>

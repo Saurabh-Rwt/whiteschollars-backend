@@ -1,0 +1,91 @@
+<div class="form-section">
+  <div class="form-section-title">Fee Structure Cards</div>
+  <form method="POST" action="{% url 'dashboard' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_fee_structure" />
+    <input type="hidden" name="course" value="{{ selected_course.id }}" />
+    <input type="hidden" name="item_id" value="{% if editing.fee_structure %}{{ editing.fee_structure.id }}{% endif %}" />
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Title</label>
+        <input type="text" class="form-control" name="title" value="{% if editing.fee_structure %}{{ editing.fee_structure.title }}{% endif %}" required />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Mode of Training</label>
+        <input type="text" class="form-control" name="mode_of_training" value="{% if editing.fee_structure %}{{ editing.fee_structure.mode_of_training }}{% endif %}" required />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Batch Date</label>
+        <input type="text" class="form-control" name="batch_date" value="{% if editing.fee_structure %}{{ editing.fee_structure.batch_date }}{% endif %}" required />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Original Price</label>
+        <input type="number" step="0.01" class="form-control" name="original_price" value="{% if editing.fee_structure %}{{ editing.fee_structure.original_price }}{% endif %}" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Discount Price</label>
+        <input type="number" step="0.01" class="form-control" name="discount_price" value="{% if editing.fee_structure %}{{ editing.fee_structure.discount_price }}{% endif %}" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Currency</label>
+        <input type="text" class="form-control" name="currency" value="{% if editing.fee_structure %}{{ editing.fee_structure.currency }}{% else %}INR{% endif %}" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">CTA Label</label>
+        <input type="text" class="form-control" name="cta_label" value="{% if editing.fee_structure %}{{ editing.fee_structure.cta_label }}{% endif %}" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">CTA URL</label>
+        <input type="url" class="form-control" name="cta_url" value="{% if editing.fee_structure %}{{ editing.fee_structure.cta_url }}{% endif %}" />
+      </div>
+    </div>
+    <div class="mt-3">
+      <label class="form-label">Bullet Points</label>
+      <div id="fee-structure-bullets">
+        {% if editing.fee_structure and editing.fee_structure.list_text %}
+          {% for bullet in editing.fee_structure.list_text %}
+            <div class="input-group mb-2" data-list-item>
+              <input type="text" class="form-control" name="list_text[]" value="{{ bullet }}" />
+              <button class="btn btn-outline-danger" type="button" data-list-remove>Remove</button>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="input-group mb-2" data-list-item>
+            <input type="text" class="form-control" name="list_text[]" placeholder="Add a bullet" />
+            <button class="btn btn-outline-danger" type="button" data-list-remove>Remove</button>
+          </div>
+        {% endif %}
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-list-add="#fee-structure-bullets" data-template="#fee-structure-template">Add Bullet</button>
+      <template id="fee-structure-template">
+        <div class="input-group mb-2" data-list-item>
+          <input type="text" class="form-control" name="list_text[]" placeholder="Add a bullet" />
+          <button class="btn btn-outline-danger" type="button" data-list-remove>Remove</button>
+        </div>
+      </template>
+    </div>
+    <div class="mt-3 text-end">
+      <button class="btn btn-outline-primary" type="submit">{% if editing.fee_structure %}Update{% else %}Add Fee Card{% endif %}</button>
+    </div>
+  </form>
+
+  <ul class="list-group list-group-flush mt-3">
+    {% for item in fee_structures %}
+      <li class="list-group-item d-flex align-items-center justify-content-between">
+        <span class="text-truncate">{{ item.title }} - {{ item.mode_of_training }}</span>
+        <div class="d-flex gap-2">
+          <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=fee_structure&edit_key=fee_structure&edit_id={{ item.id }}">Edit</a>
+          <form method="POST" action="{% url 'dashboard' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_fee_structure" />
+            <input type="hidden" name="course" value="{{ selected_course.id }}" />
+            <input type="hidden" name="item_id" value="{{ item.id }}" />
+            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+          </form>
+        </div>
+      </li>
+    {% empty %}
+      <li class="list-group-item text-muted">No fee cards yet.</li>
+    {% endfor %}
+  </ul>
+</div>

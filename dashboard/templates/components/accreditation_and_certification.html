@@ -1,114 +1,110 @@
-<div class="container mt-4">
+<div class="container" id="accreditation-panel">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Accreditations & Certifications</h5>
+      <h5 class="mb-0">Accreditations and Certifications</h5>
     </div>
 
     <div class="card-body">
-      {% if error %}
-      <div class="alert alert-danger">{{ error }}</div>
-      {% endif %}
+      {% include 'components/course_dropdown.html' with dropdown_id='accreditation-course' %}
 
-      {% include 'components/course_dropdown.html' %}
       {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_accreditation_and_certification' %}">
-        {% csrf_token %}
-        <input type="hidden" name="course" value="{{ selected_course.id }}" />
-
-        <!-- Accreditations Logos -->
-        <div class="mb-3">
-          <label class="form-label">Accreditations and Certification Logos</label>
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <input
-              type="file"
-              class="form-control"
-              id="accreditationLogo"
-              accept="image/*"
-            />
-            <button type="button" class="btn btn-outline-primary" id="addAccreditationLogo">Add</button>
+      <div class="editor-grid">
+        <div class="editor-card">
+          <div class="editor-step">
+            <div class="editor-step-number">2</div>
+            <div>
+              <div class="editor-step-title">Upload accreditation logos</div>
+              <p class="editor-helper">You can select multiple logos at once.</p>
+            </div>
           </div>
-          <div id="accreditationLogoPreview" class="d-flex flex-wrap gap-2"></div>
 
-          <!-- ✅ Hidden input where all files will accumulate -->
-          <input type="file" name="certification_logo" id="hiddenLogos" multiple hidden />
+          <form method="POST" enctype="multipart/form-data" action="{% url 'add_accreditation_and_certification' %}" id="accreditation-form">
+            {% csrf_token %}
+            <input type="hidden" name="course" value="{{ selected_course.id }}" />
+
+            <div class="mb-3">
+              <label for="accreditation-files" class="form-label">Accreditation Logos</label>
+              <input
+                type="file"
+                class="form-control"
+                id="accreditation-files"
+                name="certification_logo"
+                accept="image/*"
+                multiple
+                required
+              />
+              <div id="accreditation-preview" class="preview-stack mt-2"></div>
+            </div>
+
+            <div class="text-end">
+              <button type="submit" class="btn btn-success px-4">Save Logos</button>
+            </div>
+          </form>
+
+          {% if accreditations %}
+            <hr />
+            <h6 class="mb-2">Saved Logos</h6>
+            <div class="preview-stack">
+              {% for entry in accreditations %}
+                {% for logo in entry.certification_logo %}
+                  <img src="{{ logo }}" alt="Accreditation logo" class="preview-image" />
+                {% endfor %}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
 
-        <div class="text-end mt-3">
-          <button type="submit" class="btn btn-success px-4">Save</button>
+        <div class="preview-card" id="accreditation-preview-panel">
+          <div class="preview-title">Live Preview</div>
+          <div class="preview-muted mb-2">Accreditation logos will appear like a row of badges.</div>
+          <div id="accreditation-preview-live" class="preview-stack">
+            <span class="preview-empty">Selected logos will appear here.</span>
+          </div>
         </div>
-      </form>
+      </div>
+      {% else %}
+        <div class="editor-card">Select a course to add accreditation logos.</div>
       {% endif %}
     </div>
   </div>
 </div>
 
 <script>
-  $(document).ready(function () {
-    const allFiles = [];
+  (function () {
+    const container = document.getElementById("accreditation-panel");
+    if (!container) return;
 
-    $('#addAccreditationLogo').on('click', function () {
-      const input = $('#accreditationLogo')[0];
-      const files = Array.from(input.files);
-      if (files.length === 0) return;
+    const fileInput = container.querySelector("#accreditation-files");
+    const preview = container.querySelector("#accreditation-preview");
+    const previewLive = container.querySelector("#accreditation-preview-live");
 
-      const preview = $('#accreditationLogoPreview');
+    if (!fileInput) return;
 
-      files.forEach(file => {
-        allFiles.push(file); // ✅ Store in memory
+    const renderPreview = (files) => {
+      preview.innerHTML = "";
+      previewLive.innerHTML = "";
+
+      if (!files || !files.length) {
+        previewLive.innerHTML = "<span class='preview-empty'>Selected logos will appear here.</span>";
+        return;
+      }
+
+      Array.from(files).forEach((file) => {
         const reader = new FileReader();
-        reader.onload = function (e) {
-          const logoContainer = $('<div>')
-            .addClass('position-relative d-inline-block')
-            .css({ width: '80px', height: '80px', margin: '5px' });
-
-          const img = $('<img>')
-            .attr('src', e.target.result)
-            .addClass('img-thumbnail')
-            .css({
-              width: '80px',
-              height: '80px',
-              objectFit: 'cover',
-              borderRadius: '5px'
-            });
-
-          const removeBtn = $('<button>')
-            .attr('type', 'button')
-            .html('&times;')
-            .addClass('btn btn-sm btn-danger position-absolute top-0 end-0 translate-middle rounded-circle removeAccreditationLogoBtn')
-            .data('filename', file.name)
-            .css({
-              width: '20px',
-              height: '20px',
-              padding: '0',
-              lineHeight: '1',
-              fontSize: '14px'
-            });
-
-          logoContainer.append(img).append(removeBtn);
-          preview.append(logoContainer);
+        reader.onload = (event) => {
+          const img = document.createElement("img");
+          img.src = event.target.result;
+          img.alt = "Accreditation logo";
+          img.className = "preview-image";
+          preview.appendChild(img.cloneNode(true));
+          previewLive.appendChild(img);
         };
         reader.readAsDataURL(file);
       });
+    };
 
-      // clear file input
-      $('#accreditationLogo').val('');
-      refreshHiddenInput();
+    fileInput.addEventListener("change", (event) => {
+      renderPreview(event.target.files);
     });
-
-    // Remove logo from preview & list
-    $(document).on('click', '.removeAccreditationLogoBtn', function () {
-      const filename = $(this).data('filename');
-      const index = allFiles.findIndex(f => f.name === filename);
-      if (index > -1) allFiles.splice(index, 1);
-      $(this).closest('div.position-relative').remove();
-      refreshHiddenInput();
-    });
-
-    // ✅ Sync all selected files into hidden input for submission
-    function refreshHiddenInput() {
-      const dataTransfer = new DataTransfer();
-      allFiles.forEach(f => dataTransfer.items.add(f));
-      document.getElementById('hiddenLogos').files = dataTransfer.files;
-    }
-  });
+  })();
 </script>

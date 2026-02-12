@@ -1,4 +1,6 @@
 from django import forms
+from django.utils.text import slugify
+from .utils import sanitize_html
 from .models import (
     Course,
     Section,
@@ -14,6 +16,8 @@ from .models import (
 )
 
 class CourseForm(forms.ModelForm):
+    slug = forms.SlugField(required=False)
+
     class Meta:
         model = Course
         fields = [
@@ -23,14 +27,41 @@ class CourseForm(forms.ModelForm):
             'meta_description',
             'meta_keywords',
             'meta_og_image',
+            'brochure_pdf',
         ]
 
-class SectionForm(forms.ModelForm):
-    list_text = forms.CharField(required=False, widget=forms.HiddenInput())
+    def clean_slug(self):
+        slug = self.cleaned_data.get('slug', '')
+        name = self.cleaned_data.get('name', '')
+        if not slug and name:
+            slug = slugify(name)
+        if not slug:
+            return slug
+        qs = Course.objects.filter(slug=slug)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if not qs.exists():
+            return slug
+        # Ensure uniqueness by appending a counter
+        base = slug
+        counter = 2
+        while Course.objects.filter(slug=f"{base}-{counter}").exists():
+            counter += 1
+        return f"{base}-{counter}"
 
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class SanitizedHtmlField(forms.CharField):
+    def to_python(self, value):
+        value = super().to_python(value)
+        return sanitize_html(value) if value else ''
+
+class SectionForm(forms.ModelForm):
     class Meta:
         model = Section
-        fields = ['logo', 'section_heading', 'text', 'list_text', 'collaboration_logo', 'youtube_video']
+        fields = ['logo', 'section_heading', 'text', 'youtube_video']
 
 
 class KeyHighlightForm(forms.ModelForm):
@@ -41,7 +72,7 @@ class KeyHighlightForm(forms.ModelForm):
 
 class AccreditationsAndCertificationForm(forms.ModelForm):
     certification_logo = forms.FileField(
-        widget=forms.ClearableFileInput(attrs={'multiple': True}),
+        widget=MultipleFileInput(attrs={'multiple': True}),
         required=True
     )
 
@@ -96,7 +127,7 @@ class CareerTransitionForm(forms.ModelForm):
 
 class OurAlumniForm(forms.ModelForm):
     alumni_logo = forms.FileField(
-        widget=forms.ClearableFileInput(attrs={'multiple': True}),
+        widget=MultipleFileInput(attrs={'multiple': True}),
         required=False
     )
 
@@ -107,7 +138,7 @@ class OurAlumniForm(forms.ModelForm):
 class OnCampusClassForm(forms.ModelForm):
     class Meta:
         model = OnCampusClass
-        fields = ['course', 'date', 'time', 'batch_type']
+        fields = ['course', 'class_title', 'date', 'time', 'batch_type']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),

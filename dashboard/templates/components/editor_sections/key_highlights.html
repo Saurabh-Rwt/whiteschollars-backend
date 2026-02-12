@@ -1,0 +1,48 @@
+<div class="form-section">
+  <div class="form-section-title">Key Highlights</div>
+  <p class="editor-note">Short highlight cards with an icon and one-line text.</p>
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_key_highlight" />
+    <input type="hidden" name="course" value="{{ selected_course.id }}" />
+    <input type="hidden" name="item_id" value="{% if editing.key_highlight %}{{ editing.key_highlight.id }}{% endif %}" />
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Icon</label>
+        <input type="file" class="form-control" name="logo" accept="image/*" {% if not editing.key_highlight %}required{% endif %} />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Alt Text</label>
+        <input type="text" class="form-control" name="logo_alt" value="{% if editing.key_highlight %}{{ editing.key_highlight.logo_alt }}{% endif %}" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Highlight Text</label>
+        <input type="text" class="form-control" name="text" value="{% if editing.key_highlight %}{{ editing.key_highlight.text }}{% endif %}" required />
+      </div>
+    </div>
+    <div class="mt-3 text-end">
+      <button class="btn btn-outline-primary" type="submit">{% if editing.key_highlight %}Update{% else %}Add Highlight{% endif %}</button>
+    </div>
+  </form>
+  <div class="row g-2 mt-3">
+    {% for item in key_highlights %}
+      <div class="col-md-6">
+        <div class="border rounded p-2 d-flex align-items-center justify-content-between">
+          <span class="text-truncate">{{ item.text }}</span>
+          <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=key_highlights&edit_key=key_highlight&edit_id={{ item.id }}">Edit</a>
+            <form method="POST" action="{% url 'dashboard' %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_key_highlight" />
+              <input type="hidden" name="course" value="{{ selected_course.id }}" />
+              <input type="hidden" name="item_id" value="{{ item.id }}" />
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-muted">No key highlights yet.</div>
+    {% endfor %}
+  </div>
+</div>

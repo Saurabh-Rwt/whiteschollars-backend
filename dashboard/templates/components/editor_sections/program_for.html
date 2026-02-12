@@ -1,0 +1,49 @@
+<div class="form-section">
+  <div class="form-section-title">Program Audience Cards</div>
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_program_for" />
+    <input type="hidden" name="course" value="{{ selected_course.id }}" />
+    <input type="hidden" name="item_id" value="{% if editing.program_for %}{{ editing.program_for.id }}{% endif %}" />
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Title</label>
+        <input type="text" class="form-control" name="title" value="{% if editing.program_for %}{{ editing.program_for.title }}{% endif %}" required />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" name="description" rows="2" required>{% if editing.program_for %}{{ editing.program_for.description }}{% endif %}</textarea>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Image</label>
+        <input type="file" class="form-control" name="image" accept="image/*" />
+        <label class="form-label mt-2">Alt Text</label>
+        <input type="text" class="form-control" name="image_alt" value="{% if editing.program_for %}{{ editing.program_for.image_alt }}{% endif %}" />
+      </div>
+    </div>
+    <div class="mt-3 text-end">
+      <button class="btn btn-outline-primary" type="submit">{% if editing.program_for %}Update{% else %}Add Card{% endif %}</button>
+    </div>
+  </form>
+  <div class="row g-2 mt-3">
+    {% for item in program_for_items %}
+      <div class="col-md-6">
+        <div class="border rounded p-2 d-flex align-items-center justify-content-between">
+          <span class="text-truncate">{{ item.title }}</span>
+          <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=program_for&edit_key=program_for&edit_id={{ item.id }}">Edit</a>
+            <form method="POST" action="{% url 'dashboard' %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_program_for" />
+              <input type="hidden" name="course" value="{{ selected_course.id }}" />
+              <input type="hidden" name="item_id" value="{{ item.id }}" />
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-muted">No audience cards yet.</div>
+    {% endfor %}
+  </div>
+</div>

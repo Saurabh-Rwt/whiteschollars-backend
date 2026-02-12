@@ -1,85 +1,100 @@
-<div class="container">
+<div class="container" id="our-alumni-panel">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Add Our Alumni</h5>
+      <h5 class="mb-0">Our Alumni</h5>
     </div>
     <div class="card-body">
-      {% include 'components/course_dropdown.html' %}
+      {% include 'components/course_dropdown.html' with dropdown_id='our-alumni-course' %}
 
       {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_our_alumni' %}">
-        {% csrf_token %}
-        <input type="hidden" name="course" value="{{ selected_course.id }}">
-
-        <!-- Add Logo Section -->
-        <div class="mb-3">
-          <label class="form-label">Add Alumni Logo</label>
-          <div class="input-group">
-            <input type="file" id="alumni_logo_input" class="form-control" accept="image/*" />
-            <button type="button" id="addLogoBtn" class="btn btn-outline-success">Add</button>
+      <div class="editor-grid">
+        <div class="editor-card">
+          <div class="editor-step">
+            <div class="editor-step-number">2</div>
+            <div>
+              <div class="editor-step-title">Upload alumni logos</div>
+              <p class="editor-helper">Select multiple logos at once to display on the course page.</p>
+            </div>
           </div>
-          <small class="text-muted">Add logos one by one and preview below.</small>
+
+          <form method="POST" enctype="multipart/form-data" action="{% url 'add_our_alumni' %}" id="our-alumni-form">
+            {% csrf_token %}
+            <input type="hidden" name="course" value="{{ selected_course.id }}" />
+
+            <div class="mb-3">
+              <label for="our-alumni-files" class="form-label">Alumni Logos</label>
+              <input type="file" id="our-alumni-files" class="form-control" name="alumni_logo[]" accept="image/*" multiple required />
+              <div id="our-alumni-preview" class="preview-stack mt-2"></div>
+            </div>
+
+            <div class="text-end">
+              <button type="submit" class="btn btn-success px-4">Save Alumni Logos</button>
+            </div>
+          </form>
+
+          {% if our_alumni_entries %}
+            <hr />
+            <h6 class="mb-2">Saved Logos</h6>
+            <div class="preview-stack">
+              {% for entry in our_alumni_entries %}
+                {% for logo in entry.alumni_logo %}
+                  <img src="/media/{{ logo }}" alt="Alumni logo" class="preview-image" />
+                {% endfor %}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
 
-        <!-- Preview Section -->
-        <div id="logoPreviewContainer" class="d-flex flex-wrap gap-3 mt-3"></div>
-
-        <!-- Hidden File Inputs to Submit -->
-        <div id="hiddenInputsContainer"></div>
-
-        <!-- Submit -->
-        <div class="text-end mt-4">
-          <button type="submit" class="btn btn-success px-4">Save</button>
+        <div class="preview-card" id="our-alumni-preview-panel">
+          <div class="preview-title">Live Preview</div>
+          <div id="our-alumni-preview-live" class="preview-stack">
+            <span class="preview-empty">Selected alumni logos will appear here.</span>
+          </div>
         </div>
-      </form>
+      </div>
+      {% else %}
+        <div class="editor-card">Select a course to add alumni logos.</div>
       {% endif %}
     </div>
   </div>
 </div>
 
 <script>
-$(document).ready(function () {
-  // Add Logo Preview + Hidden File Input
-  $("#addLogoBtn").click(function () {
-    const fileInput = $("#alumni_logo_input")[0];
-    const file = fileInput.files[0];
-    if (!file) return alert("Please select an image first.");
+  (function () {
+    const container = document.getElementById("our-alumni-panel");
+    if (!container) return;
 
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      const previewHTML = `
-        <div class="preview-item position-relative">
-          <img src="${e.target.result}" class="rounded border" style="height: 80px; width: auto;" />
-          <button type="button" class="btn btn-sm btn-danger removeLogoBtn position-absolute top-0 end-0">×</button>
-        </div>
-      `;
-      $("#logoPreviewContainer").append(previewHTML);
+    const fileInput = container.querySelector("#our-alumni-files");
+    const preview = container.querySelector("#our-alumni-preview");
+    const previewLive = container.querySelector("#our-alumni-preview-live");
 
-      // Create a new hidden input (with file) to be submitted
-      const newInput = $("<input>")
-        .attr("type", "file")
-        .attr("name", "alumni_logo[]")
-        .prop("files", createFileList(file))
-        .css("display", "none");
+    if (!fileInput) return;
 
-      $("#hiddenInputsContainer").append(newInput);
+    const renderPreview = (files) => {
+      preview.innerHTML = "";
+      previewLive.innerHTML = "";
+
+      if (!files || !files.length) {
+        previewLive.innerHTML = "<span class='preview-empty'>Selected alumni logos will appear here.</span>";
+        return;
+      }
+
+      Array.from(files).forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = document.createElement("img");
+          img.src = event.target.result;
+          img.alt = "Alumni logo";
+          img.className = "preview-image";
+          preview.appendChild(img.cloneNode(true));
+          previewLive.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
     };
-    reader.readAsDataURL(file);
-    fileInput.value = ""; // reset file input
-  });
 
-  // Remove Logo Preview + Hidden File
-  $(document).on("click", ".removeLogoBtn", function () {
-    const index = $(this).closest(".preview-item").index();
-    $(this).closest(".preview-item").remove();
-    $("#hiddenInputsContainer input[type='file']").eq(index).remove();
-  });
-
-  // Helper to attach file object to hidden input
-  function createFileList(file) {
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(file);
-    return dataTransfer.files;
-  }
-});
+    fileInput.addEventListener("change", (event) => {
+      renderPreview(event.target.files);
+    });
+  })();
 </script>

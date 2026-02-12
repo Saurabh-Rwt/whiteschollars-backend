@@ -1,95 +1,184 @@
-<div class="container mt-4">
+<div class="container" id="fee-structure-panel">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Add Fee Structure</h5>
+      <h5 class="mb-0">Fee Structure</h5>
     </div>
 
     <div class="card-body">
-      {% if error %}
-      <div class="alert alert-danger">{{ error }}</div>
-      {% endif %}
-
-      {% include 'components/course_dropdown.html' %}
+      {% include 'components/course_dropdown.html' with dropdown_id='fee-structure-course' %}
 
       {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_fee_structure' %}">
-        {% csrf_token %}
-        <input type="hidden" name="course_id" value="{{ selected_course.id }}" />
-
-        <!-- Title -->
-        <div class="mb-3">
-          <label for="title" class="form-label">Title</label>
-          <input type="text" class="form-control" id="title" name="title"
-                 placeholder="Enter fee structure title" required />
-        </div>
-
-        <!-- Mode of Training -->
-        <div class="mb-3">
-          <label for="mode_of_training" class="form-label">Mode of Training</label>
-          <input type="text" class="form-control" id="mode_of_training" name="mode_of_training"
-                 placeholder="e.g. Online / Offline" required />
-        </div>
-
-        <!-- Batch Date -->
-        <div class="mb-3">
-          <label for="batch_date" class="form-label">Batch Date</label>
-          <input type="date" class="form-control" id="batch_date" name="batch_date"
-                 placeholder="e.g. 15th Jan 2025" required />
-        </div>
-
-        <!-- Description / List Text -->
-        <div class="mb-3">
-          <label class="form-label">Description / List Text</label>
-          <div id="courseListTextContainer">
-            <div class="d-flex align-items-center mb-2">
-              <input
-                type="text"
-                class="form-control me-2"
-                name="list_text[]"
-                placeholder="Enter detail"
-              />
-              <button type="button" class="btn btn-outline-success addListTextBtn">+</button>
+      <div class="editor-grid">
+        <div class="editor-card">
+          <div class="editor-step">
+            <div class="editor-step-number">2</div>
+            <div>
+              <div class="editor-step-title">Add a fee card</div>
+              <p class="editor-helper">Provide the batch details and pricing.</p>
             </div>
           </div>
+
+          <form method="POST" action="{% url 'add_fee_structure' %}" id="fee-structure-form">
+            {% csrf_token %}
+            <input type="hidden" name="course_id" value="{{ selected_course.id }}" />
+
+            <div class="mb-3">
+              <label for="fee-structure-title" class="form-label">Title</label>
+              <input type="text" class="form-control" id="fee-structure-title" name="title" placeholder="Enter fee structure title" required />
+            </div>
+
+            <div class="mb-3">
+              <label for="fee-structure-mode" class="form-label">Mode of Training</label>
+              <input type="text" class="form-control" id="fee-structure-mode" name="mode_of_training" placeholder="Online / Offline" required />
+            </div>
+
+            <div class="mb-3">
+              <label for="fee-structure-date" class="form-label">Next Batch Date</label>
+              <input type="date" class="form-control" id="fee-structure-date" name="batch_date" required />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Description / List Text</label>
+              <div id="fee-structure-list-container">
+                <div class="input-group mb-2">
+                  <input type="text" class="form-control" name="list_text[]" placeholder="Enter detail" />
+                  <button type="button" class="btn btn-outline-danger fee-structure-remove" disabled>Remove</button>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline-success btn-sm" id="fee-structure-add">Add another detail</button>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="fee-structure-original" class="form-label">Original Price</label>
+                <input type="number" step="0.01" class="form-control" id="fee-structure-original" name="original_price" placeholder="Enter original price" required />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="fee-structure-discount" class="form-label">Discount Price</label>
+                <input type="number" step="0.01" class="form-control" id="fee-structure-discount" name="discount_price" placeholder="Enter discount price" required />
+              </div>
+            </div>
+
+            <div class="text-end">
+              <button type="submit" class="btn btn-success px-4">Save Fee Card</button>
+            </div>
+          </form>
         </div>
 
-        <!-- Prices -->
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="original_price" class="form-label">Original Price</label>
-            <input type="number" step="0.01" class="form-control" id="original_price" name="original_price"
-                   placeholder="Enter original price" required />
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="discount_price" class="form-label">Discount Price</label>
-            <input type="number" step="0.01" class="form-control" id="discount_price" name="discount_price"
-                   placeholder="Enter discount price" required />
-          </div>
+        <div class="preview-card" id="fee-structure-preview">
+          <div class="preview-title">Live Preview</div>
+          <h6 id="fee-structure-preview-title">Title</h6>
+          <div id="fee-structure-preview-mode" class="preview-muted">Mode of training</div>
+          <div id="fee-structure-preview-date" class="preview-muted">Next batch date</div>
+          <ul id="fee-structure-preview-list" class="preview-list mt-3"></ul>
+          <div class="preview-muted mt-2">Original: <span id="fee-structure-preview-original">0</span></div>
+          <div class="preview-muted">Discount: <span id="fee-structure-preview-discount">0</span></div>
         </div>
+      </div>
 
-        <!-- Submit -->
-        <div class="text-end">
-          <button type="submit" class="btn btn-success px-4">Save</button>
+      {% if fee_structures %}
+        <div class="editor-card mt-4">
+          <h6 class="mb-3">Saved Fee Structures</h6>
+          <div class="row g-3">
+            {% for item in fee_structures %}
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <strong>{{ item.title }}</strong>
+                    <div class="preview-muted">{{ item.mode_of_training }} | {{ item.batch_date }}</div>
+                    <div class="preview-muted">Original: {{ item.original_price }} | Discount: {{ item.discount_price }}</div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
         </div>
-      </form>
+      {% endif %}
+      {% else %}
+        <div class="editor-card">Select a course to add fee structure details.</div>
       {% endif %}
     </div>
   </div>
 </div>
 
 <script>
-  $(document).ready(function () {
-    $(document).on("click", ".addListTextBtn", function () {
-      const newField = `
-        <div class="d-flex align-items-center mb-2">
-          <input type="text" class="form-control me-2" name="list_text[]" placeholder="Enter detail" />
-          <button type="button" class="btn btn-outline-danger removeListTextBtn">Remove</button>
-        </div>
-      `;
-      $("#courseListTextContainer").append(newField);
+  (function () {
+    const container = document.getElementById("fee-structure-panel");
+    if (!container) return;
+
+    const form = container.querySelector("#fee-structure-form");
+    if (!form) return;
+
+    const titleInput = form.querySelector("#fee-structure-title");
+    const modeInput = form.querySelector("#fee-structure-mode");
+    const dateInput = form.querySelector("#fee-structure-date");
+    const listContainer = form.querySelector("#fee-structure-list-container");
+    const addBtn = form.querySelector("#fee-structure-add");
+    const originalInput = form.querySelector("#fee-structure-original");
+    const discountInput = form.querySelector("#fee-structure-discount");
+
+    const previewTitle = container.querySelector("#fee-structure-preview-title");
+    const previewMode = container.querySelector("#fee-structure-preview-mode");
+    const previewDate = container.querySelector("#fee-structure-preview-date");
+    const previewList = container.querySelector("#fee-structure-preview-list");
+    const previewOriginal = container.querySelector("#fee-structure-preview-original");
+    const previewDiscount = container.querySelector("#fee-structure-preview-discount");
+
+    const updateTextPreview = () => {
+      previewTitle.textContent = titleInput.value.trim() || "Title";
+      previewMode.textContent = modeInput.value.trim() || "Mode of training";
+      previewDate.textContent = dateInput.value ? `Next batch: ${dateInput.value}` : "Next batch date";
+      previewOriginal.textContent = originalInput.value || "0";
+      previewDiscount.textContent = discountInput.value || "0";
+    };
+
+    const updateListPreview = () => {
+      const items = Array.from(listContainer.querySelectorAll("input[name='list_text[]']"))
+        .map((input) => input.value.trim())
+        .filter(Boolean);
+
+      previewList.innerHTML = "";
+      if (!items.length) {
+        previewList.innerHTML = "<li class='preview-empty'>List items will appear here.</li>";
+        return;
+      }
+
+      items.forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        previewList.appendChild(li);
+      });
+    };
+
+    addBtn.addEventListener("click", () => {
+      const row = document.createElement("div");
+      row.className = "input-group mb-2";
+      row.innerHTML = "<input type='text' class='form-control' name='list_text[]' placeholder='Enter detail' /><button type='button' class='btn btn-outline-danger fee-structure-remove'>Remove</button>";
+      listContainer.appendChild(row);
+      updateListPreview();
     });
-    $(document).on("click", ".removeListTextBtn", function () {
-      $(this).parent().remove();
+
+    listContainer.addEventListener("click", (event) => {
+      if (!event.target.classList.contains("fee-structure-remove")) return;
+      const row = event.target.closest(".input-group");
+      if (row && listContainer.children.length > 1) {
+        row.remove();
+        updateListPreview();
+      }
     });
-  });
+
+    listContainer.addEventListener("input", (event) => {
+      if (event.target.matches("input[name='list_text[]']")) {
+        updateListPreview();
+      }
+    });
+
+    [titleInput, modeInput, dateInput, originalInput, discountInput].forEach((input) => {
+      input.addEventListener("input", updateTextPreview);
+      input.addEventListener("change", updateTextPreview);
+    });
+
+    updateTextPreview();
+    updateListPreview();
+  })();
 </script>

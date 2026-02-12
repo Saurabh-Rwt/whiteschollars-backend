@@ -1,47 +1,125 @@
-<div class="container mt-4">
+<div class="container" id="program-for-panel">
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">Add "Who Is This Program For?"</h5>
+      <h5 class="mb-0">Program For</h5>
     </div>
 
     <div class="card-body">
-      {% if error %}
-      <div class="alert alert-danger">{{ error }}</div>
-      {% endif %}
-
-      {% include 'components/course_dropdown.html' %}
+      {% include 'components/course_dropdown.html' with dropdown_id='program-for-course' %}
 
       {% if selected_course %}
-      <form method="POST" enctype="multipart/form-data" action="{% url 'add_program_for' %}">
-        {% csrf_token %}
-        <input type="hidden" name="course_id" value="{{ selected_course.id }}" />
+      <div class="editor-grid">
+        <div class="editor-card">
+          <div class="editor-step">
+            <div class="editor-step-number">2</div>
+            <div>
+              <div class="editor-step-title">Describe who this program is for</div>
+              <p class="editor-helper">Add a short title, description, and optional image.</p>
+            </div>
+          </div>
 
-        <!-- Title -->
-        <div class="mb-3">
-          <label for="title" class="form-label">Title</label>
-          <input type="text" class="form-control" id="title" name="title"
-                 placeholder="Enter program title" required />
+          <form method="POST" enctype="multipart/form-data" action="{% url 'add_program_for' %}" id="program-for-form">
+            {% csrf_token %}
+            <input type="hidden" name="course_id" value="{{ selected_course.id }}" />
+
+            <div class="mb-3">
+              <label for="program-for-title" class="form-label">Title</label>
+              <input type="text" class="form-control" id="program-for-title" name="title" placeholder="Enter program title" required />
+            </div>
+
+            <div class="mb-3">
+              <label for="program-for-description" class="form-label">Description</label>
+              <textarea class="form-control" id="program-for-description" name="description" rows="3" placeholder="Enter program description" required></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label for="program-for-image" class="form-label">Image</label>
+              <input type="file" class="form-control" id="program-for-image" name="image" accept="image/*" />
+              <div id="program-for-image-preview" class="preview-stack mt-2"></div>
+            </div>
+
+            <div class="text-end">
+              <button type="submit" class="btn btn-success px-4">Save Section</button>
+            </div>
+          </form>
         </div>
 
-        <!-- Description -->
-        <div class="mb-3">
-          <label for="description" class="form-label">Description</label>
-          <textarea class="form-control" id="description" name="description"
-                    placeholder="Enter program description" rows="3" required></textarea>
+        <div class="preview-card" id="program-for-preview">
+          <div class="preview-title">Live Preview</div>
+          <div class="preview-stack mb-3">
+            <img id="program-for-preview-image" class="preview-image" alt="Program image" />
+            <span id="program-for-preview-image-empty" class="preview-empty">Image preview will appear here.</span>
+          </div>
+          <h6 id="program-for-preview-title">Title</h6>
+          <p id="program-for-preview-description" class="preview-muted">Description preview will appear here.</p>
         </div>
+      </div>
 
-        <!-- Image -->
-        <div class="mb-3">
-          <label for="image" class="form-label">Image</label>
-          <input type="file" class="form-control" id="image" name="image" accept="image/*" />
+      {% if program_for_entries %}
+        <div class="editor-card mt-4">
+          <h6 class="mb-3">Saved Program For Entries</h6>
+          <div class="row g-3">
+            {% for item in program_for_entries %}
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <strong>{{ item.title }}</strong>
+                    <div class="preview-muted">{{ item.description }}</div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
         </div>
-
-        <!-- Submit -->
-        <div class="text-end">
-          <button type="submit" class="btn btn-success px-4">Save</button>
-        </div>
-      </form>
+      {% endif %}
+      {% else %}
+        <div class="editor-card">Select a course to add the program audience section.</div>
       {% endif %}
     </div>
   </div>
 </div>
+
+<script>
+  (function () {
+    const container = document.getElementById("program-for-panel");
+    if (!container) return;
+
+    const form = container.querySelector("#program-for-form");
+    if (!form) return;
+
+    const titleInput = form.querySelector("#program-for-title");
+    const descriptionInput = form.querySelector("#program-for-description");
+    const imageInput = form.querySelector("#program-for-image");
+    const imagePreview = container.querySelector("#program-for-image-preview");
+
+    const previewTitle = container.querySelector("#program-for-preview-title");
+    const previewDescription = container.querySelector("#program-for-preview-description");
+    const previewImage = container.querySelector("#program-for-preview-image");
+    const previewImageEmpty = container.querySelector("#program-for-preview-image-empty");
+
+    const updateTextPreview = () => {
+      previewTitle.textContent = titleInput.value.trim() || "Title";
+      previewDescription.textContent = descriptionInput.value.trim() || "Description preview will appear here.";
+    };
+
+    imageInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        previewImage.classList.remove("d-none");
+        if (previewImageEmpty) {
+          previewImageEmpty.style.display = "none";
+        }
+        imagePreview.innerHTML = `<img src='${e.target.result}' class='preview-image' alt='Program image' />`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    titleInput.addEventListener("input", updateTextPreview);
+    descriptionInput.addEventListener("input", updateTextPreview);
+
+    updateTextPreview();
+  })();
+</script>

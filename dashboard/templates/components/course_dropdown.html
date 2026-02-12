@@ -1,14 +1,21 @@
-<!-- Course Dropdown -->
-<form method="GET" action="">
+<form method="GET" action="" class="editor-card mb-3">
     {% for key, value in request.GET.items %}
         {% if key != 'course' %}
             <input type="hidden" name="{{ key }}" value="{{ value }}">
         {% endif %}
     {% endfor %}
 
-    <div class="mb-3">
-        <label for="course" class="form-label">Select Course</label>
-        <select name="course" id="course" class="form-select" onchange="this.form.submit()">
+    <div class="editor-step">
+        <div class="editor-step-number">1</div>
+        <div>
+            <div class="editor-step-title">Choose a course</div>
+            <p class="editor-helper">Pick the course you want to edit. Everything you add below will be saved under this course.</p>
+        </div>
+    </div>
+
+    <div class="mb-0">
+        <label for="{{ dropdown_id|default:'course' }}" class="form-label">Course</label>
+        <select name="course" id="{{ dropdown_id|default:'course' }}" class="form-select" onchange="this.form.submit()">
             <option value="">-- Select Course --</option>
             {% for course in courses %}
                 <option value="{{ course.id }}" {% if selected_course and selected_course.id == course.id %}selected{% endif %}>

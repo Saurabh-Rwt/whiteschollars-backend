@@ -2,7 +2,7 @@ import os
 
 from .base import *  # noqa: F401,F403
 
-DEBUG = False
+DEBUG = os.getenv('DJANGO_DEBUG', 'true').lower() in ('1', 'true', 'yes', 'on')
 
 DATABASES = {
     'default': {

@@ -1,5 +1,10 @@
 from django.db import models
 
+BUTTON_ACTION_CHOICES = [
+    ('link', 'Link'),
+    ('modal', 'Modal'),
+]
+
 class Course(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
@@ -186,6 +191,7 @@ class OnCampusClass(models.Model):
     seats_left_text = models.CharField(max_length=100, blank=True)
     cta_label = models.CharField(max_length=100, blank=True)
     cta_url = models.URLField(max_length=500, blank=True)
+    cta_action_type = models.CharField(max_length=20, choices=BUTTON_ACTION_CHOICES, default='link')
     sort_order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -205,6 +211,7 @@ class FeeStructure(models.Model):
     currency = models.CharField(max_length=10, blank=True, default='INR')
     cta_label = models.CharField(max_length=100, blank=True)
     cta_url = models.URLField(max_length=500, blank=True)
+    cta_action_type = models.CharField(max_length=20, choices=BUTTON_ACTION_CHOICES, default='link')
     sort_order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -371,8 +378,9 @@ class CourseHeroButton(models.Model):
 
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='hero_buttons')
     label = models.CharField(max_length=100)
-    url = models.URLField(max_length=500)
+    url = models.URLField(max_length=500, blank=True)
     style = models.CharField(max_length=20, choices=STYLE_CHOICES, default='primary')
+    action_type = models.CharField(max_length=20, choices=BUTTON_ACTION_CHOICES, default='link')
     sort_order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -387,7 +395,8 @@ class LiveDemoCta(models.Model):
     course = models.OneToOneField(Course, on_delete=models.CASCADE, related_name='live_demo_cta')
     heading = models.CharField(max_length=255)
     button_label = models.CharField(max_length=100)
-    button_url = models.URLField(max_length=500)
+    button_url = models.URLField(max_length=500, blank=True)
+    button_action_type = models.CharField(max_length=20, choices=BUTTON_ACTION_CHOICES, default='link')
 
     class Meta:
         db_table = 'live_demo_cta'
@@ -439,6 +448,7 @@ class CurriculumSection(models.Model):
     call_us_phone = models.CharField(max_length=50, blank=True)
     call_us_button_label = models.CharField(max_length=100, blank=True)
     call_us_button_url = models.URLField(max_length=500, blank=True)
+    call_us_action_type = models.CharField(max_length=20, choices=BUTTON_ACTION_CHOICES, default='link')
 
     class Meta:
         db_table = 'curriculum_section'
@@ -495,6 +505,7 @@ class OnCampusSection(models.Model):
     bottom_cta_text = models.CharField(max_length=255, blank=True)
     bottom_cta_label = models.CharField(max_length=100, blank=True)
     bottom_cta_url = models.URLField(max_length=500, blank=True)
+    bottom_cta_action_type = models.CharField(max_length=20, choices=BUTTON_ACTION_CHOICES, default='link')
 
     class Meta:
         db_table = 'on_campus_section'
@@ -617,6 +628,7 @@ class RelatedArticlesSection(models.Model):
     course = models.OneToOneField(Course, on_delete=models.CASCADE, related_name='related_articles_section')
     load_more_label = models.CharField(max_length=100, blank=True)
     load_more_url = models.URLField(max_length=500, blank=True)
+    load_more_action_type = models.CharField(max_length=20, choices=BUTTON_ACTION_CHOICES, default='link')
 
     class Meta:
         db_table = 'related_articles_section'
@@ -633,6 +645,7 @@ class RelatedArticle(models.Model):
     image_alt = models.CharField(max_length=255, blank=True)
     link = models.URLField(max_length=500, blank=True)
     cta_label = models.CharField(max_length=100, blank=True)
+    cta_action_type = models.CharField(max_length=20, choices=BUTTON_ACTION_CHOICES, default='link')
     sort_order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -666,6 +679,7 @@ class ReviewSection(models.Model):
     summary_text = models.CharField(max_length=500, blank=True)
     cta_label = models.CharField(max_length=100, blank=True)
     cta_url = models.URLField(max_length=500, blank=True)
+    cta_action_type = models.CharField(max_length=20, choices=BUTTON_ACTION_CHOICES, default='link')
 
     class Meta:
         db_table = 'review_section'
@@ -736,3 +750,16 @@ class LeadCta(models.Model):
 
     def __str__(self):
         return f"{self.course.name} - {self.key}"
+
+
+class CoursePopup(models.Model):
+    course = models.OneToOneField(Course, on_delete=models.CASCADE, related_name='popup_modal')
+    heading = models.CharField(max_length=255, blank=True)
+    image = models.ImageField(upload_to='course_popups/', blank=True, null=True)
+    image_alt = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        db_table = 'course_popups'
+
+    def __str__(self):
+        return f"{self.course.name} - Popup Modal"

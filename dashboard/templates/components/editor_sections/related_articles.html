@@ -4,14 +4,33 @@
     {% csrf_token %}
     <input type="hidden" name="action" value="save_related_articles_settings" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
-    <div class="row g-3">
-      <div class="col-md-6">
+    <div class="row g-3" data-action-scope>
+      <div class="col-md-5">
         <label class="form-label">Load More Label</label>
-        <input type="text" class="form-control" name="load_more_label" value="{{ related_articles_section.load_more_label|default:'' }}" />
+        <input
+          type="text"
+          class="form-control"
+          name="load_more_label"
+          placeholder="Load More"
+          value="{{ related_articles_section.load_more_label|default:'' }}"
+        />
       </div>
-      <div class="col-md-6">
+      <div class="col-md-3">
+        <label class="form-label">On Click</label>
+        <select class="form-select" name="load_more_action_type" data-action-select>
+          <option value="link" {% if related_articles_section.load_more_action_type == 'link' %}selected{% endif %}>Link</option>
+          <option value="modal" {% if related_articles_section.load_more_action_type == 'modal' %}selected{% endif %}>Open Modal</option>
+        </select>
+      </div>
+      <div class="col-md-4" data-action-field="link">
         <label class="form-label">Load More URL</label>
-        <input type="url" class="form-control" name="load_more_url" value="{{ related_articles_section.load_more_url|default:'' }}" />
+        <input
+          type="url"
+          class="form-control"
+          name="load_more_url"
+          placeholder="https://example.com"
+          value="{{ related_articles_section.load_more_url|default:'' }}"
+        />
       </div>
     </div>
     <div class="mt-3 text-end">
@@ -27,28 +46,60 @@
     <input type="hidden" name="action" value="save_related_article" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.related_article %}{{ editing.related_article.id }}{% endif %}" />
-    <div class="row g-3">
+    <div class="row g-3" data-action-scope>
       <div class="col-md-4">
         <label class="form-label">Title</label>
-        <input type="text" class="form-control" name="title" value="{% if editing.related_article %}{{ editing.related_article.title }}{% endif %}" required />
+        <input
+          type="text"
+          class="form-control"
+          name="title"
+          placeholder="Impress Hiring Managers With Real-World Projects"
+          value="{% if editing.related_article %}{{ editing.related_article.title }}{% endif %}"
+          required
+        />
       </div>
       <div class="col-md-8">
         <label class="form-label">Excerpt</label>
-        <textarea class="form-control" name="excerpt" rows="2">{% if editing.related_article %}{{ editing.related_article.excerpt }}{% endif %}</textarea>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Link</label>
-        <input type="url" class="form-control" name="link" value="{% if editing.related_article %}{{ editing.related_article.link }}{% endif %}" />
+        <textarea class="form-control" name="excerpt" rows="2" placeholder="Short summary for the article card.">{% if editing.related_article %}{{ editing.related_article.excerpt }}{% endif %}</textarea>
       </div>
       <div class="col-md-4">
         <label class="form-label">CTA Label</label>
-        <input type="text" class="form-control" name="cta_label" value="{% if editing.related_article %}{{ editing.related_article.cta_label }}{% endif %}" />
+        <input
+          type="text"
+          class="form-control"
+          name="cta_label"
+          placeholder="Learn more"
+          value="{% if editing.related_article %}{{ editing.related_article.cta_label }}{% endif %}"
+        />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">On Click</label>
+        <select class="form-select" name="cta_action_type" data-action-select>
+          <option value="link" {% if editing.related_article and editing.related_article.cta_action_type == 'link' %}selected{% endif %}>Link</option>
+          <option value="modal" {% if editing.related_article and editing.related_article.cta_action_type == 'modal' %}selected{% endif %}>Open Modal</option>
+        </select>
+      </div>
+      <div class="col-md-4" data-action-field="link">
+        <label class="form-label">Link</label>
+        <input
+          type="url"
+          class="form-control"
+          name="link"
+          placeholder="https://example.com/article"
+          value="{% if editing.related_article %}{{ editing.related_article.link }}{% endif %}"
+        />
       </div>
       <div class="col-md-4">
         <label class="form-label">Image</label>
         <input type="file" class="form-control" name="image" accept="image/*" />
         <label class="form-label mt-2">Alt Text</label>
-        <input type="text" class="form-control" name="image_alt" value="{% if editing.related_article %}{{ editing.related_article.image_alt }}{% endif %}" />
+        <input
+          type="text"
+          class="form-control"
+          name="image_alt"
+          placeholder="Article cover illustration"
+          value="{% if editing.related_article %}{{ editing.related_article.image_alt }}{% endif %}"
+        />
       </div>
     </div>
     <div class="mt-3 text-end">

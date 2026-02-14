@@ -4,18 +4,43 @@
     {% csrf_token %}
     <input type="hidden" name="action" value="save_on_campus_settings" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
-    <div class="row g-3">
+    <div class="row g-3" data-action-scope>
       <div class="col-md-6">
         <label class="form-label">Bottom CTA Text</label>
-        <input type="text" class="form-control" name="bottom_cta_text" value="{{ on_campus_section.bottom_cta_text|default:'' }}" />
+        <input
+          type="text"
+          class="form-control"
+          name="bottom_cta_text"
+          placeholder="Want to know about upcoming cohort dates?"
+          value="{{ on_campus_section.bottom_cta_text|default:'' }}"
+        />
       </div>
       <div class="col-md-3">
         <label class="form-label">Button Label</label>
-        <input type="text" class="form-control" name="bottom_cta_label" value="{{ on_campus_section.bottom_cta_label|default:'' }}" />
+        <input
+          type="text"
+          class="form-control"
+          name="bottom_cta_label"
+          placeholder="Talk to an Admission Counsellor"
+          value="{{ on_campus_section.bottom_cta_label|default:'' }}"
+        />
       </div>
       <div class="col-md-3">
+        <label class="form-label">On Click</label>
+        <select class="form-select" name="bottom_cta_action_type" data-action-select>
+          <option value="link" {% if on_campus_section.bottom_cta_action_type == 'link' %}selected{% endif %}>Link</option>
+          <option value="modal" {% if on_campus_section.bottom_cta_action_type == 'modal' %}selected{% endif %}>Open Modal</option>
+        </select>
+      </div>
+      <div class="col-md-6" data-action-field="link">
         <label class="form-label">Button URL</label>
-        <input type="url" class="form-control" name="bottom_cta_url" value="{{ on_campus_section.bottom_cta_url|default:'' }}" />
+        <input
+          type="url"
+          class="form-control"
+          name="bottom_cta_url"
+          placeholder="https://example.com"
+          value="{{ on_campus_section.bottom_cta_url|default:'' }}"
+        />
       </div>
     </div>
     <div class="mt-3 text-end">
@@ -31,10 +56,16 @@
     <input type="hidden" name="action" value="save_on_campus_class" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.on_campus_class %}{{ editing.on_campus_class.id }}{% endif %}" />
-    <div class="row g-3">
+    <div class="row g-3" data-action-scope>
       <div class="col-md-3">
         <label class="form-label">Class Title</label>
-        <input type="text" class="form-control" name="class_title" value="{% if editing.on_campus_class %}{{ editing.on_campus_class.class_title }}{% endif %}" />
+        <input
+          type="text"
+          class="form-control"
+          name="class_title"
+          placeholder="Program Induction"
+          value="{% if editing.on_campus_class %}{{ editing.on_campus_class.class_title }}{% endif %}"
+        />
       </div>
       <div class="col-md-2">
         <label class="form-label">Date</label>
@@ -42,23 +73,61 @@
       </div>
       <div class="col-md-2">
         <label class="form-label">Time</label>
-        <input type="text" class="form-control" name="time" value="{% if editing.on_campus_class %}{{ editing.on_campus_class.time }}{% endif %}" required />
+        <input
+          type="text"
+          class="form-control"
+          name="time"
+          placeholder="03:00 PM - 04:30 PM IST"
+          value="{% if editing.on_campus_class %}{{ editing.on_campus_class.time }}{% endif %}"
+          required
+        />
       </div>
       <div class="col-md-2">
         <label class="form-label">Batch Type</label>
-        <input type="text" class="form-control" name="batch_type" value="{% if editing.on_campus_class %}{{ editing.on_campus_class.batch_type }}{% endif %}" />
+        <input
+          type="text"
+          class="form-control"
+          name="batch_type"
+          placeholder="Weekdays & Weekend"
+          value="{% if editing.on_campus_class %}{{ editing.on_campus_class.batch_type }}{% endif %}"
+        />
       </div>
       <div class="col-md-3">
         <label class="form-label">Seats Left Text</label>
-        <input type="text" class="form-control" name="seats_left_text" value="{% if editing.on_campus_class %}{{ editing.on_campus_class.seats_left_text }}{% endif %}" />
+        <input
+          type="text"
+          class="form-control"
+          name="seats_left_text"
+          placeholder="09 More Seats Left"
+          value="{% if editing.on_campus_class %}{{ editing.on_campus_class.seats_left_text }}{% endif %}"
+        />
       </div>
       <div class="col-md-3">
         <label class="form-label">CTA Label</label>
-        <input type="text" class="form-control" name="cta_label" value="{% if editing.on_campus_class %}{{ editing.on_campus_class.cta_label }}{% endif %}" />
+        <input
+          type="text"
+          class="form-control"
+          name="cta_label"
+          placeholder="Enroll Now"
+          value="{% if editing.on_campus_class %}{{ editing.on_campus_class.cta_label }}{% endif %}"
+        />
       </div>
       <div class="col-md-3">
+        <label class="form-label">On Click</label>
+        <select class="form-select" name="cta_action_type" data-action-select>
+          <option value="link" {% if editing.on_campus_class and editing.on_campus_class.cta_action_type == 'link' %}selected{% endif %}>Link</option>
+          <option value="modal" {% if editing.on_campus_class and editing.on_campus_class.cta_action_type == 'modal' %}selected{% endif %}>Open Modal</option>
+        </select>
+      </div>
+      <div class="col-md-6" data-action-field="link">
         <label class="form-label">CTA URL</label>
-        <input type="url" class="form-control" name="cta_url" value="{% if editing.on_campus_class %}{{ editing.on_campus_class.cta_url }}{% endif %}" />
+        <input
+          type="url"
+          class="form-control"
+          name="cta_url"
+          placeholder="https://example.com"
+          value="{% if editing.on_campus_class %}{{ editing.on_campus_class.cta_url }}{% endif %}"
+        />
       </div>
     </div>
     <div class="mt-3 text-end">

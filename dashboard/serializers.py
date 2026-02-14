@@ -46,6 +46,7 @@ from .models import (
     FaqSection,
     FaqItem,
     LeadCta,
+    CoursePopup,
 )
 
 # ----------------- Basic Serializers -----------------
@@ -305,6 +306,12 @@ class LeadCtaSerializer(serializers.ModelSerializer):
         model = LeadCta
         fields = '__all__'
 
+
+class CoursePopupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CoursePopup
+        fields = '__all__'
+
 # ----------------- Course Serializers -----------------
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -404,6 +411,7 @@ class CoursePageSerializer(serializers.ModelSerializer):
     faq_section = FaqSectionSerializer(read_only=True)
     faq_items = FaqItemSerializer(many=True, read_only=True)
     lead_ctas = LeadCtaSerializer(many=True, read_only=True)
+    popup_modal = CoursePopupSerializer(read_only=True)
 
     class Meta:
         model = Course
@@ -457,4 +465,5 @@ class CoursePageSerializer(serializers.ModelSerializer):
             'faq_section',
             'faq_items',
             'lead_ctas',
+            'popup_modal',
         ]

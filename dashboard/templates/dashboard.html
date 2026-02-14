@@ -526,6 +526,57 @@
                   </form>
                 </div>
 
+                <div class="panel mb-4">
+                  <div class="panel-header">
+                    <div>
+                      <p class="panel-title">Popup Modal (Lead Form)</p>
+                      <p class="panel-subtitle">This modal opens when a button action is set to Modal.</p>
+                    </div>
+                    <span class="badge-soft">Step 2</span>
+                  </div>
+                  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="save_popup_modal" />
+                    <input type="hidden" name="course" value="{{ selected_course.id }}" />
+                    <div class="row g-3">
+                      <div class="col-12">
+                        <label class="form-label">Popup Heading</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          name="popup_heading"
+                          placeholder="Still confused of what course to take? Let us help you!"
+                          value="{{ popup_modal.heading|default:'' }}"
+                          required
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Popup Image</label>
+                        <input type="file" class="form-control" name="popup_image" accept="image/*" />
+                        {% if popup_modal.image %}
+                          <div class="media-preview">
+                            <img src="{{ popup_modal.image.url }}" alt="{{ popup_modal.image_alt|default:'Popup image' }}" />
+                            <small class="text-muted">{{ popup_modal.image_alt|default:'Popup image' }}</small>
+                          </div>
+                        {% endif %}
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Image Alt Text</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          name="popup_image_alt"
+                          placeholder="Counselor pointing at charts"
+                          value="{{ popup_modal.image_alt|default:'' }}"
+                        />
+                      </div>
+                    </div>
+                    <div class="mt-3 text-end">
+                      <button class="btn btn-primary" type="submit">Save Popup</button>
+                    </div>
+                  </form>
+                </div>
+
                 <div class="section-list" id="section-list">
                   {% for section in course_sections %}
                     <div class="section-card" data-section-key="{{ section.key }}">
@@ -747,6 +798,14 @@
           .replace(/\s+/g, '-')
           .replace(/-+/g, '-');
 
+      const updateActionVisibility = (select) => {
+        const scope = select.closest('[data-action-scope]');
+        if (!scope) return;
+        const linkField = scope.querySelector('[data-action-field="link"]');
+        if (!linkField) return;
+        linkField.style.display = select.value === 'link' ? '' : 'none';
+      };
+
       const reorderPreview = (order) => {
         const reorderContainer = (container, selector) => {
           if (!container) return;
@@ -826,6 +885,11 @@
           });
           updatePreviewToggle(key, isEnabled);
         });
+      });
+
+      document.querySelectorAll('[data-action-select]').forEach((select) => {
+        updateActionVisibility(select);
+        select.addEventListener('change', () => updateActionVisibility(select));
       });
 
       document.querySelectorAll('[data-list-add]').forEach((button) => {

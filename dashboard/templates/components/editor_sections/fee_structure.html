@@ -5,18 +5,39 @@
     <input type="hidden" name="action" value="save_fee_structure" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.fee_structure %}{{ editing.fee_structure.id }}{% endif %}" />
-    <div class="row g-3">
+    <div class="row g-3" data-action-scope>
       <div class="col-md-4">
         <label class="form-label">Title</label>
-        <input type="text" class="form-control" name="title" value="{% if editing.fee_structure %}{{ editing.fee_structure.title }}{% endif %}" required />
+        <input
+          type="text"
+          class="form-control"
+          name="title"
+          placeholder="Instructor Led Training"
+          value="{% if editing.fee_structure %}{{ editing.fee_structure.title }}{% endif %}"
+          required
+        />
       </div>
       <div class="col-md-4">
         <label class="form-label">Mode of Training</label>
-        <input type="text" class="form-control" name="mode_of_training" value="{% if editing.fee_structure %}{{ editing.fee_structure.mode_of_training }}{% endif %}" required />
+        <input
+          type="text"
+          class="form-control"
+          name="mode_of_training"
+          placeholder="Online / Offline / Hybrid"
+          value="{% if editing.fee_structure %}{{ editing.fee_structure.mode_of_training }}{% endif %}"
+          required
+        />
       </div>
       <div class="col-md-4">
         <label class="form-label">Batch Date</label>
-        <input type="text" class="form-control" name="batch_date" value="{% if editing.fee_structure %}{{ editing.fee_structure.batch_date }}{% endif %}" required />
+        <input
+          type="text"
+          class="form-control"
+          name="batch_date"
+          placeholder="Next Batch: 13th Feb 2026"
+          value="{% if editing.fee_structure %}{{ editing.fee_structure.batch_date }}{% endif %}"
+          required
+        />
       </div>
       <div class="col-md-4">
         <label class="form-label">Original Price</label>
@@ -30,13 +51,32 @@
         <label class="form-label">Currency</label>
         <input type="text" class="form-control" name="currency" value="{% if editing.fee_structure %}{{ editing.fee_structure.currency }}{% else %}INR{% endif %}" />
       </div>
-      <div class="col-md-6">
+      <div class="col-md-4">
         <label class="form-label">CTA Label</label>
-        <input type="text" class="form-control" name="cta_label" value="{% if editing.fee_structure %}{{ editing.fee_structure.cta_label }}{% endif %}" />
+        <input
+          type="text"
+          class="form-control"
+          name="cta_label"
+          placeholder="Enroll Now"
+          value="{% if editing.fee_structure %}{{ editing.fee_structure.cta_label }}{% endif %}"
+        />
       </div>
-      <div class="col-md-6">
+      <div class="col-md-2">
+        <label class="form-label">On Click</label>
+        <select class="form-select" name="cta_action_type" data-action-select>
+          <option value="link" {% if editing.fee_structure and editing.fee_structure.cta_action_type == 'link' %}selected{% endif %}>Link</option>
+          <option value="modal" {% if editing.fee_structure and editing.fee_structure.cta_action_type == 'modal' %}selected{% endif %}>Open Modal</option>
+        </select>
+      </div>
+      <div class="col-md-6" data-action-field="link">
         <label class="form-label">CTA URL</label>
-        <input type="url" class="form-control" name="cta_url" value="{% if editing.fee_structure %}{{ editing.fee_structure.cta_url }}{% endif %}" />
+        <input
+          type="url"
+          class="form-control"
+          name="cta_url"
+          placeholder="https://example.com"
+          value="{% if editing.fee_structure %}{{ editing.fee_structure.cta_url }}{% endif %}"
+        />
       </div>
     </div>
     <div class="mt-3">

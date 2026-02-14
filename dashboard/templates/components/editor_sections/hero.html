@@ -195,14 +195,35 @@
     <input type="hidden" name="action" value="save_hero_button" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.hero_button %}{{ editing.hero_button.id }}{% endif %}" />
-    <div class="row g-3 align-items-end">
+    <div class="row g-3 align-items-end" data-action-scope>
       <div class="col-md-4">
         <label class="form-label">Label</label>
-        <input type="text" class="form-control" name="label" value="{% if editing.hero_button %}{{ editing.hero_button.label }}{% endif %}" required />
+        <input
+          type="text"
+          class="form-control"
+          name="label"
+          placeholder="Talk to Advisor"
+          value="{% if editing.hero_button %}{{ editing.hero_button.label }}{% endif %}"
+          required
+        />
       </div>
-      <div class="col-md-5">
+      <div class="col-md-3">
+        <label class="form-label">On Click</label>
+        <select class="form-select" name="action_type" data-action-select>
+          <option value="link" {% if editing.hero_button and editing.hero_button.action_type == 'link' %}selected{% endif %}>Link</option>
+          <option value="modal" {% if editing.hero_button and editing.hero_button.action_type == 'modal' %}selected{% endif %}>Open Modal</option>
+        </select>
+      </div>
+      <div class="col-md-3" data-action-field="link">
         <label class="form-label">URL</label>
-        <input type="url" class="form-control" name="url" value="{% if editing.hero_button %}{{ editing.hero_button.url }}{% endif %}" required />
+        <input
+          type="url"
+          class="form-control"
+          name="url"
+          placeholder="https://example.com"
+          value="{% if editing.hero_button %}{{ editing.hero_button.url }}{% endif %}"
+        />
+        <div class="editor-note">Use a brochure PDF link for downloads.</div>
       </div>
       <div class="col-md-2">
         <label class="form-label">Style</label>
@@ -212,7 +233,7 @@
           <option value="ghost" {% if editing.hero_button and editing.hero_button.style == 'ghost' %}selected{% endif %}>Ghost</option>
         </select>
       </div>
-      <div class="col-md-1 text-end">
+      <div class="col-12 text-end">
         <button class="btn btn-outline-primary" type="submit">{% if editing.hero_button %}Update{% else %}Add{% endif %}</button>
       </div>
     </div>
@@ -220,7 +241,7 @@
   <ul class="list-group list-group-flush mt-3">
     {% for item in hero_buttons %}
       <li class="list-group-item d-flex align-items-center justify-content-between">
-        <span>{{ item.label }} <small class="text-muted">({{ item.style }})</small></span>
+        <span>{{ item.label }} <small class="text-muted">({{ item.style }}, {{ item.action_type }})</small></span>
         <div class="d-flex gap-2">
           <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=hero&edit_key=hero_button&edit_id={{ item.id }}">Edit</a>
           <form method="POST" action="{% url 'dashboard' %}">

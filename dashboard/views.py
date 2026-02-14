@@ -58,6 +58,7 @@ from .models import (
     FaqSection,
     FaqItem,
     LeadCta,
+    CoursePopup,
 )
 from .forms import (
     CourseForm, SectionForm, KeyHighlightForm, AccreditationsAndCertificationForm, 
@@ -407,6 +408,7 @@ def _build_dashboard_context(request, selected_course=None, active_section=None,
         'faq_section': getattr(selected_course, 'faq_section', None),
         'faq_items': FaqItem.objects.filter(course=selected_course).order_by('sort_order'),
         'lead_ctas': {cta.key: cta for cta in LeadCta.objects.filter(course=selected_course)},
+        'popup_modal': getattr(selected_course, 'popup_modal', None),
     })
     return context
 
@@ -506,6 +508,31 @@ def _handle_dashboard_post(request):
             messages.success(request, 'Course settings updated.')
         else:
             messages.error(request, f"Please fix the errors: {form.errors.as_text()}")
+        return redirect(_dashboard_url(course_id=selected_course.id))
+
+    if action == 'save_popup_modal':
+        popup, _created = CoursePopup.objects.get_or_create(course=selected_course)
+        heading = request.POST.get('popup_heading', '').strip()
+        image = request.FILES.get('popup_image')
+        image_alt = request.POST.get('popup_image_alt', '').strip()
+
+        if not heading:
+            messages.error(request, 'Popup heading is required.')
+            return redirect(_dashboard_url(course_id=selected_course.id))
+        if image and not image_alt:
+            messages.error(request, 'Alt text is required for the popup image.')
+            return redirect(_dashboard_url(course_id=selected_course.id))
+        if not image and not popup.image:
+            messages.error(request, 'Popup image is required.')
+            return redirect(_dashboard_url(course_id=selected_course.id))
+
+        popup.heading = heading
+        if image:
+            popup.image = image
+        if image_alt:
+            popup.image_alt = image_alt
+        popup.save()
+        messages.success(request, 'Popup modal saved.')
         return redirect(_dashboard_url(course_id=selected_course.id))
 
     if action == 'save_hero':
@@ -618,9 +645,13 @@ def _handle_dashboard_post(request):
         label = request.POST.get('label', '').strip()
         url = request.POST.get('url', '').strip()
         style = request.POST.get('style', 'primary')
+        action_type = request.POST.get('action_type', 'link')
         item_id = request.POST.get('item_id')
-        if not label or not url:
-            messages.error(request, 'Button label and URL are required.')
+        if not label:
+            messages.error(request, 'Button label is required.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
+        if action_type == 'link' and not url:
+            messages.error(request, 'A URL is required when the button action is set to Link.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
         if item_id:
             button = CourseHeroButton.objects.filter(id=item_id, course=selected_course).first()
@@ -632,6 +663,7 @@ def _handle_dashboard_post(request):
         button.label = label
         button.url = url
         button.style = style
+        button.action_type = action_type
         button.save()
         messages.success(request, 'CTA button saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
@@ -741,13 +773,18 @@ def _handle_dashboard_post(request):
         heading = request.POST.get('heading', '').strip()
         button_label = request.POST.get('button_label', '').strip()
         button_url = request.POST.get('button_url', '').strip()
-        if not heading or not button_label or not button_url:
-            messages.error(request, 'Heading, button label, and URL are required.')
+        button_action_type = request.POST.get('button_action_type', 'link')
+        if not heading or not button_label:
+            messages.error(request, 'Heading and button label are required.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='live_demo'))
+        if button_action_type == 'link' and not button_url:
+            messages.error(request, 'A URL is required when the button action is set to Link.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='live_demo'))
         live_demo, _created = LiveDemoCta.objects.get_or_create(course=selected_course)
         live_demo.heading = heading
         live_demo.button_label = button_label
         live_demo.button_url = button_url
+        live_demo.button_action_type = button_action_type
         live_demo.save()
         messages.success(request, 'Live demo CTA saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='live_demo'))
@@ -884,6 +921,10 @@ def _handle_dashboard_post(request):
         section.call_us_phone = request.POST.get('call_us_phone', '').strip()
         section.call_us_button_label = request.POST.get('call_us_button_label', '').strip()
         section.call_us_button_url = request.POST.get('call_us_button_url', '').strip()
+        section.call_us_action_type = request.POST.get('call_us_action_type', 'link')
+        if section.call_us_button_label and section.call_us_action_type == 'link' and not section.call_us_button_url:
+            messages.error(request, 'A URL is required when the Call Us button action is Link.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='curriculum'))
         section.save()
         messages.success(request, 'Curriculum settings saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='curriculum'))
@@ -1063,6 +1104,10 @@ def _handle_dashboard_post(request):
         section.bottom_cta_text = request.POST.get('bottom_cta_text', '').strip()
         section.bottom_cta_label = request.POST.get('bottom_cta_label', '').strip()
         section.bottom_cta_url = request.POST.get('bottom_cta_url', '').strip()
+        section.bottom_cta_action_type = request.POST.get('bottom_cta_action_type', 'link')
+        if section.bottom_cta_label and section.bottom_cta_action_type == 'link' and not section.bottom_cta_url:
+            messages.error(request, 'A URL is required when the bottom CTA action is Link.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='on_campus'))
         section.save()
         messages.success(request, 'On campus CTA saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='on_campus'))
@@ -1075,9 +1120,13 @@ def _handle_dashboard_post(request):
         seats_left_text = request.POST.get('seats_left_text', '').strip()
         cta_label = request.POST.get('cta_label', '').strip()
         cta_url = request.POST.get('cta_url', '').strip()
+        cta_action_type = request.POST.get('cta_action_type', 'link')
         item_id = request.POST.get('item_id')
         if not date or not time:
             messages.error(request, 'Date and time are required.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='on_campus'))
+        if cta_label and cta_action_type == 'link' and not cta_url:
+            messages.error(request, 'A URL is required when the class CTA action is Link.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='on_campus'))
         if item_id:
             entry = OnCampusClass.objects.filter(id=item_id, course=selected_course).first()
@@ -1093,6 +1142,7 @@ def _handle_dashboard_post(request):
         entry.seats_left_text = seats_left_text
         entry.cta_label = cta_label
         entry.cta_url = cta_url
+        entry.cta_action_type = cta_action_type
         entry.save()
         messages.success(request, 'On-campus class saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='on_campus'))
@@ -1112,12 +1162,16 @@ def _handle_dashboard_post(request):
         currency = request.POST.get('currency', 'INR').strip() or 'INR'
         cta_label = request.POST.get('cta_label', '').strip()
         cta_url = request.POST.get('cta_url', '').strip()
+        cta_action_type = request.POST.get('cta_action_type', 'link')
         item_id = request.POST.get('item_id')
         if not title or not mode_of_training or not batch_date:
             messages.error(request, 'Title, mode of training, and batch date are required.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='fee_structure'))
         if original_price is None or discount_price is None:
             messages.error(request, 'Prices must be valid numbers.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='fee_structure'))
+        if cta_label and cta_action_type == 'link' and not cta_url:
+            messages.error(request, 'A URL is required when the fee CTA action is Link.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='fee_structure'))
         if item_id:
             entry = FeeStructure.objects.filter(id=item_id, course=selected_course).first()
@@ -1135,6 +1189,7 @@ def _handle_dashboard_post(request):
         entry.currency = currency
         entry.cta_label = cta_label
         entry.cta_url = cta_url
+        entry.cta_action_type = cta_action_type
         entry.save()
         messages.success(request, 'Fee structure saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='fee_structure'))
@@ -1368,6 +1423,10 @@ def _handle_dashboard_post(request):
         section, _created = RelatedArticlesSection.objects.get_or_create(course=selected_course)
         section.load_more_label = request.POST.get('load_more_label', '').strip()
         section.load_more_url = request.POST.get('load_more_url', '').strip()
+        section.load_more_action_type = request.POST.get('load_more_action_type', 'link')
+        if section.load_more_label and section.load_more_action_type == 'link' and not section.load_more_url:
+            messages.error(request, 'A URL is required when the Load More action is Link.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='related_articles'))
         section.save()
         messages.success(request, 'Related articles settings saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='related_articles'))
@@ -1377,6 +1436,7 @@ def _handle_dashboard_post(request):
         excerpt = request.POST.get('excerpt', '').strip()
         link = request.POST.get('link', '').strip()
         cta_label = request.POST.get('cta_label', '').strip()
+        cta_action_type = request.POST.get('cta_action_type', 'link')
         image = request.FILES.get('image')
         image_alt = request.POST.get('image_alt', '').strip()
         item_id = request.POST.get('item_id')
@@ -1385,6 +1445,9 @@ def _handle_dashboard_post(request):
             return redirect(_dashboard_url(course_id=selected_course.id, section='related_articles'))
         if image and not image_alt:
             messages.error(request, 'Alt text is required for article images.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='related_articles'))
+        if cta_label and cta_action_type == 'link' and not link:
+            messages.error(request, 'A URL is required when the article CTA action is Link.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='related_articles'))
         if item_id:
             article = RelatedArticle.objects.filter(id=item_id, course=selected_course).first()
@@ -1397,6 +1460,7 @@ def _handle_dashboard_post(request):
         article.excerpt = excerpt
         article.link = link
         article.cta_label = cta_label
+        article.cta_action_type = cta_action_type
         if image:
             article.image = image
         article.image_alt = image_alt
@@ -1450,6 +1514,10 @@ def _handle_dashboard_post(request):
         review.summary_text = request.POST.get('summary_text', '').strip()
         review.cta_label = request.POST.get('cta_label', '').strip()
         review.cta_url = request.POST.get('cta_url', '').strip()
+        review.cta_action_type = request.POST.get('cta_action_type', 'link')
+        if review.cta_label and review.cta_action_type == 'link' and not review.cta_url:
+            messages.error(request, 'A URL is required when the review CTA action is Link.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='reviews'))
         review.save()
         messages.success(request, 'Review summary saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='reviews'))

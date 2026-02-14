@@ -7,6 +7,11 @@ SECRET_KEY = 'django-insecure-46iuc_a&@t7pi=b$fwk8$lrwmk+f8)o^o^+1tx%obb)o3muy(v
 
 DEBUG = False
 
+# Toggle this to switch settings without relying on environment variables.
+# True  -> production (MySQL)
+# False -> local (SQLite)
+USE_PRODUCTION = False
+
 allowed_hosts_env = os.getenv('DJANGO_ALLOWED_HOSTS', '')
 ALLOWED_HOSTS = [host for host in allowed_hosts_env.split(',') if host]
 

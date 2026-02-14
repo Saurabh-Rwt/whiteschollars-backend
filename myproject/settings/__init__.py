@@ -24,18 +24,12 @@ def _load_env_file(path: Path) -> None:
         os.environ.setdefault(key, value)
 
 
-ENVIRONMENT = os.getenv('DJANGO_ENV', 'local').lower()
+from .base import USE_PRODUCTION as _USE_PRODUCTION  # noqa: E402
+
+ENVIRONMENT = 'production' if _USE_PRODUCTION else 'local'
 _load_env_file(BASE_DIR / f'.env.{ENVIRONMENT}')
-ENVIRONMENT = os.getenv('DJANGO_ENV', ENVIRONMENT).lower()
 
-use_sqlite_env = os.getenv('USE_SQLITE')
-USE_SQLITE = (
-    use_sqlite_env.lower() in ('1', 'true', 'yes', 'on')
-    if use_sqlite_env is not None
-    else ENVIRONMENT != 'production'
-)
-
-if USE_SQLITE:
-    from .local import *  # noqa: F401,F403
-else:
+if _USE_PRODUCTION:
     from .prod import *  # noqa: F401,F403
+else:
+    from .local import *  # noqa: F401,F403

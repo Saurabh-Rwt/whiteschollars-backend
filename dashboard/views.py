@@ -740,6 +740,7 @@ def _handle_dashboard_post(request):
             item={
                 'id': logo.id,
                 'image_alt': logo.image_alt or 'Logo',
+                'image_url': logo.image.url if logo.image else '',
             },
         )
         messages.success(request, 'Collaboration logo saved.')
@@ -785,6 +786,7 @@ def _handle_dashboard_post(request):
                 'label': button.label,
                 'style': button.style,
                 'action_type': button.action_type,
+                'url': button.url or '',
             },
         )
         messages.success(request, 'CTA button saved.')

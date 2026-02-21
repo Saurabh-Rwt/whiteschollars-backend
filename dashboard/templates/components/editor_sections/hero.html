@@ -154,19 +154,25 @@
   </form>
 </div>
 
-<div class="form-section">
-  <div class="form-section-title">Collaboration Logos</div>
-  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}" data-hero-logo-form>
+<div class="form-section editor-entity-section">
+  <div class="entity-header">
+    <div>
+      <div class="form-section-title mb-1">Collaboration Logos</div>
+      <p class="editor-note mb-0">Add partner logos quickly. After each save, the form resets for the next logo.</p>
+    </div>
+    <span class="entity-mode-badge" data-hero-logo-mode>{% if editing.hero_logo %}Editing logo{% else %}Add new logo{% endif %}</span>
+  </div>
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}" data-hero-logo-form class="entity-form">
     {% csrf_token %}
     <input type="hidden" name="action" value="save_hero_logo" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.hero_logo %}{{ editing.hero_logo.id }}{% endif %}" data-hero-logo-item-id />
-    <div class="row g-3 align-items-end">
-      <div class="col-md-5">
+    <div class="row g-3">
+      <div class="col-lg-5 col-md-6">
         <label class="form-label">Logo Image</label>
         <input type="file" class="form-control" name="image" accept="image/*" data-hero-logo-image {% if not editing.hero_logo %}required{% endif %} />
       </div>
-      <div class="col-md-5">
+      <div class="col-lg-7 col-md-6">
         <label class="form-label">Alt Text</label>
         <input
           type="text"
@@ -177,8 +183,9 @@
           placeholder="Microsoft logo"
         />
       </div>
-      <div class="col-md-2 d-flex justify-content-end gap-2">
-        <button class="btn btn-outline-primary" type="submit" data-hero-logo-submit>{% if editing.hero_logo %}Update{% else %}Add{% endif %}</button>
+      <div class="col-12">
+        <div class="entity-actions">
+        <button class="btn btn-outline-primary" type="submit" data-hero-logo-submit>{% if editing.hero_logo %}Update Logo{% else %}Add Logo{% endif %}</button>
         {% if editing.hero_logo %}
           <a
             class="btn btn-outline-secondary"
@@ -188,6 +195,7 @@
             Cancel
           </a>
         {% endif %}
+        </div>
       </div>
     </div>
   </form>
@@ -195,35 +203,64 @@
   <div class="row g-2 mt-3" data-hero-logos-list>
     {% for item in hero_logos %}
       <div class="col-md-6" data-hero-logo-item="{{ item.id }}">
-        <div class="d-flex align-items-center justify-content-between border rounded p-2">
-          <span class="text-truncate" data-hero-logo-label>{{ item.image_alt|default:'Logo' }}</span>
-          <div class="d-flex gap-2">
-            <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=hero&edit_key=hero_logo&edit_id={{ item.id }}">Edit</a>
-            <form method="POST" action="{% url 'dashboard' %}">
+        <article class="entity-item">
+          <div class="entity-main">
+            <div class="entity-thumb-wrap">
+              {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.image_alt|default:'Logo' }}" class="entity-thumb" />
+              {% else %}
+                <span class="entity-thumb-placeholder"><i class="bi bi-image"></i></span>
+              {% endif %}
+            </div>
+            <div class="entity-text">
+              <div class="entity-title text-truncate" data-hero-logo-label>{{ item.image_alt|default:'Logo' }}</div>
+              <div class="entity-meta">Logo ID #{{ item.id }}</div>
+            </div>
+          </div>
+          <div class="entity-item-actions">
+            <a
+              class="btn btn-sm btn-outline-secondary"
+              href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=hero&edit_key=hero_logo&edit_id={{ item.id }}"
+              title="Edit logo"
+              aria-label="Edit logo"
+            >
+              <i class="bi bi-pencil"></i>
+            </a>
+            <form method="POST" action="{% url 'dashboard' %}" class="d-inline">
               {% csrf_token %}
               <input type="hidden" name="action" value="delete_hero_logo" />
               <input type="hidden" name="course" value="{{ selected_course.id }}" />
               <input type="hidden" name="item_id" value="{{ item.id }}" />
-              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+              <button class="btn btn-sm btn-outline-danger" type="submit" title="Delete logo" aria-label="Delete logo">
+                <i class="bi bi-trash"></i>
+              </button>
             </form>
           </div>
-        </div>
+        </article>
       </div>
     {% empty %}
-      <div class="col-12 text-muted" data-hero-logos-empty>No collaboration logos yet.</div>
+      <div class="col-12" data-hero-logos-empty>
+        <div class="entity-empty-state">No collaboration logos yet. Add your first partner logo above.</div>
+      </div>
     {% endfor %}
   </div>
 </div>
 
-<div class="form-section">
-  <div class="form-section-title">Hero CTA Buttons</div>
-  <form method="POST" action="{% url 'dashboard' %}" data-hero-button-form>
+<div class="form-section editor-entity-section">
+  <div class="entity-header">
+    <div>
+      <div class="form-section-title mb-1">Hero CTA Buttons</div>
+      <p class="editor-note mb-0">Manage multiple CTA buttons cleanly. Use quick edit/delete actions from the list.</p>
+    </div>
+    <span class="entity-mode-badge" data-hero-button-mode>{% if editing.hero_button %}Editing button{% else %}Add new button{% endif %}</span>
+  </div>
+  <form method="POST" action="{% url 'dashboard' %}" data-hero-button-form class="entity-form">
     {% csrf_token %}
     <input type="hidden" name="action" value="save_hero_button" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.hero_button %}{{ editing.hero_button.id }}{% endif %}" data-hero-button-item-id />
-    <div class="row g-3 align-items-end" data-action-scope>
-      <div class="col-md-4">
+    <div class="row g-3" data-action-scope>
+      <div class="col-xl-4 col-md-6">
         <label class="form-label">Label</label>
         <input
           type="text"
@@ -234,14 +271,14 @@
           required
         />
       </div>
-      <div class="col-md-3">
+      <div class="col-xl-3 col-md-6">
         <label class="form-label">On Click</label>
         <select class="form-select" name="action_type" data-action-select>
           <option value="link" {% if editing.hero_button and editing.hero_button.action_type == 'link' %}selected{% endif %}>Link</option>
           <option value="modal" {% if editing.hero_button and editing.hero_button.action_type == 'modal' %}selected{% endif %}>Open Modal</option>
         </select>
       </div>
-      <div class="col-md-3" data-action-field="link">
+      <div class="col-xl-3 col-md-8" data-action-field="link">
         <label class="form-label">URL</label>
         <input
           type="url"
@@ -252,7 +289,7 @@
         />
         <div class="editor-note">Use a brochure PDF link for downloads.</div>
       </div>
-      <div class="col-md-2">
+      <div class="col-xl-2 col-md-4">
         <label class="form-label">Style</label>
         <select class="form-select" name="style">
           <option value="primary" {% if editing.hero_button and editing.hero_button.style == 'primary' %}selected{% endif %}>Primary</option>
@@ -260,8 +297,9 @@
           <option value="ghost" {% if editing.hero_button and editing.hero_button.style == 'ghost' %}selected{% endif %}>Ghost</option>
         </select>
       </div>
-      <div class="col-12 d-flex justify-content-end gap-2">
-        <button class="btn btn-outline-primary" type="submit" data-hero-button-submit>{% if editing.hero_button %}Update{% else %}Add Button{% endif %}</button>
+      <div class="col-12">
+        <div class="entity-actions">
+        <button class="btn btn-outline-primary" type="submit" data-hero-button-submit>{% if editing.hero_button %}Update Button{% else %}Add Button{% endif %}</button>
         {% if editing.hero_button %}
           <a
             class="btn btn-outline-secondary"
@@ -271,19 +309,26 @@
             Cancel
           </a>
         {% endif %}
+        </div>
       </div>
     </div>
   </form>
-  <ul class="list-group list-group-flush mt-3" data-hero-buttons-list>
+  <ul class="list-group list-group-flush mt-3 entity-list" data-hero-buttons-list>
     {% for item in hero_buttons %}
       <li class="list-group-item d-flex align-items-center justify-content-between" data-hero-button-item="{{ item.id }}">
-        <span class="pe-3">
-          <strong data-hero-button-label>{{ item.label }}</strong>
-          <small class="text-muted" data-hero-button-meta>({{ item.style }}, {{ item.action_type }})</small>
-        </span>
-        <div class="btn-group btn-group-sm" role="group" aria-label="Hero CTA actions">
+        <div class="pe-3">
+          <div class="entity-title" data-hero-button-label>{{ item.label }}</div>
+          <div class="entity-tags">
+            <span class="entity-tag">{{ item.style|title }}</span>
+            <span class="entity-tag">{{ item.action_type|title }}</span>
+            {% if item.action_type == 'link' and item.url %}
+              <span class="entity-url" title="{{ item.url }}">{{ item.url }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="entity-item-actions" role="group" aria-label="Hero CTA actions">
           <a
-            class="btn btn-outline-secondary"
+            class="btn btn-sm btn-outline-secondary"
             href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=hero&edit_key=hero_button&edit_id={{ item.id }}"
             title="Edit button"
             aria-label="Edit button"
@@ -295,14 +340,16 @@
             <input type="hidden" name="action" value="delete_hero_button" />
             <input type="hidden" name="course" value="{{ selected_course.id }}" />
             <input type="hidden" name="item_id" value="{{ item.id }}" />
-            <button class="btn btn-outline-danger" type="submit" title="Delete button" aria-label="Delete button">
+            <button class="btn btn-sm btn-outline-danger" type="submit" title="Delete button" aria-label="Delete button">
               <i class="bi bi-trash"></i>
             </button>
           </form>
         </div>
       </li>
     {% empty %}
-      <li class="list-group-item text-muted" data-hero-buttons-empty>No CTA buttons yet.</li>
+      <li class="list-group-item" data-hero-buttons-empty>
+        <div class="entity-empty-state">No CTA buttons yet. Add your first hero CTA above.</div>
+      </li>
     {% endfor %}
   </ul>
 </div>

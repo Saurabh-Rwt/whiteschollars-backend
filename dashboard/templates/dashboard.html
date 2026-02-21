@@ -382,6 +382,149 @@
         background: #fff;
       }
 
+      .editor-entity-section {
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        border-color: #dce6f5;
+      }
+
+      .entity-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .entity-mode-badge {
+        background: #eef4ff;
+        border: 1px solid #d7e5ff;
+        color: #1d4e89;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 4px 10px;
+        white-space: nowrap;
+      }
+
+      .entity-form {
+        border: 1px solid var(--panel-border);
+        border-radius: 12px;
+        background: #fff;
+        padding: 12px;
+      }
+
+      .entity-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .entity-item {
+        border: 1px solid var(--panel-border);
+        border-radius: 12px;
+        background: #fff;
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .entity-main {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .entity-thumb-wrap {
+        width: 44px;
+        height: 44px;
+        border: 1px solid var(--panel-border);
+        border-radius: 10px;
+        background: #f9fbff;
+        flex: 0 0 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .entity-thumb {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+      }
+
+      .entity-thumb-placeholder {
+        color: var(--panel-muted);
+        font-size: 16px;
+      }
+
+      .entity-text {
+        min-width: 0;
+      }
+
+      .entity-title {
+        font-weight: 700;
+        line-height: 1.2;
+      }
+
+      .entity-meta {
+        color: var(--panel-muted);
+        font-size: 12px;
+        margin-top: 2px;
+      }
+
+      .entity-item-actions {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex: 0 0 auto;
+      }
+
+      .entity-list .list-group-item {
+        padding: 12px 0;
+        border-color: #eef2f8;
+      }
+
+      .entity-tags {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 5px;
+      }
+
+      .entity-tag {
+        background: #eef4ff;
+        border: 1px solid #d9e7ff;
+        color: #1d4e89;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+      }
+
+      .entity-url {
+        color: var(--panel-muted);
+        font-size: 12px;
+        max-width: 260px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .entity-empty-state {
+        border: 1px dashed var(--panel-soft-border);
+        border-radius: 12px;
+        background: #fbfdff;
+        color: var(--panel-muted);
+        text-align: center;
+        padding: 14px 12px;
+        font-size: 13px;
+      }
+
       .badge-soft {
         background: rgba(15, 76, 129, 0.1);
         color: var(--panel-accent);
@@ -402,6 +545,11 @@
 
       @media (max-width: 991px) {
         .editor-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .entity-header {
           flex-direction: column;
           align-items: flex-start;
         }
@@ -881,6 +1029,10 @@
           .replace(/'/g, '&#39;');
 
       const escapeAttr = (value) => escapeHtml(value);
+      const toTitle = (value) =>
+        String(value ?? '')
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, (char) => char.toUpperCase());
 
       const createHeroLogoItemMarkup = (item) => {
         const label = item.image_alt || 'Logo';
@@ -890,21 +1042,30 @@
           edit_key: 'hero_logo',
           edit_id: String(item.id),
         }).toString();
+        const thumb = item.image_url
+          ? `<img src="${escapeAttr(item.image_url)}" alt="${escapeAttr(label)}" class="entity-thumb" />`
+          : '<span class="entity-thumb-placeholder"><i class="bi bi-image"></i></span>';
         return (
           `<div class="col-md-6" data-hero-logo-item="${escapeAttr(item.id)}">` +
-          '<div class="d-flex align-items-center justify-content-between border rounded p-2">' +
-          `<span class="text-truncate" data-hero-logo-label>${escapeHtml(label)}</span>` +
-          '<div class="d-flex gap-2">' +
-          `<a class="btn btn-sm btn-ghost" href="${dashboardPath}?${editQuery}">Edit</a>` +
-          `<form method="POST" action="${dashboardPath}">` +
+          '<article class="entity-item">' +
+          '<div class="entity-main">' +
+          `<div class="entity-thumb-wrap">${thumb}</div>` +
+          '<div class="entity-text">' +
+          `<div class="entity-title text-truncate" data-hero-logo-label>${escapeHtml(label)}</div>` +
+          `<div class="entity-meta">Logo ID #${escapeHtml(item.id)}</div>` +
+          '</div>' +
+          '</div>' +
+          '<div class="entity-item-actions">' +
+          `<a class="btn btn-sm btn-outline-secondary" href="${dashboardPath}?${editQuery}" title="Edit logo" aria-label="Edit logo"><i class="bi bi-pencil"></i></a>` +
+          `<form method="POST" action="${dashboardPath}" class="d-inline">` +
           `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeAttr(csrfToken)}" />` +
           '<input type="hidden" name="action" value="delete_hero_logo" />' +
           `<input type="hidden" name="course" value="${escapeAttr(selectedCourseId)}" />` +
           `<input type="hidden" name="item_id" value="${escapeAttr(item.id)}" />` +
-          '<button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>' +
+          '<button class="btn btn-sm btn-outline-danger" type="submit" title="Delete logo" aria-label="Delete logo"><i class="bi bi-trash"></i></button>' +
           '</form>' +
           '</div>' +
-          '</div>' +
+          '</article>' +
           '</div>'
         );
       };
@@ -916,20 +1077,27 @@
           edit_key: 'hero_button',
           edit_id: String(item.id),
         }).toString();
+        const urlTag = item.action_type === 'link' && item.url
+          ? `<span class="entity-url" title="${escapeAttr(item.url)}">${escapeHtml(item.url)}</span>`
+          : '';
         return (
           `<li class="list-group-item d-flex align-items-center justify-content-between" data-hero-button-item="${escapeAttr(item.id)}">` +
-          '<span class="pe-3">' +
-          `<strong data-hero-button-label>${escapeHtml(item.label || '')}</strong> ` +
-          `<small class="text-muted" data-hero-button-meta>(${escapeHtml(item.style || '')}, ${escapeHtml(item.action_type || '')})</small>` +
-          '</span>' +
-          '<div class="btn-group btn-group-sm" role="group" aria-label="Hero CTA actions">' +
-          `<a class="btn btn-outline-secondary" href="${dashboardPath}?${editQuery}" title="Edit button" aria-label="Edit button"><i class="bi bi-pencil"></i></a>` +
+          '<div class="pe-3">' +
+          `<div class="entity-title" data-hero-button-label>${escapeHtml(item.label || '')}</div>` +
+          '<div class="entity-tags">' +
+          `<span class="entity-tag">${escapeHtml(toTitle(item.style || ''))}</span>` +
+          `<span class="entity-tag">${escapeHtml(toTitle(item.action_type || ''))}</span>` +
+          `${urlTag}` +
+          '</div>' +
+          '</div>' +
+          '<div class="entity-item-actions" role="group" aria-label="Hero CTA actions">' +
+          `<a class="btn btn-sm btn-outline-secondary" href="${dashboardPath}?${editQuery}" title="Edit button" aria-label="Edit button"><i class="bi bi-pencil"></i></a>` +
           `<form method="POST" action="${dashboardPath}" class="d-inline">` +
           `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeAttr(csrfToken)}" />` +
           '<input type="hidden" name="action" value="delete_hero_button" />' +
           `<input type="hidden" name="course" value="${escapeAttr(selectedCourseId)}" />` +
           `<input type="hidden" name="item_id" value="${escapeAttr(item.id)}" />` +
-          '<button class="btn btn-outline-danger" type="submit" title="Delete button" aria-label="Delete button"><i class="bi bi-trash"></i></button>' +
+          '<button class="btn btn-sm btn-outline-danger" type="submit" title="Delete button" aria-label="Delete button"><i class="bi bi-trash"></i></button>' +
           '</form>' +
           '</div>' +
           '</li>'
@@ -944,7 +1112,7 @@
         if (itemCount === 0 && !empty) {
           list.insertAdjacentHTML(
             'beforeend',
-            '<div class="col-12 text-muted" data-hero-logos-empty>No collaboration logos yet.</div>'
+            '<div class="col-12" data-hero-logos-empty><div class="entity-empty-state">No collaboration logos yet. Add your first partner logo above.</div></div>'
           );
           return;
         }
@@ -961,7 +1129,7 @@
         if (itemCount === 0 && !empty) {
           list.insertAdjacentHTML(
             'beforeend',
-            '<li class="list-group-item text-muted" data-hero-buttons-empty>No CTA buttons yet.</li>'
+            '<li class="list-group-item" data-hero-buttons-empty><div class="entity-empty-state">No CTA buttons yet. Add your first hero CTA above.</div></li>'
           );
           return;
         }
@@ -979,7 +1147,9 @@
         const imageInput = form.querySelector('[data-hero-logo-image]');
         if (imageInput) imageInput.required = true;
         const submitButton = form.querySelector('[data-hero-logo-submit]');
-        if (submitButton) submitButton.textContent = 'Add';
+        if (submitButton) submitButton.textContent = 'Add Logo';
+        const modeBadge = document.querySelector('[data-hero-logo-mode]');
+        if (modeBadge) modeBadge.textContent = 'Add new logo';
         const cancelButton = form.querySelector('[data-hero-logo-cancel]');
         if (cancelButton) cancelButton.remove();
       };
@@ -992,6 +1162,8 @@
         if (itemId) itemId.value = '';
         const submitButton = form.querySelector('[data-hero-button-submit]');
         if (submitButton) submitButton.textContent = 'Add Button';
+        const modeBadge = document.querySelector('[data-hero-button-mode]');
+        if (modeBadge) modeBadge.textContent = 'Add new button';
         const cancelButton = form.querySelector('[data-hero-button-cancel]');
         if (cancelButton) cancelButton.remove();
         const actionSelect = form.querySelector('[data-action-select]');

@@ -69,6 +69,9 @@ from .utils import sanitize_html
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
 import json, os
+import logging
+
+logger = logging.getLogger(__name__)
 
 SECTION_CONFIG = [
     {
@@ -474,7 +477,15 @@ def user_logout(request):
 @login_required(login_url='login')
 def dashboard(request):
     if request.method == 'POST':
-        return _handle_dashboard_post(request)
+        try:
+            return _handle_dashboard_post(request)
+        except Exception as exc:
+            logger.exception(
+                "Dashboard action failed",
+                extra={"action": request.POST.get('action'), "course_id": request.POST.get('course')},
+            )
+            messages.error(request, f"Failed to save changes: {exc}")
+            return redirect(_dashboard_url(course_id=request.POST.get('course')))
 
     course_id = request.GET.get('course')
     selected_course = _get_selected_course(course_id)
@@ -1664,6 +1675,14 @@ def _handle_dashboard_post(request):
     messages.error(request, 'Unsupported action requested.')
     return redirect(_dashboard_url(course_id=selected_course.id))
 
+
+
+def _form_error_text(form):
+    errors = []
+    for field, field_errors in form.errors.items():
+        label = field if field != '__all__' else 'General'
+        errors.append(f"{label}: {'; '.join(field_errors)}")
+    return ' | '.join(errors)
 # -------------------- COURSE CRUD --------------------
 @login_required(login_url='login')
 def course_list(request):
@@ -1681,6 +1700,9 @@ def add_course(request):
                 messages.success(request, 'Course created. You can now fill the content.')
                 return redirect(_dashboard_url(course_id=course.id))
             return redirect('course_list')
+        messages.error(request, f"Could not create course: {_form_error_text(form)}")
+        if request.POST.get('next') == 'dashboard':
+            return redirect(_dashboard_url())
     else:
         form = CourseForm()
     return render(request, 'course/course_form.html', {'form': form, 'title': 'Add Course'})
@@ -1697,6 +1719,9 @@ def edit_course(request, pk):
                 messages.success(request, 'Course settings updated.')
                 return redirect(_dashboard_url(course_id=course.id))
             return redirect('course_list')
+        messages.error(request, f"Could not update course: {_form_error_text(form)}")
+        if request.POST.get('next') == 'dashboard':
+            return redirect(_dashboard_url(course_id=course.id))
     else:
         form = CourseForm(instance=course)
     return render(request, 'course/course_form.html', {'form': form, 'title': 'Edit Course'})

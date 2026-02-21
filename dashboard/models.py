@@ -381,6 +381,7 @@ class CourseHeroButton(models.Model):
     url = models.URLField(max_length=500, blank=True)
     style = models.CharField(max_length=20, choices=STYLE_CHOICES, default='primary')
     action_type = models.CharField(max_length=20, choices=BUTTON_ACTION_CHOICES, default='link')
+    icon_class = models.CharField(max_length=50, blank=True, default='')
     sort_order = models.PositiveIntegerField(default=0)
 
     class Meta:

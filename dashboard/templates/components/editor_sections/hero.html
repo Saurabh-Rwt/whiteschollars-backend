@@ -158,7 +158,7 @@
   <div class="entity-header">
     <div>
       <div class="form-section-title mb-1">Collaboration Logos</div>
-      <p class="editor-note mb-0">Add partner logos quickly. After each save, the form resets for the next logo.</p>
+      <p class="editor-note mb-0">Add partner logos quickly and drag cards to arrange display order.</p>
     </div>
     <span class="entity-mode-badge" data-hero-logo-mode>{% if editing.hero_logo %}Editing logo{% else %}Add new logo{% endif %}</span>
   </div>
@@ -185,16 +185,14 @@
       </div>
       <div class="col-12">
         <div class="entity-actions">
-        <button class="btn btn-primary" type="submit" data-hero-logo-submit>{% if editing.hero_logo %}Update Logo{% else %}Add Logo{% endif %}</button>
-        {% if editing.hero_logo %}
-          <form method="POST" action="{% url 'dashboard' %}" class="d-inline">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="clear_edit_context" />
-            <input type="hidden" name="course" value="{{ selected_course.id }}" />
-            <input type="hidden" name="section" value="hero" />
-            <button class="btn btn-outline-secondary" type="submit" data-hero-logo-cancel>Cancel</button>
-          </form>
-        {% endif %}
+          <button class="btn btn-primary" type="submit" data-hero-logo-submit>{% if editing.hero_logo %}Update Logo{% else %}Add Logo{% endif %}</button>
+          <button
+            class="btn btn-outline-secondary {% if not editing.hero_logo %}d-none{% endif %}"
+            type="button"
+            data-hero-logo-cancel
+          >
+            Cancel
+          </button>
         </div>
       </div>
     </div>
@@ -218,14 +216,27 @@
             </div>
           </div>
           <div class="entity-item-actions">
-            <a
+            <button
+              type="button"
+              class="btn btn-sm btn-light entity-order-handle"
+              data-hero-logo-handle
+              title="Drag to reorder"
+              aria-label="Drag to reorder logo"
+            >
+              <i class="bi bi-grip-vertical"></i>
+            </button>
+            <button
+              type="button"
               class="btn btn-sm btn-outline-secondary"
-              href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=hero&edit_key=hero_logo&edit_id={{ item.id }}"
+              data-hero-logo-edit
+              data-item-id="{{ item.id }}"
+              data-image-alt="{{ item.image_alt|default:'' }}"
+              data-image-url="{% if item.image %}{{ item.image.url }}{% endif %}"
               title="Edit logo"
               aria-label="Edit logo"
             >
               <i class="bi bi-pencil"></i>
-            </a>
+            </button>
             <form method="POST" action="{% url 'dashboard' %}" class="d-inline">
               {% csrf_token %}
               <input type="hidden" name="action" value="delete_hero_logo" />
@@ -250,7 +261,7 @@
   <div class="entity-header">
     <div>
       <div class="form-section-title mb-1">Hero CTA Buttons</div>
-      <p class="editor-note mb-0">Manage multiple CTA buttons cleanly. Use quick edit/delete actions from the list.</p>
+      <p class="editor-note mb-0">Manage multiple CTA buttons and drag rows to set the order shown on the website.</p>
     </div>
     <span class="entity-mode-badge" data-hero-button-mode>{% if editing.hero_button %}Editing button{% else %}Add new button{% endif %}</span>
   </div>
@@ -259,6 +270,7 @@
     <input type="hidden" name="action" value="save_hero_button" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.hero_button %}{{ editing.hero_button.id }}{% endif %}" data-hero-button-item-id />
+    <input type="hidden" name="icon_class" value="{% if editing.hero_button %}{{ editing.hero_button.icon_class }}{% endif %}" data-hero-button-icon-value />
     <div class="row g-3" data-action-scope>
       <div class="col-xl-4 col-md-6">
         <label class="form-label">Label</label>
@@ -297,18 +309,34 @@
           <option value="ghost" {% if editing.hero_button and editing.hero_button.style == 'ghost' %}selected{% endif %}>Ghost</option>
         </select>
       </div>
-      <div class="col-12">
-        <div class="entity-actions">
-        <button class="btn btn-primary" type="submit" data-hero-button-submit>{% if editing.hero_button %}Update Button{% else %}Add Button{% endif %}</button>
-        {% if editing.hero_button %}
-          <form method="POST" action="{% url 'dashboard' %}" class="d-inline">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="clear_edit_context" />
-            <input type="hidden" name="course" value="{{ selected_course.id }}" />
-            <input type="hidden" name="section" value="hero" />
-            <button class="btn btn-outline-secondary" type="submit" data-hero-button-cancel>Cancel</button>
-          </form>
-        {% endif %}
+      <div class="col-xl-6 col-md-7">
+        <label class="form-label">Icon</label>
+        <div class="hero-icon-controls">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#heroButtonIconModal">
+            Choose
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-hero-icon-clear>None</button>
+        </div>
+        <div class="hero-icon-selected{% if not editing.hero_button or not editing.hero_button.icon_class %} is-empty{% endif %}" data-hero-button-icon-preview>
+          {% if editing.hero_button and editing.hero_button.icon_class %}
+            <i class="bi {{ editing.hero_button.icon_class }}"></i>
+            <span>Icon selected</span>
+          {% else %}
+            <i class="bi bi-slash-circle"></i>
+            <span>No icon selected</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-xl-6 col-md-5 d-flex align-items-end justify-content-md-end">
+        <div class="entity-actions hero-inline-actions">
+          <button class="btn btn-primary" type="submit" data-hero-button-submit>{% if editing.hero_button %}Update Button{% else %}Add Button{% endif %}</button>
+          <button
+            class="btn btn-outline-secondary {% if not editing.hero_button %}d-none{% endif %}"
+            type="button"
+            data-hero-button-cancel
+          >
+            Cancel
+          </button>
         </div>
       </div>
     </div>
@@ -317,7 +345,12 @@
     {% for item in hero_buttons %}
       <li class="list-group-item d-flex align-items-center justify-content-between" data-hero-button-item="{{ item.id }}">
         <div class="pe-3">
-          <div class="entity-title" data-hero-button-label>{{ item.label }}</div>
+          <div class="entity-title d-flex align-items-center gap-2" data-hero-button-label>
+            {% if item.icon_class %}
+              <span class="entity-inline-icon"><i class="bi {{ item.icon_class }}"></i></span>
+            {% endif %}
+            <span>{{ item.label }}</span>
+          </div>
           <div class="entity-tags">
             <span class="entity-tag">{{ item.style|title }}</span>
             <span class="entity-tag">{{ item.action_type|title }}</span>
@@ -327,14 +360,30 @@
           </div>
         </div>
         <div class="entity-item-actions" role="group" aria-label="Hero CTA actions">
-          <a
+          <button
+            type="button"
+            class="btn btn-sm btn-light entity-order-handle"
+            data-hero-button-handle
+            title="Drag to reorder"
+            aria-label="Drag to reorder button"
+          >
+            <i class="bi bi-grip-vertical"></i>
+          </button>
+          <button
+            type="button"
             class="btn btn-sm btn-outline-secondary"
-            href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=hero&edit_key=hero_button&edit_id={{ item.id }}"
+            data-hero-button-edit
+            data-item-id="{{ item.id }}"
+            data-label="{{ item.label }}"
+            data-action-type="{{ item.action_type }}"
+            data-url="{{ item.url|default:'' }}"
+            data-style="{{ item.style }}"
+            data-icon-class="{{ item.icon_class|default:'' }}"
             title="Edit button"
             aria-label="Edit button"
           >
             <i class="bi bi-pencil"></i>
-          </a>
+          </button>
           <form method="POST" action="{% url 'dashboard' %}" class="d-inline">
             {% csrf_token %}
             <input type="hidden" name="action" value="delete_hero_button" />
@@ -354,6 +403,38 @@
   </ul>
 </div>
 
+<div class="modal fade" id="heroButtonIconModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Choose Button Icon</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="editor-note mb-3">Pick one icon from the list. Choose "No icon" to show text-only button.</p>
+        <div class="hero-icon-grid">
+          {% for icon in hero_button_icons %}
+            <button
+              type="button"
+              class="btn btn-outline-secondary hero-icon-option{% if editing.hero_button and editing.hero_button.icon_class == icon.value %} active{% endif %}"
+              data-hero-icon-option="{{ icon.value }}"
+              data-hero-icon-label="{{ icon.label }}"
+              data-bs-dismiss="modal"
+            >
+              {% if icon.icon_class %}
+                <i class="bi {{ icon.icon_class }}"></i>
+              {% else %}
+                <i class="bi bi-slash-circle"></i>
+              {% endif %}
+              <span>{{ icon.label }}</span>
+            </button>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="form-section">
   <div class="form-section-title">Hero Media</div>
   <p class="editor-note">Choose image or video for the right side of hero section.</p>
@@ -362,18 +443,18 @@
     <input type="hidden" name="action" value="save_hero" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
 
-    <div class="row g-3" data-hero-media-scope>
-      <div class="col-md-4">
+    <div class="row g-3 hero-media-layout" data-hero-media-scope>
+      <div class="col-lg-4 col-md-6">
         <label class="form-label">Media Type</label>
         <select class="form-select" name="media_type" data-hero-media-select>
           <option value="image" {% if hero.media_type == 'image' or not hero.media_type %}selected{% endif %}>Image</option>
           <option value="video" {% if hero.media_type == 'video' %}selected{% endif %}>Video</option>
         </select>
-        <div class="editor-note mt-1" data-hero-media-help="image">Use a hero image for static visual.</div>
-        <div class="editor-note mt-1" data-hero-media-help="video">Play button opens modal with embedded video + lead form.</div>
+        <div class="editor-note mt-1 hero-media-help" data-hero-media-help="image">Use a hero image for static visual.</div>
+        <div class="editor-note mt-1 hero-media-help" data-hero-media-help="video">Play button opens modal with embedded video + lead form.</div>
       </div>
 
-      <div class="col-md-8" data-hero-media-field="image">
+      <div class="col-lg-8 col-md-6" data-hero-media-field="image">
         <label class="form-label">Hero Image</label>
         <input type="file" class="form-control" name="hero_image" accept="image/*" />
         <div class="editor-note mt-1">Recommended ratio: 16:9</div>
@@ -384,7 +465,7 @@
           </div>
         {% endif %}
       </div>
-      <div class="col-md-4" data-hero-media-field="image">
+      <div class="col-lg-6 col-md-6" data-hero-media-field="image">
         <label class="form-label">Hero Image Alt Text</label>
         <input
           type="text"
@@ -395,7 +476,7 @@
         />
       </div>
 
-      <div class="col-md-6" data-hero-media-field="video">
+      <div class="col-lg-8 col-md-6" data-hero-media-field="video">
         <label class="form-label">Hero Video URL</label>
         <input
           type="url"
@@ -405,7 +486,7 @@
           placeholder="https://www.youtube.com/watch?v=..."
         />
       </div>
-      <div class="col-md-3" data-hero-media-field="video">
+      <div class="col-lg-6 col-md-6" data-hero-media-field="video">
         <label class="form-label">Video Thumbnail</label>
         <input type="file" class="form-control" name="hero_video_thumbnail" accept="image/*" />
         {% if hero.hero_video_thumbnail %}
@@ -415,7 +496,7 @@
           </div>
         {% endif %}
       </div>
-      <div class="col-md-3" data-hero-media-field="video">
+      <div class="col-lg-6 col-md-6" data-hero-media-field="video">
         <label class="form-label">Thumbnail Alt Text</label>
         <input
           type="text"
@@ -426,7 +507,7 @@
         />
       </div>
 
-      <div class="col-12 text-end">
+      <div class="col-12 hero-media-actions">
         <button class="btn btn-primary" type="submit">Save Hero Media</button>
       </div>
     </div>

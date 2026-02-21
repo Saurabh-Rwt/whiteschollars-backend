@@ -483,6 +483,111 @@
         flex: 0 0 auto;
       }
 
+      .entity-order-handle {
+        cursor: grab;
+        background: #f8fafc;
+      }
+
+      .entity-order-handle:active {
+        cursor: grabbing;
+      }
+
+      .entity-inline-icon {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 1px solid var(--panel-border);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #1d4e89;
+        background: #f8fbff;
+        flex: 0 0 22px;
+      }
+
+      .hero-icon-controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: nowrap;
+      }
+
+      .hero-icon-selected {
+        margin-top: 8px;
+        border: 1px solid var(--panel-border);
+        border-radius: 8px;
+        padding: 6px 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: #1d4e89;
+        background: #f8fbff;
+        max-width: 240px;
+      }
+
+      .hero-icon-selected i {
+        font-size: 16px;
+      }
+
+      .hero-icon-selected.is-empty {
+        color: var(--panel-muted);
+        background: #f9fafb;
+      }
+
+      .hero-icon-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 10px;
+      }
+
+      .hero-icon-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 90px;
+      }
+
+      .hero-icon-option i {
+        font-size: 20px;
+      }
+
+      .hero-inline-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .hero-media-layout {
+        align-items: flex-start;
+      }
+
+      .hero-media-help {
+        max-width: 420px;
+      }
+
+      .hero-media-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 2px;
+        padding-top: 10px;
+        border-top: 1px dashed var(--panel-border);
+      }
+
+      @media (max-width: 768px) {
+        .hero-icon-controls {
+          flex-wrap: wrap;
+        }
+
+        .hero-inline-actions {
+          justify-content: flex-start;
+        }
+
+        .hero-media-actions {
+          justify-content: flex-start;
+        }
+      }
+
       .entity-list .list-group-item {
         padding: 12px 0;
         border-color: #eef2f8;
@@ -1036,12 +1141,6 @@
 
       const createHeroLogoItemMarkup = (item) => {
         const label = item.image_alt || 'Logo';
-        const editQuery = new URLSearchParams({
-          course: selectedCourseId,
-          section: 'hero',
-          edit_key: 'hero_logo',
-          edit_id: String(item.id),
-        }).toString();
         const thumb = item.image_url
           ? `<img src="${escapeAttr(item.image_url)}" alt="${escapeAttr(label)}" class="entity-thumb" />`
           : '<span class="entity-thumb-placeholder"><i class="bi bi-image"></i></span>';
@@ -1056,7 +1155,8 @@
           '</div>' +
           '</div>' +
           '<div class="entity-item-actions">' +
-          `<a class="btn btn-sm btn-outline-secondary" href="${dashboardPath}?${editQuery}" title="Edit logo" aria-label="Edit logo"><i class="bi bi-pencil"></i></a>` +
+          '<button type="button" class="btn btn-sm btn-light entity-order-handle" data-hero-logo-handle title="Drag to reorder" aria-label="Drag to reorder logo"><i class="bi bi-grip-vertical"></i></button>' +
+          `<button type="button" class="btn btn-sm btn-outline-secondary" data-hero-logo-edit data-item-id="${escapeAttr(item.id)}" data-image-alt="${escapeAttr(item.image_alt || '')}" data-image-url="${escapeAttr(item.image_url || '')}" title="Edit logo" aria-label="Edit logo"><i class="bi bi-pencil"></i></button>` +
           `<form method="POST" action="${dashboardPath}" class="d-inline">` +
           `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeAttr(csrfToken)}" />` +
           '<input type="hidden" name="action" value="delete_hero_logo" />' +
@@ -1071,19 +1171,17 @@
       };
 
       const createHeroButtonItemMarkup = (item) => {
-        const editQuery = new URLSearchParams({
-          course: selectedCourseId,
-          section: 'hero',
-          edit_key: 'hero_button',
-          edit_id: String(item.id),
-        }).toString();
+        const iconClass = String(item.icon_class || '').trim();
+        const iconTag = iconClass
+          ? `<span class="entity-inline-icon"><i class="bi ${escapeAttr(iconClass)}"></i></span>`
+          : '';
         const urlTag = item.action_type === 'link' && item.url
           ? `<span class="entity-url" title="${escapeAttr(item.url)}">${escapeHtml(item.url)}</span>`
           : '';
         return (
           `<li class="list-group-item d-flex align-items-center justify-content-between" data-hero-button-item="${escapeAttr(item.id)}">` +
           '<div class="pe-3">' +
-          `<div class="entity-title" data-hero-button-label>${escapeHtml(item.label || '')}</div>` +
+          `<div class="entity-title d-flex align-items-center gap-2" data-hero-button-label>${iconTag}<span>${escapeHtml(item.label || '')}</span></div>` +
           '<div class="entity-tags">' +
           `<span class="entity-tag">${escapeHtml(toTitle(item.style || ''))}</span>` +
           `<span class="entity-tag">${escapeHtml(toTitle(item.action_type || ''))}</span>` +
@@ -1091,7 +1189,8 @@
           '</div>' +
           '</div>' +
           '<div class="entity-item-actions" role="group" aria-label="Hero CTA actions">' +
-          `<a class="btn btn-sm btn-outline-secondary" href="${dashboardPath}?${editQuery}" title="Edit button" aria-label="Edit button"><i class="bi bi-pencil"></i></a>` +
+          '<button type="button" class="btn btn-sm btn-light entity-order-handle" data-hero-button-handle title="Drag to reorder" aria-label="Drag to reorder button"><i class="bi bi-grip-vertical"></i></button>' +
+          `<button type="button" class="btn btn-sm btn-outline-secondary" data-hero-button-edit data-item-id="${escapeAttr(item.id)}" data-label="${escapeAttr(item.label || '')}" data-action-type="${escapeAttr(item.action_type || 'link')}" data-url="${escapeAttr(item.url || '')}" data-style="${escapeAttr(item.style || 'primary')}" data-icon-class="${escapeAttr(item.icon_class || '')}" title="Edit button" aria-label="Edit button"><i class="bi bi-pencil"></i></button>` +
           `<form method="POST" action="${dashboardPath}" class="d-inline">` +
           `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeAttr(csrfToken)}" />` +
           '<input type="hidden" name="action" value="delete_hero_button" />' +
@@ -1138,6 +1237,32 @@
         }
       };
 
+      const setHeroButtonIconSelection = (iconClass, iconLabel = '') => {
+        const form = document.querySelector('[data-hero-button-form]');
+        if (!form) return;
+
+        const valueInput = form.querySelector('[data-hero-button-icon-value]');
+        if (valueInput) {
+          valueInput.value = iconClass || '';
+        }
+
+        const preview = form.querySelector('[data-hero-button-icon-preview]');
+        if (!preview) return;
+
+        document.querySelectorAll('[data-hero-icon-option]').forEach((option) => {
+          option.classList.toggle('active', (option.dataset.heroIconOption || '') === (iconClass || ''));
+        });
+
+        if (iconClass) {
+          preview.classList.remove('is-empty');
+          preview.innerHTML = `<i class="bi ${escapeAttr(iconClass)}"></i><span>${escapeHtml(iconLabel || 'Icon selected')}</span>`;
+          return;
+        }
+
+        preview.classList.add('is-empty');
+        preview.innerHTML = '<i class="bi bi-slash-circle"></i><span>No icon selected</span>';
+      };
+
       const resetHeroLogoFormToAddMode = () => {
         const form = document.querySelector('[data-hero-logo-form]');
         if (!form) return;
@@ -1145,19 +1270,19 @@
         const itemId = form.querySelector('[data-hero-logo-item-id]');
         if (itemId) itemId.value = '';
         const imageInput = form.querySelector('[data-hero-logo-image]');
-        if (imageInput) imageInput.required = true;
+        if (imageInput) {
+          imageInput.value = '';
+          imageInput.required = true;
+        }
+        const altInput = form.querySelector('[data-hero-logo-alt]');
+        if (altInput) altInput.value = '';
         const submitButton = form.querySelector('[data-hero-logo-submit]');
         if (submitButton) submitButton.textContent = 'Add Logo';
         const modeBadge = document.querySelector('[data-hero-logo-mode]');
         if (modeBadge) modeBadge.textContent = 'Add new logo';
         const cancelButton = form.querySelector('[data-hero-logo-cancel]');
         if (cancelButton) {
-          const cancelForm = cancelButton.closest('form');
-          if (cancelForm) {
-            cancelForm.remove();
-          } else {
-            cancelButton.remove();
-          }
+          cancelButton.classList.add('d-none');
         }
       };
 
@@ -1167,21 +1292,69 @@
         form.reset();
         const itemId = form.querySelector('[data-hero-button-item-id]');
         if (itemId) itemId.value = '';
+        const labelInput = form.querySelector('input[name="label"]');
+        if (labelInput) labelInput.value = '';
+        const actionSelect = form.querySelector('[data-action-select]');
+        if (actionSelect) actionSelect.value = 'link';
+        const urlInput = form.querySelector('input[name="url"]');
+        if (urlInput) urlInput.value = '';
+        const styleSelect = form.querySelector('select[name="style"]');
+        if (styleSelect) styleSelect.value = 'primary';
         const submitButton = form.querySelector('[data-hero-button-submit]');
         if (submitButton) submitButton.textContent = 'Add Button';
         const modeBadge = document.querySelector('[data-hero-button-mode]');
         if (modeBadge) modeBadge.textContent = 'Add new button';
         const cancelButton = form.querySelector('[data-hero-button-cancel]');
         if (cancelButton) {
-          const cancelForm = cancelButton.closest('form');
-          if (cancelForm) {
-            cancelForm.remove();
-          } else {
-            cancelButton.remove();
-          }
+          cancelButton.classList.add('d-none');
         }
-        const actionSelect = form.querySelector('[data-action-select]');
         if (actionSelect) updateActionVisibility(actionSelect);
+        setHeroButtonIconSelection('', '');
+      };
+
+      const startHeroLogoEdit = (button) => {
+        const form = document.querySelector('[data-hero-logo-form]');
+        if (!form || !button) return;
+        const itemId = form.querySelector('[data-hero-logo-item-id]');
+        const imageInput = form.querySelector('[data-hero-logo-image]');
+        const altInput = form.querySelector('[data-hero-logo-alt]');
+        const submitButton = form.querySelector('[data-hero-logo-submit]');
+        const modeBadge = document.querySelector('[data-hero-logo-mode]');
+        const cancelButton = form.querySelector('[data-hero-logo-cancel]');
+
+        if (itemId) itemId.value = button.dataset.itemId || '';
+        if (altInput) altInput.value = button.dataset.imageAlt || '';
+        if (imageInput) imageInput.required = false;
+        if (submitButton) submitButton.textContent = 'Update Logo';
+        if (modeBadge) modeBadge.textContent = 'Editing logo';
+        if (cancelButton) cancelButton.classList.remove('d-none');
+      };
+
+      const startHeroButtonEdit = (button) => {
+        const form = document.querySelector('[data-hero-button-form]');
+        if (!form || !button) return;
+        const itemId = form.querySelector('[data-hero-button-item-id]');
+        const labelInput = form.querySelector('input[name="label"]');
+        const actionSelect = form.querySelector('[data-action-select]');
+        const urlInput = form.querySelector('input[name="url"]');
+        const styleSelect = form.querySelector('select[name="style"]');
+        const submitButton = form.querySelector('[data-hero-button-submit]');
+        const modeBadge = document.querySelector('[data-hero-button-mode]');
+        const cancelButton = form.querySelector('[data-hero-button-cancel]');
+        const iconClass = button.dataset.iconClass || '';
+
+        if (itemId) itemId.value = button.dataset.itemId || '';
+        if (labelInput) labelInput.value = button.dataset.label || '';
+        if (actionSelect) {
+          actionSelect.value = button.dataset.actionType || 'link';
+          updateActionVisibility(actionSelect);
+        }
+        if (urlInput) urlInput.value = button.dataset.url || '';
+        if (styleSelect) styleSelect.value = button.dataset.style || 'primary';
+        setHeroButtonIconSelection(iconClass, getHeroIconLabel(iconClass));
+        if (submitButton) submitButton.textContent = 'Update Button';
+        if (modeBadge) modeBadge.textContent = 'Editing button';
+        if (cancelButton) cancelButton.classList.remove('d-none');
       };
 
       const bindDashboardForm = (form) => {
@@ -1356,6 +1529,80 @@
         });
       };
 
+      const getHeroIconLabel = (iconClass) => {
+        if (!iconClass) return '';
+        const option = Array.from(document.querySelectorAll('[data-hero-icon-option]')).find(
+          (node) => (node.dataset.heroIconOption || '') === iconClass
+        );
+        return option?.dataset.heroIconLabel || '';
+      };
+
+      const initializeHeroAssetSorting = () => {
+        const logosList = document.querySelector('[data-hero-logos-list]');
+        if (logosList && !logosList.dataset.sortableBound) {
+          logosList.dataset.sortableBound = 'true';
+          Sortable.create(logosList, {
+            handle: '[data-hero-logo-handle]',
+            draggable: '[data-hero-logo-item]',
+            animation: 150,
+            onEnd: async () => {
+              const order = Array.from(logosList.querySelectorAll('[data-hero-logo-item]')).map(
+                (item) => item.getAttribute('data-hero-logo-item')
+              );
+              try {
+                const response = await fetch("{% url 'reorder_hero_logos' %}", {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                  },
+                  body: JSON.stringify({
+                    course_id: selectedCourseId,
+                    order: order,
+                  }),
+                });
+                if (!response.ok) throw new Error('failed');
+                showToast('Logo order updated.', 'success');
+              } catch (error) {
+                showToast('Unable to update logo order.', 'error');
+              }
+            },
+          });
+        }
+
+        const buttonsList = document.querySelector('[data-hero-buttons-list]');
+        if (buttonsList && !buttonsList.dataset.sortableBound) {
+          buttonsList.dataset.sortableBound = 'true';
+          Sortable.create(buttonsList, {
+            handle: '[data-hero-button-handle]',
+            draggable: '[data-hero-button-item]',
+            animation: 150,
+            onEnd: async () => {
+              const order = Array.from(buttonsList.querySelectorAll('[data-hero-button-item]')).map(
+                (item) => item.getAttribute('data-hero-button-item')
+              );
+              try {
+                const response = await fetch("{% url 'reorder_hero_buttons' %}", {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                  },
+                  body: JSON.stringify({
+                    course_id: selectedCourseId,
+                    order: order,
+                  }),
+                });
+                if (!response.ok) throw new Error('failed');
+                showToast('Button order updated.', 'success');
+              } catch (error) {
+                showToast('Unable to update button order.', 'error');
+              }
+            },
+          });
+        }
+      };
+
       const reorderPreview = (order) => {
         const reorderContainer = (container, selector) => {
           if (!container) return;
@@ -1465,6 +1712,49 @@
           return;
         }
 
+        const iconOption = event.target.closest('[data-hero-icon-option]');
+        if (iconOption) {
+          const iconClass = iconOption.dataset.heroIconOption || '';
+          const iconLabel = iconOption.dataset.heroIconLabel || '';
+          setHeroButtonIconSelection(iconClass, iconLabel);
+          return;
+        }
+
+        const clearIconButton = event.target.closest('[data-hero-icon-clear]');
+        if (clearIconButton) {
+          event.preventDefault();
+          setHeroButtonIconSelection('', '');
+          return;
+        }
+
+        const heroLogoEditButton = event.target.closest('[data-hero-logo-edit]');
+        if (heroLogoEditButton) {
+          event.preventDefault();
+          startHeroLogoEdit(heroLogoEditButton);
+          return;
+        }
+
+        const heroButtonEditButton = event.target.closest('[data-hero-button-edit]');
+        if (heroButtonEditButton) {
+          event.preventDefault();
+          startHeroButtonEdit(heroButtonEditButton);
+          return;
+        }
+
+        const heroLogoCancel = event.target.closest('[data-hero-logo-cancel]');
+        if (heroLogoCancel) {
+          event.preventDefault();
+          resetHeroLogoFormToAddMode();
+          return;
+        }
+
+        const heroButtonCancel = event.target.closest('[data-hero-button-cancel]');
+        if (heroButtonCancel) {
+          event.preventDefault();
+          resetHeroButtonFormToAddMode();
+          return;
+        }
+
         const editLink = event.target.closest('a[href*="edit_key="][href*="edit_id="]');
         if (!editLink) return;
         if (editLink.getAttribute('target') === '_blank') return;
@@ -1566,6 +1856,9 @@
         }
       });
 
+      resetHeroLogoFormToAddMode();
+      resetHeroButtonFormToAddMode();
+      initializeHeroAssetSorting();
       bindDashboardForms();
     </script>
   </body>

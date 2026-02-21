@@ -241,6 +241,26 @@ SECTION_CONFIG = [
 SECTION_INDEX = {item['key']: idx for idx, item in enumerate(SECTION_CONFIG)}
 SECTION_META = {item['key']: item for item in SECTION_CONFIG}
 
+HERO_BUTTON_ICON_CHOICES = [
+    {'value': '', 'label': 'No icon', 'icon_class': ''},
+    {'value': 'bi-telephone-fill', 'label': 'Phone', 'icon_class': 'bi-telephone-fill'},
+    {'value': 'bi-cloud-download-fill', 'label': 'Download', 'icon_class': 'bi-cloud-download-fill'},
+    {'value': 'bi-play-circle-fill', 'label': 'Play', 'icon_class': 'bi-play-circle-fill'},
+    {'value': 'bi-chat-dots-fill', 'label': 'Chat', 'icon_class': 'bi-chat-dots-fill'},
+    {'value': 'bi-calendar-event-fill', 'label': 'Calendar', 'icon_class': 'bi-calendar-event-fill'},
+    {'value': 'bi-arrow-right-circle-fill', 'label': 'Arrow Right', 'icon_class': 'bi-arrow-right-circle-fill'},
+    {'value': 'bi-send-fill', 'label': 'Send', 'icon_class': 'bi-send-fill'},
+    {'value': 'bi-briefcase-fill', 'label': 'Briefcase', 'icon_class': 'bi-briefcase-fill'},
+    {'value': 'bi-book-fill', 'label': 'Book', 'icon_class': 'bi-book-fill'},
+    {'value': 'bi-whatsapp', 'label': 'WhatsApp', 'icon_class': 'bi-whatsapp'},
+    {'value': 'bi-info-circle-fill', 'label': 'Info', 'icon_class': 'bi-info-circle-fill'},
+]
+HERO_BUTTON_ICON_ALLOWED = {
+    item['value']
+    for item in HERO_BUTTON_ICON_CHOICES
+    if item['value']
+}
+
 EDITABLE_MAP = {
     'hero_highlight': HeroHighlight,
     'hero_logo': HeroCollaborationLogo,
@@ -438,6 +458,7 @@ def _build_dashboard_context(request, selected_course=None, active_section=None,
     context.update({
         'course_sections': course_sections,
         'editing': editing,
+        'hero_button_icons': HERO_BUTTON_ICON_CHOICES,
         'hero': getattr(selected_course, 'hero', None),
         'hero_highlights': hero_highlights,
         'hero_highlights_text': '\n'.join(item.text for item in hero_highlights),
@@ -916,12 +937,16 @@ def _handle_dashboard_post(request):
         url = request.POST.get('url', '').strip()
         style = request.POST.get('style', 'primary')
         action_type = request.POST.get('action_type', 'link')
+        icon_class = request.POST.get('icon_class', '').strip()
         item_id = request.POST.get('item_id')
         if not label:
             messages.error(request, 'Button label is required.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
         if action_type == 'link' and not url:
             messages.error(request, 'A URL is required when the button action is set to Link.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
+        if icon_class and icon_class not in HERO_BUTTON_ICON_ALLOWED:
+            messages.error(request, 'Please select a valid icon from the list.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
         if item_id:
             button = CourseHeroButton.objects.filter(id=item_id, course=selected_course).first()
@@ -934,6 +959,7 @@ def _handle_dashboard_post(request):
         button.url = url
         button.style = style
         button.action_type = action_type
+        button.icon_class = icon_class
         button.save()
         _set_dashboard_ajax_data(
             request,
@@ -945,6 +971,7 @@ def _handle_dashboard_post(request):
                 'style': button.style,
                 'action_type': button.action_type,
                 'url': button.url or '',
+                'icon_class': button.icon_class or '',
             },
         )
         messages.success(request, 'CTA button saved.')
@@ -1937,6 +1964,80 @@ def toggle_section(request):
         return JsonResponse({'error': 'Invalid section key'}, status=400)
 
     CourseSection.objects.filter(course=course, key=key).update(is_enabled=bool(is_enabled))
+    return JsonResponse({'status': 'ok'})
+
+
+@login_required(login_url='login')
+@require_POST
+def reorder_hero_logos(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    course_id = payload.get('course_id')
+    order = payload.get('order', [])
+    course = _get_selected_course(course_id)
+    if not course:
+        return JsonResponse({'error': 'Course not found'}, status=404)
+    if not isinstance(order, list):
+        return JsonResponse({'error': 'Invalid order payload'}, status=400)
+
+    existing_ids = set(
+        HeroCollaborationLogo.objects.filter(course=course).values_list('id', flat=True)
+    )
+    ordered_ids = []
+    for entry in order:
+        try:
+            item_id = int(entry)
+        except (TypeError, ValueError):
+            continue
+        if item_id in existing_ids and item_id not in ordered_ids:
+            ordered_ids.append(item_id)
+
+    missing_ids = [item_id for item_id in existing_ids if item_id not in ordered_ids]
+    ordered_ids.extend(sorted(missing_ids))
+
+    for index, item_id in enumerate(ordered_ids, start=1):
+        HeroCollaborationLogo.objects.filter(course=course, id=item_id).update(sort_order=index * 10)
+
+    return JsonResponse({'status': 'ok'})
+
+
+@login_required(login_url='login')
+@require_POST
+def reorder_hero_buttons(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    course_id = payload.get('course_id')
+    order = payload.get('order', [])
+    course = _get_selected_course(course_id)
+    if not course:
+        return JsonResponse({'error': 'Course not found'}, status=404)
+    if not isinstance(order, list):
+        return JsonResponse({'error': 'Invalid order payload'}, status=400)
+
+    existing_ids = set(
+        CourseHeroButton.objects.filter(course=course).values_list('id', flat=True)
+    )
+    ordered_ids = []
+    for entry in order:
+        try:
+            item_id = int(entry)
+        except (TypeError, ValueError):
+            continue
+        if item_id in existing_ids and item_id not in ordered_ids:
+            ordered_ids.append(item_id)
+
+    missing_ids = [item_id for item_id in existing_ids if item_id not in ordered_ids]
+    ordered_ids.extend(sorted(missing_ids))
+
+    for index, item_id in enumerate(ordered_ids, start=1):
+        CourseHeroButton.objects.filter(course=course, id=item_id).update(sort_order=index * 10)
+
     return JsonResponse({'status': 'ok'})
 
 

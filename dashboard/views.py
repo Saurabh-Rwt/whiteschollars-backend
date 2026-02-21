@@ -473,19 +473,70 @@ def user_logout(request):
     logout(request)
     return redirect('login')
 
+
+def _is_ajax_request(request):
+    return request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+
+def _serialize_dashboard_message(message):
+    tags = message.tags or 'info'
+    if 'error' in tags:
+        level = 'error'
+    elif 'warning' in tags:
+        level = 'warning'
+    elif 'success' in tags:
+        level = 'success'
+    else:
+        level = 'info'
+    return {
+        'level': level,
+        'tags': tags,
+        'text': str(message),
+    }
+
+
+def _ajax_dashboard_response(request, response=None, fallback_redirect=None):
+    redirect_url = fallback_redirect or getattr(
+        response,
+        'url',
+        _dashboard_url(course_id=request.POST.get('course') or request.POST.get('course_id')),
+    )
+    queued_messages = [
+        _serialize_dashboard_message(message)
+        for message in messages.get_messages(request)
+    ]
+    has_error = any(message['level'] == 'error' for message in queued_messages)
+    return JsonResponse(
+        {
+            'ok': not has_error,
+            'messages': queued_messages,
+            'redirect_url': redirect_url,
+        },
+        status=400 if has_error else 200,
+    )
+
+
 # -------------------- DASHBOARD --------------------
 @login_required(login_url='login')
 def dashboard(request):
     if request.method == 'POST':
         try:
-            return _handle_dashboard_post(request)
+            response = _handle_dashboard_post(request)
         except Exception as exc:
+            fallback_course_id = request.POST.get('course') or request.POST.get('course_id')
+            fallback_redirect = _dashboard_url(course_id=fallback_course_id)
             logger.exception(
                 "Dashboard action failed",
                 extra={"action": request.POST.get('action'), "course_id": request.POST.get('course')},
             )
             messages.error(request, f"Failed to save changes: {exc}")
-            return redirect(_dashboard_url(course_id=request.POST.get('course')))
+            if _is_ajax_request(request):
+                return _ajax_dashboard_response(request, fallback_redirect=fallback_redirect)
+            return redirect(fallback_redirect)
+
+        if _is_ajax_request(request):
+            return _ajax_dashboard_response(request, response=response)
+        return response
 
     course_id = request.GET.get('course')
     selected_course = _get_selected_course(course_id)
@@ -533,9 +584,6 @@ def _handle_dashboard_post(request):
         if not heading:
             messages.error(request, 'Popup heading is required.')
             return redirect(_dashboard_url(course_id=selected_course.id))
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for the popup image.')
-            return redirect(_dashboard_url(course_id=selected_course.id))
         if not image and not popup.image:
             messages.error(request, 'Popup image is required.')
             return redirect(_dashboard_url(course_id=selected_course.id))
@@ -573,36 +621,24 @@ def _handle_dashboard_post(request):
 
         badge_icon = request.FILES.get('badge_icon')
         if badge_icon:
-            if not request.POST.get('badge_icon_alt', '').strip():
-                messages.error(request, 'Badge icon alt text is required when uploading a badge icon.')
-                return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
             hero.badge_icon = badge_icon
         if has_field('badge_icon_alt'):
             hero.badge_icon_alt = request.POST.get('badge_icon_alt', '').strip()
 
         award_logo = request.FILES.get('award_logo')
         if award_logo:
-            if not request.POST.get('award_logo_alt', '').strip():
-                messages.error(request, 'Award logo alt text is required when uploading an award logo.')
-                return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
             hero.award_logo = award_logo
         if has_field('award_logo_alt'):
             hero.award_logo_alt = request.POST.get('award_logo_alt', '').strip()
 
         hero_image = request.FILES.get('hero_image')
         if hero_image:
-            if not request.POST.get('hero_image_alt', '').strip():
-                messages.error(request, 'Hero image alt text is required when uploading a hero image.')
-                return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
             hero.hero_image = hero_image
         if has_field('hero_image_alt'):
             hero.hero_image_alt = request.POST.get('hero_image_alt', '').strip()
 
         video_thumb = request.FILES.get('hero_video_thumbnail')
         if video_thumb:
-            if not request.POST.get('hero_video_thumbnail_alt', '').strip():
-                messages.error(request, 'Video thumbnail alt text is required when uploading a thumbnail.')
-                return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
             hero.hero_video_thumbnail = video_thumb
         if has_field('hero_video_thumbnail_alt'):
             hero.hero_video_thumbnail_alt = request.POST.get('hero_video_thumbnail_alt', '').strip()
@@ -676,9 +712,6 @@ def _handle_dashboard_post(request):
         if not image and not item_id:
             messages.error(request, 'Please upload a collaboration logo.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for collaboration logos.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
         if item_id:
             logo = HeroCollaborationLogo.objects.filter(id=item_id, course=selected_course).first()
             if not logo:
@@ -741,9 +774,6 @@ def _handle_dashboard_post(request):
         if not text:
             messages.error(request, 'Highlight text is required.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='key_highlights'))
-        if logo and not logo_alt:
-            messages.error(request, 'Alt text is required for highlight logos.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='key_highlights'))
         if item_id:
             highlight = KeyHighlight.objects.filter(id=item_id, course=selected_course).first()
             if not highlight:
@@ -770,9 +800,6 @@ def _handle_dashboard_post(request):
         item_id = request.POST.get('item_id')
         if not image and not item_id:
             messages.error(request, 'Please upload an accreditation logo.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='accreditations'))
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for accreditation logos.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='accreditations'))
         if item_id:
             logo = AccreditationLogo.objects.filter(id=item_id, course=selected_course).first()
@@ -802,9 +829,6 @@ def _handle_dashboard_post(request):
         item_id = request.POST.get('item_id')
         if not heading or not text:
             messages.error(request, 'Heading and description are required.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='why_choose'))
-        if icon and not icon_alt:
-            messages.error(request, 'Alt text is required for icons.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='why_choose'))
         if item_id:
             item = WhyChoose.objects.filter(id=item_id, course=selected_course).first()
@@ -892,12 +916,6 @@ def _handle_dashboard_post(request):
         if not name or not designation or not experience:
             messages.error(request, 'Mentor name, designation, and experience are required.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='mentors'))
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for mentor photos.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='mentors'))
-        if company_logo and not company_logo_alt:
-            messages.error(request, 'Alt text is required for company logos.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='mentors'))
         if item_id:
             mentor = Mentor.objects.filter(id=item_id, course=selected_course).first()
             if not mentor:
@@ -934,9 +952,6 @@ def _handle_dashboard_post(request):
         if not title or not heading:
             messages.error(request, 'Tab title and heading are required.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='program_highlights'))
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for the highlight image.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='program_highlights'))
         if item_id:
             highlight = ProgramHighlight.objects.filter(id=item_id, course=selected_course).first()
             if not highlight:
@@ -964,9 +979,6 @@ def _handle_dashboard_post(request):
         journey, _created = LearnerJourney.objects.get_or_create(course=selected_course)
         image = request.FILES.get('image')
         image_alt = request.POST.get('image_alt', '').strip()
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for the learner journey image.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='learner_journey'))
         if image:
             journey.image = image
         journey.image_alt = image_alt
@@ -1023,9 +1035,6 @@ def _handle_dashboard_post(request):
         if not title or not description:
             messages.error(request, 'Title and description are required.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='career_assistance'))
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for the image.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='career_assistance'))
         if item_id:
             assistance = CareerAssistance.objects.filter(id=item_id, course=selected_course).first()
             if not assistance:
@@ -1065,9 +1074,6 @@ def _handle_dashboard_post(request):
         if not name or not designation or not description:
             messages.error(request, 'Name, designation, and description are required.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='career_transitions'))
-        if profile_image and not profile_image_alt:
-            messages.error(request, 'Alt text is required for the profile image.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='career_transitions'))
         if item_id:
             transition = CareerTransition.objects.filter(id=item_id, course=selected_course).first()
             if not transition:
@@ -1105,9 +1111,6 @@ def _handle_dashboard_post(request):
         if not text:
             messages.error(request, 'Stat text is required.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='career_transitions'))
-        if icon and not icon_alt:
-            messages.error(request, 'Alt text is required for the stat icon.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='career_transitions'))
         if item_id:
             stat = CareerTransitionStat.objects.filter(id=item_id, course=selected_course).first()
             if not stat:
@@ -1134,9 +1137,6 @@ def _handle_dashboard_post(request):
         item_id = request.POST.get('item_id')
         if not image and not item_id:
             messages.error(request, 'Please upload an alumni logo.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='alumni'))
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for alumni logos.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='alumni'))
         if item_id:
             logo = AlumniLogo.objects.filter(id=item_id, course=selected_course).first()
@@ -1267,9 +1267,6 @@ def _handle_dashboard_post(request):
         if not title or not description:
             messages.error(request, 'Title and description are required.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='program_for'))
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for the image.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='program_for'))
         if item_id:
             entry = ProgramFor.objects.filter(id=item_id, course=selected_course).first()
             if not entry:
@@ -1321,9 +1318,6 @@ def _handle_dashboard_post(request):
         if not image and not item_id:
             messages.error(request, 'Please upload an image.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='why_white_scholars'))
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for the image.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='why_white_scholars'))
         if item_id:
             entry = WhyWhiteScholarsImage.objects.filter(id=item_id, course=selected_course).first()
             if not entry:
@@ -1350,9 +1344,6 @@ def _handle_dashboard_post(request):
         item_id = request.POST.get('item_id')
         if not youtube_url:
             messages.error(request, 'YouTube URL is required.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='expert_talks'))
-        if thumbnail and not thumbnail_alt:
-            messages.error(request, 'Alt text is required for the thumbnail.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='expert_talks'))
         if item_id:
             entry = ExpertTalkVideo.objects.filter(id=item_id, course=selected_course).first()
@@ -1418,9 +1409,6 @@ def _handle_dashboard_post(request):
         if not image and not item_id:
             messages.error(request, 'Please upload a hiring logo.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='salary_trends'))
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for hiring logos.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='salary_trends'))
         if item_id:
             entry = HiringLogo.objects.filter(id=item_id, course=selected_course).first()
             if not entry:
@@ -1445,9 +1433,6 @@ def _handle_dashboard_post(request):
         scope.intro_html = _rich_text(request.POST.get('intro_html'))
         image = request.FILES.get('image')
         image_alt = request.POST.get('image_alt', '').strip()
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for the scope image.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='scope'))
         if image:
             scope.image = image
         scope.image_alt = image_alt
@@ -1502,9 +1487,6 @@ def _handle_dashboard_post(request):
         if not title:
             messages.error(request, 'Title is required.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='related_articles'))
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for article images.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='related_articles'))
         if cta_label and cta_action_type == 'link' and not link:
             messages.error(request, 'A URL is required when the article CTA action is Link.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='related_articles'))
@@ -1539,9 +1521,6 @@ def _handle_dashboard_post(request):
         item_id = request.POST.get('item_id')
         if not image and not item_id:
             messages.error(request, 'Please upload a certification image.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='certifications'))
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for certification images.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='certifications'))
         if item_id:
             cert = CertificationItem.objects.filter(id=item_id, course=selected_course).first()
@@ -1591,9 +1570,6 @@ def _handle_dashboard_post(request):
         item_id = request.POST.get('item_id')
         if not name or not text:
             messages.error(request, 'Reviewer name and review text are required.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section='reviews'))
-        if avatar and not avatar_alt:
-            messages.error(request, 'Alt text is required for reviewer avatars.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='reviews'))
         if item_id:
             item = ReviewItem.objects.filter(id=item_id, course=selected_course).first()
@@ -1659,9 +1635,6 @@ def _handle_dashboard_post(request):
         if cta_key not in dict(LeadCta.CTA_CHOICES):
             messages.error(request, 'Invalid CTA type.')
             return redirect(_dashboard_url(course_id=selected_course.id))
-        if image and not image_alt:
-            messages.error(request, 'Alt text is required for CTA images.')
-            return redirect(_dashboard_url(course_id=selected_course.id, section=f'cta_{cta_key}'))
         cta, _created = LeadCta.objects.get_or_create(course=selected_course, key=cta_key)
         cta.heading = heading
         cta.description_html = description_html

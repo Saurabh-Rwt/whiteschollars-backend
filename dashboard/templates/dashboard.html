@@ -212,6 +212,22 @@
         color: var(--panel-muted);
       }
 
+      .required-label::after {
+        content: " *";
+        color: var(--panel-danger);
+        font-weight: 700;
+      }
+
+      .required-hint {
+        border: 1px solid var(--panel-soft-border);
+        background: #f8fbff;
+        color: #1f2937;
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 12px;
+        margin-bottom: 12px;
+      }
+
       .preview-card {
         border: 1px dashed var(--panel-soft-border);
         background: #f8fafc;
@@ -405,8 +421,8 @@
     </nav>
 
     <div class="container-fluid py-4">
-      {% if messages %}
-        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080">
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080" data-toast-container>
+          {% if messages %}
           {% for message in messages %}
             {% with tag=message.tags|default:'info' %}
               <div
@@ -424,8 +440,12 @@
               </div>
             {% endwith %}
           {% endfor %}
+          {% endif %}
         </div>
-      {% endif %}
+
+      <div class="required-hint">
+        Only fields marked with <strong>*</strong> are mandatory. Alt text fields are optional.
+      </div>
 
       <div class="row g-4">
         <aside class="col-xl-3 col-lg-4">
@@ -564,7 +584,7 @@
                       </div>
                       <div class="col-md-6">
                         <label class="form-label">Popup Image</label>
-                        <input type="file" class="form-control" name="popup_image" accept="image/*" />
+                        <input type="file" class="form-control" name="popup_image" accept="image/*" {% if not popup_modal.image %}required{% endif %} />
                         {% if popup_modal.image %}
                           <div class="media-preview">
                             <img src="{{ popup_modal.image.url }}" alt="{{ popup_modal.image_alt|default:'Popup image' }}" />
@@ -801,6 +821,68 @@
       };
       const csrfToken =
         document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+      const dashboardUrl = new URL("{% url 'dashboard' %}", window.location.origin);
+      const quillEditors = [];
+
+      const getToastContainer = () => {
+        let container = document.querySelector('[data-toast-container]');
+        if (!container) {
+          container = document.createElement('div');
+          container.className = 'toast-container position-fixed top-0 end-0 p-3';
+          container.style.zIndex = '1080';
+          container.setAttribute('data-toast-container', '');
+          document.body.appendChild(container);
+        }
+        return container;
+      };
+
+      const getToastClass = (level) => {
+        if (level === 'success') return 'text-bg-success';
+        if (level === 'error') return 'text-bg-danger';
+        if (level === 'warning') return 'text-bg-warning';
+        return 'text-bg-info';
+      };
+
+      const showToast = (message, level = 'info') => {
+        const normalizedLevel = ['success', 'error', 'warning', 'info'].includes(level) ? level : 'info';
+        const autohide = normalizedLevel !== 'error';
+        const delay = normalizedLevel === 'success' ? 4000 : 5000;
+        const container = getToastContainer();
+
+        const toastEl = document.createElement('div');
+        toastEl.className = `toast align-items-center border-0 ${getToastClass(normalizedLevel)}`;
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+        toastEl.setAttribute('data-bs-autohide', autohide ? 'true' : 'false');
+        toastEl.setAttribute('data-bs-delay', autohide ? String(delay) : '0');
+        toastEl.innerHTML =
+          '<div class="d-flex">' +
+          '<div class="toast-body"></div>' +
+          '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
+          '</div>';
+        toastEl.querySelector('.toast-body').textContent = message;
+
+        container.appendChild(toastEl);
+        toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+        const toast = bootstrap.Toast.getOrCreateInstance(toastEl, { autohide, delay });
+        toast.show();
+      };
+
+      const isDashboardEditorForm = (form) => {
+        if ((form.method || 'GET').toUpperCase() !== 'POST') return false;
+        if (!form.querySelector('input[name="action"]')) return false;
+        const actionUrl = new URL(form.getAttribute('action') || window.location.href, window.location.origin);
+        return actionUrl.pathname === dashboardUrl.pathname;
+      };
+
+      const syncFormQuillEditors = (form) => {
+        quillEditors.forEach((editor) => {
+          if (editor.form === form) {
+            editor.hiddenInput.value = editor.quill.root.innerHTML;
+          }
+        });
+      };
 
       const slugify = (value) =>
         value
@@ -815,7 +897,19 @@
         if (!scope) return;
         const linkField = scope.querySelector('[data-action-field="link"]');
         if (!linkField) return;
-        linkField.style.display = select.value === 'link' ? '' : 'none';
+
+        const isLink = select.value === 'link';
+        linkField.style.display = isLink ? '' : 'none';
+
+        const urlInput = linkField.querySelector('input, textarea, select');
+        if (urlInput) {
+          urlInput.required = isLink;
+        }
+
+        const label = linkField.querySelector('.form-label');
+        if (label) {
+          label.classList.toggle('required-label', isLink);
+        }
       };
 
       const updateHeroMediaVisibility = (select) => {
@@ -947,6 +1041,16 @@
         toast.show();
       });
 
+      document.querySelectorAll('form').forEach((form) => {
+        form.querySelectorAll('input[required], textarea[required], select[required]').forEach((field) => {
+          const fieldWrap = field.closest('.mb-3') || field.closest('.col-12') || field.closest('[class*="col-"]');
+          const label = fieldWrap ? fieldWrap.querySelector('.form-label') : null;
+          if (label && !label.classList.contains('required-label')) {
+            label.classList.add('required-label');
+          }
+        });
+      });
+
       document.querySelectorAll('[data-quill]').forEach((container) => {
         const targetId = container.dataset.target;
         const hiddenInput = document.getElementById(targetId);
@@ -966,10 +1070,57 @@
         }
         const form = container.closest('form');
         if (form) {
+          quillEditors.push({ form, hiddenInput, quill });
           form.addEventListener('submit', () => {
             hiddenInput.value = quill.root.innerHTML;
           });
         }
+      });
+
+      document.querySelectorAll('form').forEach((form) => {
+        if (!isDashboardEditorForm(form)) return;
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          syncFormQuillEditors(form);
+
+          const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+          submitButtons.forEach((button) => {
+            button.disabled = true;
+          });
+
+          try {
+            const response = await fetch(form.getAttribute('action') || window.location.href, {
+              method: 'POST',
+              body: new FormData(form),
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken,
+              },
+            });
+
+            let payload = null;
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+              payload = await response.json();
+            }
+
+            if (payload && Array.isArray(payload.messages) && payload.messages.length) {
+              payload.messages.forEach((entry) => {
+                showToast(entry.text, entry.level);
+              });
+            } else if (response.ok) {
+              showToast('Data saved successfully.', 'success');
+            } else {
+              showToast('Unable to save changes. Please check the form and try again.', 'error');
+            }
+          } catch (error) {
+            showToast('Network error while saving. Please try again.', 'error');
+          } finally {
+            submitButtons.forEach((button) => {
+              button.disabled = false;
+            });
+          }
+        });
       });
     </script>
   </body>

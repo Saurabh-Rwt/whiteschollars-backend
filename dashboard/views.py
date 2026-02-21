@@ -370,6 +370,7 @@ def _build_dashboard_context(request, selected_course=None, active_section=None,
         editing[edit_key] = model.objects.filter(id=edit_id, course=selected_course).first()
 
     hero_highlights = HeroHighlight.objects.filter(course=selected_course).order_by('sort_order')
+    hero_buttons = CourseHeroButton.objects.filter(course=selected_course).order_by('sort_order')
 
     context.update({
         'course_sections': course_sections,
@@ -378,7 +379,7 @@ def _build_dashboard_context(request, selected_course=None, active_section=None,
         'hero_highlights': hero_highlights,
         'hero_highlights_text': '\n'.join(item.text for item in hero_highlights),
         'hero_logos': HeroCollaborationLogo.objects.filter(course=selected_course).order_by('sort_order'),
-        'hero_buttons': CourseHeroButton.objects.filter(course=selected_course).order_by('sort_order'),
+        'hero_buttons': hero_buttons,
         'key_highlights': KeyHighlight.objects.filter(course=selected_course).order_by('sort_order'),
         'accreditation_logos': AccreditationLogo.objects.filter(course=selected_course).order_by('sort_order'),
         'why_choose_items': WhyChoose.objects.filter(course=selected_course).order_by('sort_order'),
@@ -478,6 +479,13 @@ def _is_ajax_request(request):
     return request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
 
+def _set_dashboard_ajax_data(request, action, **extra):
+    request._dashboard_ajax_data = {
+        'action': action,
+        **extra,
+    }
+
+
 def _serialize_dashboard_message(message):
     tags = message.tags or 'info'
     if 'error' in tags:
@@ -511,6 +519,7 @@ def _ajax_dashboard_response(request, response=None, fallback_redirect=None):
             'ok': not has_error,
             'messages': queued_messages,
             'redirect_url': redirect_url,
+            'data': getattr(request, '_dashboard_ajax_data', None),
         },
         status=400 if has_error else 200,
     )
@@ -724,12 +733,22 @@ def _handle_dashboard_post(request):
         if image_alt:
             logo.image_alt = image_alt
         logo.save()
+        _set_dashboard_ajax_data(
+            request,
+            'save_hero_logo',
+            mode='updated' if item_id else 'created',
+            item={
+                'id': logo.id,
+                'image_alt': logo.image_alt or 'Logo',
+            },
+        )
         messages.success(request, 'Collaboration logo saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
 
     if action == 'delete_hero_logo':
         item_id = request.POST.get('item_id')
         HeroCollaborationLogo.objects.filter(id=item_id, course=selected_course).delete()
+        _set_dashboard_ajax_data(request, 'delete_hero_logo', item_id=str(item_id or ''))
         messages.success(request, 'Collaboration logo removed.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
 
@@ -757,12 +776,24 @@ def _handle_dashboard_post(request):
         button.style = style
         button.action_type = action_type
         button.save()
+        _set_dashboard_ajax_data(
+            request,
+            'save_hero_button',
+            mode='updated' if item_id else 'created',
+            item={
+                'id': button.id,
+                'label': button.label,
+                'style': button.style,
+                'action_type': button.action_type,
+            },
+        )
         messages.success(request, 'CTA button saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
 
     if action == 'delete_hero_button':
         item_id = request.POST.get('item_id')
         CourseHeroButton.objects.filter(id=item_id, course=selected_course).delete()
+        _set_dashboard_ajax_data(request, 'delete_hero_button', item_id=str(item_id or ''))
         messages.success(request, 'CTA button removed.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
 

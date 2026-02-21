@@ -822,7 +822,10 @@
       const csrfToken =
         document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
       const dashboardUrl = new URL("{% url 'dashboard' %}", window.location.origin);
+      const dashboardPath = dashboardUrl.pathname;
+      const selectedCourseId = '{{ selected_course.id|default:"" }}';
       const quillEditors = [];
+      const boundDashboardForms = new WeakSet();
 
       const getToastContainer = () => {
         let container = document.querySelector('[data-toast-container]');
@@ -867,6 +870,236 @@
         toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
         const toast = bootstrap.Toast.getOrCreateInstance(toastEl, { autohide, delay });
         toast.show();
+      };
+
+      const escapeHtml = (value) =>
+        String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+
+      const escapeAttr = (value) => escapeHtml(value);
+
+      const createHeroLogoItemMarkup = (item) => {
+        const label = item.image_alt || 'Logo';
+        const editQuery = new URLSearchParams({
+          course: selectedCourseId,
+          section: 'hero',
+          edit_key: 'hero_logo',
+          edit_id: String(item.id),
+        }).toString();
+        return (
+          `<div class="col-md-6" data-hero-logo-item="${escapeAttr(item.id)}">` +
+          '<div class="d-flex align-items-center justify-content-between border rounded p-2">' +
+          `<span class="text-truncate" data-hero-logo-label>${escapeHtml(label)}</span>` +
+          '<div class="d-flex gap-2">' +
+          `<a class="btn btn-sm btn-ghost" href="${dashboardPath}?${editQuery}">Edit</a>` +
+          `<form method="POST" action="${dashboardPath}">` +
+          `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeAttr(csrfToken)}" />` +
+          '<input type="hidden" name="action" value="delete_hero_logo" />' +
+          `<input type="hidden" name="course" value="${escapeAttr(selectedCourseId)}" />` +
+          `<input type="hidden" name="item_id" value="${escapeAttr(item.id)}" />` +
+          '<button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>' +
+          '</form>' +
+          '</div>' +
+          '</div>' +
+          '</div>'
+        );
+      };
+
+      const createHeroButtonItemMarkup = (item) => {
+        const editQuery = new URLSearchParams({
+          course: selectedCourseId,
+          section: 'hero',
+          edit_key: 'hero_button',
+          edit_id: String(item.id),
+        }).toString();
+        return (
+          `<li class="list-group-item d-flex align-items-center justify-content-between" data-hero-button-item="${escapeAttr(item.id)}">` +
+          '<span class="pe-3">' +
+          `<strong data-hero-button-label>${escapeHtml(item.label || '')}</strong> ` +
+          `<small class="text-muted" data-hero-button-meta>(${escapeHtml(item.style || '')}, ${escapeHtml(item.action_type || '')})</small>` +
+          '</span>' +
+          '<div class="btn-group btn-group-sm" role="group" aria-label="Hero CTA actions">' +
+          `<a class="btn btn-outline-secondary" href="${dashboardPath}?${editQuery}" title="Edit button" aria-label="Edit button"><i class="bi bi-pencil"></i></a>` +
+          `<form method="POST" action="${dashboardPath}" class="d-inline">` +
+          `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeAttr(csrfToken)}" />` +
+          '<input type="hidden" name="action" value="delete_hero_button" />' +
+          `<input type="hidden" name="course" value="${escapeAttr(selectedCourseId)}" />` +
+          `<input type="hidden" name="item_id" value="${escapeAttr(item.id)}" />` +
+          '<button class="btn btn-outline-danger" type="submit" title="Delete button" aria-label="Delete button"><i class="bi bi-trash"></i></button>' +
+          '</form>' +
+          '</div>' +
+          '</li>'
+        );
+      };
+
+      const ensureHeroLogosEmptyState = () => {
+        const list = document.querySelector('[data-hero-logos-list]');
+        if (!list) return;
+        const itemCount = list.querySelectorAll('[data-hero-logo-item]').length;
+        let empty = list.querySelector('[data-hero-logos-empty]');
+        if (itemCount === 0 && !empty) {
+          list.insertAdjacentHTML(
+            'beforeend',
+            '<div class="col-12 text-muted" data-hero-logos-empty>No collaboration logos yet.</div>'
+          );
+          return;
+        }
+        if (itemCount > 0 && empty) {
+          empty.remove();
+        }
+      };
+
+      const ensureHeroButtonsEmptyState = () => {
+        const list = document.querySelector('[data-hero-buttons-list]');
+        if (!list) return;
+        const itemCount = list.querySelectorAll('[data-hero-button-item]').length;
+        let empty = list.querySelector('[data-hero-buttons-empty]');
+        if (itemCount === 0 && !empty) {
+          list.insertAdjacentHTML(
+            'beforeend',
+            '<li class="list-group-item text-muted" data-hero-buttons-empty>No CTA buttons yet.</li>'
+          );
+          return;
+        }
+        if (itemCount > 0 && empty) {
+          empty.remove();
+        }
+      };
+
+      const resetHeroLogoFormToAddMode = () => {
+        const form = document.querySelector('[data-hero-logo-form]');
+        if (!form) return;
+        form.reset();
+        const itemId = form.querySelector('[data-hero-logo-item-id]');
+        if (itemId) itemId.value = '';
+        const imageInput = form.querySelector('[data-hero-logo-image]');
+        if (imageInput) imageInput.required = true;
+        const submitButton = form.querySelector('[data-hero-logo-submit]');
+        if (submitButton) submitButton.textContent = 'Add';
+        const cancelButton = form.querySelector('[data-hero-logo-cancel]');
+        if (cancelButton) cancelButton.remove();
+      };
+
+      const resetHeroButtonFormToAddMode = () => {
+        const form = document.querySelector('[data-hero-button-form]');
+        if (!form) return;
+        form.reset();
+        const itemId = form.querySelector('[data-hero-button-item-id]');
+        if (itemId) itemId.value = '';
+        const submitButton = form.querySelector('[data-hero-button-submit]');
+        if (submitButton) submitButton.textContent = 'Add Button';
+        const cancelButton = form.querySelector('[data-hero-button-cancel]');
+        if (cancelButton) cancelButton.remove();
+        const actionSelect = form.querySelector('[data-action-select]');
+        if (actionSelect) updateActionVisibility(actionSelect);
+      };
+
+      const bindDashboardForm = (form) => {
+        if (!isDashboardEditorForm(form) || boundDashboardForms.has(form)) return;
+        boundDashboardForms.add(form);
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          syncFormQuillEditors(form);
+
+          const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+          submitButtons.forEach((button) => {
+            button.disabled = true;
+          });
+
+          try {
+            const response = await fetch(form.getAttribute('action') || window.location.href, {
+              method: 'POST',
+              body: new FormData(form),
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken,
+              },
+            });
+
+            let payload = null;
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+              payload = await response.json();
+            }
+
+            if (payload && Array.isArray(payload.messages) && payload.messages.length) {
+              payload.messages.forEach((entry) => {
+                showToast(entry.text, entry.level);
+              });
+            } else if (response.ok) {
+              showToast('Data saved successfully.', 'success');
+            } else {
+              showToast('Unable to save changes. Please check the form and try again.', 'error');
+            }
+
+            if (response.ok && payload && payload.data) {
+              const action = payload.data.action;
+              if (action === 'save_hero_logo' && payload.data.item) {
+                const list = document.querySelector('[data-hero-logos-list]');
+                if (list) {
+                  const itemSelector = `[data-hero-logo-item="${payload.data.item.id}"]`;
+                  const existingItem = list.querySelector(itemSelector);
+                  if (existingItem) {
+                    existingItem.outerHTML = createHeroLogoItemMarkup(payload.data.item);
+                  } else {
+                    list.insertAdjacentHTML('beforeend', createHeroLogoItemMarkup(payload.data.item));
+                  }
+                  ensureHeroLogosEmptyState();
+                  bindDashboardForms(list);
+                }
+                resetHeroLogoFormToAddMode();
+              }
+
+              if (action === 'delete_hero_logo' && payload.data.item_id) {
+                const list = document.querySelector('[data-hero-logos-list]');
+                if (list) {
+                  const item = list.querySelector(`[data-hero-logo-item="${payload.data.item_id}"]`);
+                  if (item) item.remove();
+                  ensureHeroLogosEmptyState();
+                }
+              }
+
+              if (action === 'save_hero_button' && payload.data.item) {
+                const list = document.querySelector('[data-hero-buttons-list]');
+                if (list) {
+                  const itemSelector = `[data-hero-button-item="${payload.data.item.id}"]`;
+                  const existingItem = list.querySelector(itemSelector);
+                  if (existingItem) {
+                    existingItem.outerHTML = createHeroButtonItemMarkup(payload.data.item);
+                  } else {
+                    list.insertAdjacentHTML('beforeend', createHeroButtonItemMarkup(payload.data.item));
+                  }
+                  ensureHeroButtonsEmptyState();
+                  bindDashboardForms(list);
+                }
+                resetHeroButtonFormToAddMode();
+              }
+
+              if (action === 'delete_hero_button' && payload.data.item_id) {
+                const list = document.querySelector('[data-hero-buttons-list]');
+                if (list) {
+                  const item = list.querySelector(`[data-hero-button-item="${payload.data.item_id}"]`);
+                  if (item) item.remove();
+                  ensureHeroButtonsEmptyState();
+                }
+              }
+            }
+          } catch (error) {
+            showToast('Network error while saving. Please try again.', 'error');
+          } finally {
+            submitButtons.forEach((button) => {
+              button.disabled = false;
+            });
+          }
+        });
+      };
+
+      const bindDashboardForms = (scope = document) => {
+        scope.querySelectorAll('form').forEach((form) => bindDashboardForm(form));
       };
 
       const isDashboardEditorForm = (form) => {
@@ -1077,51 +1310,7 @@
         }
       });
 
-      document.querySelectorAll('form').forEach((form) => {
-        if (!isDashboardEditorForm(form)) return;
-        form.addEventListener('submit', async (event) => {
-          event.preventDefault();
-          syncFormQuillEditors(form);
-
-          const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
-          submitButtons.forEach((button) => {
-            button.disabled = true;
-          });
-
-          try {
-            const response = await fetch(form.getAttribute('action') || window.location.href, {
-              method: 'POST',
-              body: new FormData(form),
-              headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': csrfToken,
-              },
-            });
-
-            let payload = null;
-            const contentType = response.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
-              payload = await response.json();
-            }
-
-            if (payload && Array.isArray(payload.messages) && payload.messages.length) {
-              payload.messages.forEach((entry) => {
-                showToast(entry.text, entry.level);
-              });
-            } else if (response.ok) {
-              showToast('Data saved successfully.', 'success');
-            } else {
-              showToast('Unable to save changes. Please check the form and try again.', 'error');
-            }
-          } catch (error) {
-            showToast('Network error while saving. Please try again.', 'error');
-          } finally {
-            submitButtons.forEach((button) => {
-              button.disabled = false;
-            });
-          }
-        });
-      });
+      bindDashboardForms();
     </script>
   </body>
 </html>

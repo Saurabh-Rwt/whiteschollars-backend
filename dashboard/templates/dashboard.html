@@ -806,6 +806,21 @@
         linkField.style.display = select.value === 'link' ? '' : 'none';
       };
 
+      const updateHeroMediaVisibility = (select) => {
+        const scope = select.closest('[data-hero-media-scope]');
+        if (!scope) return;
+
+        const selectedType = select.value === 'video' ? 'video' : 'image';
+
+        scope.querySelectorAll('[data-hero-media-field]').forEach((field) => {
+          field.style.display = field.dataset.heroMediaField === selectedType ? '' : 'none';
+        });
+
+        scope.querySelectorAll('[data-hero-media-help]').forEach((note) => {
+          note.style.display = note.dataset.heroMediaHelp === selectedType ? '' : 'none';
+        });
+      };
+
       const reorderPreview = (order) => {
         const reorderContainer = (container, selector) => {
           if (!container) return;
@@ -890,6 +905,11 @@
       document.querySelectorAll('[data-action-select]').forEach((select) => {
         updateActionVisibility(select);
         select.addEventListener('change', () => updateActionVisibility(select));
+      });
+
+      document.querySelectorAll('[data-hero-media-select]').forEach((select) => {
+        updateHeroMediaVisibility(select);
+        select.addEventListener('change', () => updateHeroMediaVisibility(select));
       });
 
       document.querySelectorAll('[data-list-add]').forEach((button) => {

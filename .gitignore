@@ -175,3 +175,5 @@ override.tf.json
 # --- Nginx / Gunicorn generated (optional local artifacts) ---
 gunicorn.log
 nginx.log
+
+db.sqlite3

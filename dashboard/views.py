@@ -366,11 +366,14 @@ def _build_dashboard_context(request, selected_course=None, active_section=None,
         model = EDITABLE_MAP[edit_key]
         editing[edit_key] = model.objects.filter(id=edit_id, course=selected_course).first()
 
+    hero_highlights = HeroHighlight.objects.filter(course=selected_course).order_by('sort_order')
+
     context.update({
         'course_sections': course_sections,
         'editing': editing,
         'hero': getattr(selected_course, 'hero', None),
-        'hero_highlights': HeroHighlight.objects.filter(course=selected_course).order_by('sort_order'),
+        'hero_highlights': hero_highlights,
+        'hero_highlights_text': '\n'.join(item.text for item in hero_highlights),
         'hero_logos': HeroCollaborationLogo.objects.filter(course=selected_course).order_by('sort_order'),
         'hero_buttons': CourseHeroButton.objects.filter(course=selected_course).order_by('sort_order'),
         'key_highlights': KeyHighlight.objects.filter(course=selected_course).order_by('sort_order'),
@@ -537,14 +540,25 @@ def _handle_dashboard_post(request):
 
     if action == 'save_hero':
         hero, _created = CourseHero.objects.get_or_create(course=selected_course)
-        hero.heading = request.POST.get('heading', '').strip()
-        hero.subheading = request.POST.get('subheading', '').strip()
-        hero.description_html = _rich_text(request.POST.get('description_html'))
-        hero.badge_text = request.POST.get('badge_text', '').strip()
-        hero.award_text = request.POST.get('award_text', '').strip()
-        hero.collaboration_heading = request.POST.get('collaboration_heading', '').strip()
-        hero.media_type = request.POST.get('media_type', 'image')
-        hero.hero_video_url = request.POST.get('hero_video_url', '').strip()
+        def has_field(name):
+            return name in request.POST or name in request.FILES
+
+        if has_field('heading'):
+            hero.heading = request.POST.get('heading', '').strip()
+        if has_field('subheading'):
+            hero.subheading = request.POST.get('subheading', '').strip()
+        if has_field('description_html'):
+            hero.description_html = _rich_text(request.POST.get('description_html'))
+        if has_field('badge_text'):
+            hero.badge_text = request.POST.get('badge_text', '').strip()
+        if has_field('award_text'):
+            hero.award_text = request.POST.get('award_text', '').strip()
+        if has_field('collaboration_heading'):
+            hero.collaboration_heading = request.POST.get('collaboration_heading', '').strip()
+        if has_field('media_type'):
+            hero.media_type = request.POST.get('media_type', 'image')
+        if has_field('hero_video_url'):
+            hero.hero_video_url = request.POST.get('hero_video_url', '').strip()
 
         badge_icon = request.FILES.get('badge_icon')
         if badge_icon:
@@ -552,7 +566,8 @@ def _handle_dashboard_post(request):
                 messages.error(request, 'Badge icon alt text is required when uploading a badge icon.')
                 return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
             hero.badge_icon = badge_icon
-        hero.badge_icon_alt = request.POST.get('badge_icon_alt', '').strip()
+        if has_field('badge_icon_alt'):
+            hero.badge_icon_alt = request.POST.get('badge_icon_alt', '').strip()
 
         award_logo = request.FILES.get('award_logo')
         if award_logo:
@@ -560,7 +575,8 @@ def _handle_dashboard_post(request):
                 messages.error(request, 'Award logo alt text is required when uploading an award logo.')
                 return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
             hero.award_logo = award_logo
-        hero.award_logo_alt = request.POST.get('award_logo_alt', '').strip()
+        if has_field('award_logo_alt'):
+            hero.award_logo_alt = request.POST.get('award_logo_alt', '').strip()
 
         hero_image = request.FILES.get('hero_image')
         if hero_image:
@@ -568,7 +584,8 @@ def _handle_dashboard_post(request):
                 messages.error(request, 'Hero image alt text is required when uploading a hero image.')
                 return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
             hero.hero_image = hero_image
-        hero.hero_image_alt = request.POST.get('hero_image_alt', '').strip()
+        if has_field('hero_image_alt'):
+            hero.hero_image_alt = request.POST.get('hero_image_alt', '').strip()
 
         video_thumb = request.FILES.get('hero_video_thumbnail')
         if video_thumb:
@@ -576,14 +593,45 @@ def _handle_dashboard_post(request):
                 messages.error(request, 'Video thumbnail alt text is required when uploading a thumbnail.')
                 return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
             hero.hero_video_thumbnail = video_thumb
-        hero.hero_video_thumbnail_alt = request.POST.get('hero_video_thumbnail_alt', '').strip()
+        if has_field('hero_video_thumbnail_alt'):
+            hero.hero_video_thumbnail_alt = request.POST.get('hero_video_thumbnail_alt', '').strip()
 
-        if not hero.heading:
+        core_fields = {
+            'heading',
+            'subheading',
+            'description_html',
+            'badge_text',
+            'badge_icon',
+            'badge_icon_alt',
+            'award_text',
+            'award_logo',
+            'award_logo_alt',
+        }
+        if any(has_field(field) for field in core_fields) and not hero.heading:
             messages.error(request, 'Hero heading is required.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
 
         hero.save()
         messages.success(request, 'Hero section saved.')
+        return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
+
+    if action == 'save_hero_highlights_bulk':
+        raw_text = request.POST.get('highlights_text', '')
+        lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
+
+        HeroHighlight.objects.filter(course=selected_course).delete()
+        if lines:
+            HeroHighlight.objects.bulk_create([
+                HeroHighlight(
+                    course=selected_course,
+                    text=line,
+                    sort_order=(idx + 1) * 10,
+                )
+                for idx, line in enumerate(lines)
+            ])
+            messages.success(request, 'Hero checklist points saved.')
+        else:
+            messages.success(request, 'Hero checklist points cleared.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='hero'))
 
     if action == 'save_hero_highlight':

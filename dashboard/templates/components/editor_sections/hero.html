@@ -1,28 +1,50 @@
 <div class="form-section">
-  <div class="form-section-title">Hero Content</div>
-  <p class="editor-note">This is the first section visitors see. Keep it crisp and job-focused.</p>
+  <div class="form-section-title">Hero Intro Content</div>
+  <p class="editor-note">Top heading block: heading, subheading, description, badge, and award details.</p>
   <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
     {% csrf_token %}
     <input type="hidden" name="action" value="save_hero" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
+
     <div class="row g-3">
       <div class="col-md-8">
         <label class="form-label">Hero Heading</label>
-        <input type="text" class="form-control" name="heading" value="{{ hero.heading|default:'' }}" required />
+        <input
+          type="text"
+          class="form-control"
+          name="heading"
+          value="{{ hero.heading|default:'' }}"
+          placeholder="Data Science &amp; Generative AI"
+          required
+        />
       </div>
       <div class="col-md-4">
         <label class="form-label">Subheading</label>
-        <input type="text" class="form-control" name="subheading" value="{{ hero.subheading|default:'' }}" />
+        <input
+          type="text"
+          class="form-control"
+          name="subheading"
+          value="{{ hero.subheading|default:'' }}"
+          placeholder="Certification Course In Hyderabad"
+        />
       </div>
+
       <div class="col-12">
         <label class="form-label">Description</label>
         <div class="editor-note">Rich text: bold, italic, lists, links only.</div>
         <input type="hidden" name="description_html" id="hero-description-html" value="{{ hero.description_html|default:'' }}" />
         <div class="form-control" style="padding: 0;" data-quill data-target="hero-description-html"></div>
       </div>
+
       <div class="col-md-4">
         <label class="form-label">Badge Text</label>
-        <input type="text" class="form-control" name="badge_text" value="{{ hero.badge_text|default:'' }}" />
+        <input
+          type="text"
+          class="form-control"
+          name="badge_text"
+          value="{{ hero.badge_text|default:'' }}"
+          placeholder="Job - Ready Course"
+        />
       </div>
       <div class="col-md-4">
         <label class="form-label">Badge Icon</label>
@@ -36,11 +58,24 @@
       </div>
       <div class="col-md-4">
         <label class="form-label">Badge Icon Alt Text</label>
-        <input type="text" class="form-control" name="badge_icon_alt" value="{{ hero.badge_icon_alt|default:'' }}" />
+        <input
+          type="text"
+          class="form-control"
+          name="badge_icon_alt"
+          value="{{ hero.badge_icon_alt|default:'' }}"
+          placeholder="Checkmark icon"
+        />
       </div>
+
       <div class="col-md-4">
         <label class="form-label">Award Text</label>
-        <input type="text" class="form-control" name="award_text" value="{{ hero.award_text|default:'' }}" />
+        <input
+          type="text"
+          class="form-control"
+          name="award_text"
+          value="{{ hero.award_text|default:'' }}"
+          placeholder="Awarded by Telangana Higher Education as Emerging EdTech of India"
+        />
       </div>
       <div class="col-md-4">
         <label class="form-label">Award Logo</label>
@@ -54,94 +89,69 @@
       </div>
       <div class="col-md-4">
         <label class="form-label">Award Logo Alt Text</label>
-        <input type="text" class="form-control" name="award_logo_alt" value="{{ hero.award_logo_alt|default:'' }}" />
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Media Type</label>
-        <select class="form-select" name="media_type">
-          <option value="image" {% if hero.media_type == 'image' %}selected{% endif %}>Image</option>
-          <option value="video" {% if hero.media_type == 'video' %}selected{% endif %}>Video</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Hero Image</label>
-        <input type="file" class="form-control" name="hero_image" accept="image/*" />
-        {% if hero.hero_image %}
-          <div class="media-preview">
-            <img src="{{ hero.hero_image.url }}" alt="{{ hero.hero_image_alt|default:'Hero image' }}" />
-            <small class="text-muted">{{ hero.hero_image_alt|default:'Hero image' }}</small>
-          </div>
-        {% endif %}
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Hero Image Alt Text</label>
-        <input type="text" class="form-control" name="hero_image_alt" value="{{ hero.hero_image_alt|default:'' }}" />
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Hero Video URL</label>
-        <input type="url" class="form-control" name="hero_video_url" value="{{ hero.hero_video_url|default:'' }}" />
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Video Thumbnail</label>
-        <input type="file" class="form-control" name="hero_video_thumbnail" accept="image/*" />
-        {% if hero.hero_video_thumbnail %}
-          <div class="media-preview">
-            <img src="{{ hero.hero_video_thumbnail.url }}" alt="{{ hero.hero_video_thumbnail_alt|default:'Video thumbnail' }}" />
-            <small class="text-muted">{{ hero.hero_video_thumbnail_alt|default:'Video thumbnail' }}</small>
-          </div>
-        {% endif %}
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Thumbnail Alt Text</label>
-        <input type="text" class="form-control" name="hero_video_thumbnail_alt" value="{{ hero.hero_video_thumbnail_alt|default:'' }}" />
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Collaboration Heading</label>
-        <input type="text" class="form-control" name="collaboration_heading" value="{{ hero.collaboration_heading|default:'' }}" />
+        <input
+          type="text"
+          class="form-control"
+          name="award_logo_alt"
+          value="{{ hero.award_logo_alt|default:'' }}"
+          placeholder="Award seal logo"
+        />
       </div>
     </div>
+
     <div class="mt-3 text-end">
-      <button class="btn btn-primary" type="submit">Save Hero</button>
+      <button class="btn btn-primary" type="submit">Save Hero Intro</button>
     </div>
   </form>
 </div>
 
 <div class="form-section">
-  <div class="form-section-title">Hero Highlights</div>
+  <div class="form-section-title">Hero Checklist Points</div>
+  <p class="editor-note">Add one point per line. These lines will be shown with check icons under the hero heading.</p>
   <form method="POST" action="{% url 'dashboard' %}">
     {% csrf_token %}
-    <input type="hidden" name="action" value="save_hero_highlight" />
+    <input type="hidden" name="action" value="save_hero_highlights_bulk" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
-    <input type="hidden" name="item_id" value="{% if editing.hero_highlight %}{{ editing.hero_highlight.id }}{% endif %}" />
-    <div class="row g-3 align-items-end">
-      <div class="col-md-9">
-        <label class="form-label">Highlight Text</label>
-        <input type="text" class="form-control" name="highlight_text" value="{% if editing.hero_highlight %}{{ editing.hero_highlight.text }}{% endif %}" required />
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Checklist Lines</label>
+        <textarea
+          class="form-control"
+          name="highlights_text"
+          rows="7"
+          placeholder="Mode: Offline | Online | Live Recorded Sessions&#10;180 Hours of learning&#10;Guaranteed virtual internships with Accenture &amp; PWC"
+        >{{ hero_highlights_text|default:'' }}</textarea>
       </div>
-      <div class="col-md-3 text-end">
-        <button class="btn btn-outline-primary" type="submit">{% if editing.hero_highlight %}Update{% else %}Add{% endif %}</button>
+      <div class="col-12 text-end">
+        <button class="btn btn-outline-primary" type="submit">Save Checklist</button>
       </div>
     </div>
   </form>
-  <ul class="list-group list-group-flush mt-3">
-    {% for item in hero_highlights %}
-      <li class="list-group-item d-flex align-items-center justify-content-between">
-        <span>{{ item.text }}</span>
-        <div class="d-flex gap-2">
-          <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=hero&edit_key=hero_highlight&edit_id={{ item.id }}">Edit</a>
-          <form method="POST" action="{% url 'dashboard' %}">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="delete_hero_highlight" />
-            <input type="hidden" name="course" value="{{ selected_course.id }}" />
-            <input type="hidden" name="item_id" value="{{ item.id }}" />
-            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-          </form>
-        </div>
-      </li>
-    {% empty %}
-      <li class="list-group-item text-muted">No highlights added yet.</li>
-    {% endfor %}
-  </ul>
+</div>
+
+<div class="form-section">
+  <div class="form-section-title">Collaboration Heading</div>
+  <p class="editor-note">This text appears above partner logos in hero section.</p>
+  <form method="POST" action="{% url 'dashboard' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_hero" />
+    <input type="hidden" name="course" value="{{ selected_course.id }}" />
+    <div class="row g-3 align-items-end">
+      <div class="col-md-10">
+        <label class="form-label">Heading</label>
+        <input
+          type="text"
+          class="form-control"
+          name="collaboration_heading"
+          value="{{ hero.collaboration_heading|default:'' }}"
+          placeholder="In Collaboration With"
+        />
+      </div>
+      <div class="col-md-2 text-end">
+        <button class="btn btn-outline-primary" type="submit">Save</button>
+      </div>
+    </div>
+  </form>
 </div>
 
 <div class="form-section">
@@ -158,13 +168,20 @@
       </div>
       <div class="col-md-5">
         <label class="form-label">Alt Text</label>
-        <input type="text" class="form-control" name="image_alt" value="{% if editing.hero_logo %}{{ editing.hero_logo.image_alt }}{% endif %}" />
+        <input
+          type="text"
+          class="form-control"
+          name="image_alt"
+          value="{% if editing.hero_logo %}{{ editing.hero_logo.image_alt }}{% endif %}"
+          placeholder="Microsoft logo"
+        />
       </div>
       <div class="col-md-2 text-end">
         <button class="btn btn-outline-primary" type="submit">{% if editing.hero_logo %}Update{% else %}Add{% endif %}</button>
       </div>
     </div>
   </form>
+
   <div class="row g-2 mt-3">
     {% for item in hero_logos %}
       <div class="col-md-6">
@@ -257,4 +274,83 @@
       <li class="list-group-item text-muted">No CTA buttons yet.</li>
     {% endfor %}
   </ul>
+</div>
+
+<div class="form-section">
+  <div class="form-section-title">Hero Media</div>
+  <p class="editor-note">Choose image or video for the right side of hero section.</p>
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_hero" />
+    <input type="hidden" name="course" value="{{ selected_course.id }}" />
+
+    <div class="row g-3" data-hero-media-scope>
+      <div class="col-md-4">
+        <label class="form-label">Media Type</label>
+        <select class="form-select" name="media_type" data-hero-media-select>
+          <option value="image" {% if hero.media_type == 'image' or not hero.media_type %}selected{% endif %}>Image</option>
+          <option value="video" {% if hero.media_type == 'video' %}selected{% endif %}>Video</option>
+        </select>
+        <div class="editor-note mt-1" data-hero-media-help="image">Use a hero image for static visual.</div>
+        <div class="editor-note mt-1" data-hero-media-help="video">Play button opens modal with embedded video + lead form.</div>
+      </div>
+
+      <div class="col-md-8" data-hero-media-field="image">
+        <label class="form-label">Hero Image</label>
+        <input type="file" class="form-control" name="hero_image" accept="image/*" />
+        <div class="editor-note mt-1">Recommended ratio: 16:9</div>
+        {% if hero.hero_image %}
+          <div class="media-preview">
+            <img src="{{ hero.hero_image.url }}" alt="{{ hero.hero_image_alt|default:'Hero image' }}" />
+            <small class="text-muted">{{ hero.hero_image_alt|default:'Hero image' }}</small>
+          </div>
+        {% endif %}
+      </div>
+      <div class="col-md-4" data-hero-media-field="image">
+        <label class="form-label">Hero Image Alt Text</label>
+        <input
+          type="text"
+          class="form-control"
+          name="hero_image_alt"
+          value="{{ hero.hero_image_alt|default:'' }}"
+          placeholder="Students learning from mentor"
+        />
+      </div>
+
+      <div class="col-md-6" data-hero-media-field="video">
+        <label class="form-label">Hero Video URL</label>
+        <input
+          type="url"
+          class="form-control"
+          name="hero_video_url"
+          value="{{ hero.hero_video_url|default:'' }}"
+          placeholder="https://www.youtube.com/watch?v=..."
+        />
+      </div>
+      <div class="col-md-3" data-hero-media-field="video">
+        <label class="form-label">Video Thumbnail</label>
+        <input type="file" class="form-control" name="hero_video_thumbnail" accept="image/*" />
+        {% if hero.hero_video_thumbnail %}
+          <div class="media-preview">
+            <img src="{{ hero.hero_video_thumbnail.url }}" alt="{{ hero.hero_video_thumbnail_alt|default:'Video thumbnail' }}" />
+            <small class="text-muted">{{ hero.hero_video_thumbnail_alt|default:'Video thumbnail' }}</small>
+          </div>
+        {% endif %}
+      </div>
+      <div class="col-md-3" data-hero-media-field="video">
+        <label class="form-label">Thumbnail Alt Text</label>
+        <input
+          type="text"
+          class="form-control"
+          name="hero_video_thumbnail_alt"
+          value="{{ hero.hero_video_thumbnail_alt|default:'' }}"
+          placeholder="Course intro video thumbnail"
+        />
+      </div>
+
+      <div class="col-12 text-end">
+        <button class="btn btn-primary" type="submit">Save Hero Media</button>
+      </div>
+    </div>
+  </form>
 </div>

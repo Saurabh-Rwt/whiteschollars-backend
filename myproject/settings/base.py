@@ -1,19 +1,27 @@
 import os
 from pathlib import Path
+from typing import List
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = 'django-insecure-46iuc_a&@t7pi=b$fwk8$lrwmk+f8)o^o^+1tx%obb)o3muy(v'
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-change-me-in-production",
+)
 
 DEBUG = False
 
-# Toggle this to switch settings without relying on environment variables.
-# True  -> production (MySQL)
-# False -> local (SQLite)
-USE_PRODUCTION = False
+DJANGO_ENV = os.getenv("DJANGO_ENV", "local").strip().lower()
+USE_PRODUCTION = DJANGO_ENV in ("production", "prod")
 
-allowed_hosts_env = os.getenv('DJANGO_ALLOWED_HOSTS', '')
-ALLOWED_HOSTS = [host for host in allowed_hosts_env.split(',') if host]
+
+def _split_csv(value: str) -> List[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+allowed_hosts_env = os.getenv("DJANGO_ALLOWED_HOSTS", "")
+ALLOWED_HOSTS = _split_csv(allowed_hosts_env)
+CSRF_TRUSTED_ORIGINS = _split_csv(os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", ""))
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -88,9 +96,9 @@ USE_I18N = True
 
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = "/static/"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / "media"

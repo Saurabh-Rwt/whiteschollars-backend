@@ -271,14 +271,24 @@ EDITABLE_MAP = {
     'curriculum_module': CurriculumModule,
 }
 
+DASHBOARD_EDITOR_STATE_KEY = 'dashboard_editor_state'
 
-def _dashboard_url(tab=None, course_id=None, section=None, edit_key=None, edit_id=None, **extra_params):
-    base = reverse('dashboard')
+
+def _dashboard_url(tab=None, course_id=None, course_slug=None, section=None, edit_key=None, edit_id=None, **extra_params):
+    resolved_slug = course_slug
+    if not resolved_slug and course_id:
+        selected_course = _get_selected_course(course_id)
+        if selected_course:
+            resolved_slug = selected_course.slug
+
+    if resolved_slug:
+        base = reverse('dashboard_course', kwargs={'course_slug': resolved_slug})
+    else:
+        base = reverse('dashboard')
+
     params = {}
     if tab:
         params['tab'] = tab
-    if course_id:
-        params['course'] = course_id
     if section:
         params['section'] = section
     if edit_key:
@@ -293,13 +303,66 @@ def _dashboard_url(tab=None, course_id=None, section=None, edit_key=None, edit_i
     return f"{base}?{urlencode(params)}"
 
 
-def _get_selected_course(course_id):
-    if not course_id:
+def _get_selected_course(course_ref):
+    if not course_ref:
         return None
+
+    if isinstance(course_ref, Course):
+        return course_ref
+
+    if isinstance(course_ref, int):
+        try:
+            return Course.objects.get(id=course_ref)
+        except Course.DoesNotExist:
+            return None
+
+    course_ref = str(course_ref).strip()
+    if not course_ref:
+        return None
+
+    if course_ref.isdigit():
+        try:
+            return Course.objects.get(id=int(course_ref))
+        except Course.DoesNotExist:
+            pass
+
     try:
-        return Course.objects.get(id=course_id)
-    except (Course.DoesNotExist, ValueError, TypeError):
+        return Course.objects.get(slug=course_ref)
+    except Course.DoesNotExist:
         return None
+
+
+def _get_dashboard_editor_state(request, course):
+    if not course:
+        return {}
+    all_state = request.session.get(DASHBOARD_EDITOR_STATE_KEY, {})
+    return all_state.get(course.slug, {})
+
+
+def _set_dashboard_editor_state(request, course, active_section=None, edit_key=None, edit_id=None):
+    if not course:
+        return
+
+    all_state = request.session.get(DASHBOARD_EDITOR_STATE_KEY, {})
+    course_state = dict(all_state.get(course.slug, {}))
+
+    def assign_value(key, value):
+        if value in (None, ''):
+            course_state.pop(key, None)
+        else:
+            course_state[key] = str(value)
+
+    assign_value('active_section', active_section)
+    assign_value('edit_key', edit_key)
+    assign_value('edit_id', edit_id)
+
+    if course_state:
+        all_state[course.slug] = course_state
+    else:
+        all_state.pop(course.slug, None)
+
+    request.session[DASHBOARD_EDITOR_STATE_KEY] = all_state
+    request.session.modified = True
 
 
 def _ensure_course_sections(course):
@@ -527,34 +590,91 @@ def _ajax_dashboard_response(request, response=None, fallback_redirect=None):
 
 # -------------------- DASHBOARD --------------------
 @login_required(login_url='login')
-def dashboard(request):
+def dashboard(request, course_slug=None):
     if request.method == 'POST':
         try:
             response = _handle_dashboard_post(request)
         except Exception as exc:
-            fallback_course_id = request.POST.get('course') or request.POST.get('course_id')
-            fallback_redirect = _dashboard_url(course_id=fallback_course_id)
+            fallback_course_ref = request.POST.get('course') or request.POST.get('course_id') or request.POST.get('course_slug')
+            fallback_redirect = _dashboard_url(course_id=fallback_course_ref)
             logger.exception(
                 "Dashboard action failed",
-                extra={"action": request.POST.get('action'), "course_id": request.POST.get('course')},
+                extra={"action": request.POST.get('action'), "course_ref": fallback_course_ref},
             )
             messages.error(request, f"Failed to save changes: {exc}")
             if _is_ajax_request(request):
                 return _ajax_dashboard_response(request, fallback_redirect=fallback_redirect)
             return redirect(fallback_redirect)
 
+        post_action = (request.POST.get('action') or '').strip()
+        if post_action.startswith('save_') or post_action.startswith('delete_'):
+            posted_course = _get_selected_course(
+                request.POST.get('course') or request.POST.get('course_id') or request.POST.get('course_slug')
+            )
+            if posted_course:
+                existing_state = _get_dashboard_editor_state(request, posted_course)
+                _set_dashboard_editor_state(
+                    request,
+                    posted_course,
+                    active_section=existing_state.get('active_section'),
+                    edit_key=None,
+                    edit_id=None,
+                )
+
         if _is_ajax_request(request):
             return _ajax_dashboard_response(request, response=response)
         return response
 
-    course_id = request.GET.get('course')
-    selected_course = _get_selected_course(course_id)
-    if course_id and not selected_course:
+    legacy_course = request.GET.get('course')
+    if legacy_course:
+        selected_course = _get_selected_course(legacy_course)
+        if selected_course:
+            legacy_section = request.GET.get('section')
+            legacy_edit_key = request.GET.get('edit_key')
+            legacy_edit_id = request.GET.get('edit_id')
+            if legacy_section or (legacy_edit_key and legacy_edit_id):
+                _set_dashboard_editor_state(
+                    request,
+                    selected_course,
+                    active_section=legacy_section,
+                    edit_key=legacy_edit_key,
+                    edit_id=legacy_edit_id,
+                )
+            return redirect(_dashboard_url(course_slug=selected_course.slug))
+        messages.error(request, 'The selected course was not found.')
+        return redirect(_dashboard_url())
+
+    selected_course = _get_selected_course(course_slug)
+    if course_slug and not selected_course:
         messages.error(request, 'The selected course was not found.')
 
-    active_section = request.GET.get('section')
-    edit_key = request.GET.get('edit_key')
-    edit_id = request.GET.get('edit_id')
+    if selected_course:
+        legacy_edit_key = request.GET.get('edit_key')
+        legacy_edit_id = request.GET.get('edit_id')
+        legacy_section = request.GET.get('section')
+        if legacy_edit_key and legacy_edit_id:
+            _set_dashboard_editor_state(
+                request,
+                selected_course,
+                active_section=legacy_section,
+                edit_key=legacy_edit_key,
+                edit_id=legacy_edit_id,
+            )
+            return redirect(_dashboard_url(course_slug=selected_course.slug))
+
+    editor_state = _get_dashboard_editor_state(request, selected_course)
+    active_section = request.GET.get('section') or editor_state.get('active_section')
+    edit_key = editor_state.get('edit_key')
+    edit_id = editor_state.get('edit_id')
+
+    if selected_course and request.GET.get('section'):
+        _set_dashboard_editor_state(
+            request,
+            selected_course,
+            active_section=active_section,
+            edit_key=edit_key,
+            edit_id=edit_id,
+        )
 
     context = _build_dashboard_context(
         request,
@@ -568,12 +688,50 @@ def dashboard(request):
 
 def _handle_dashboard_post(request):
     action = request.POST.get('action')
-    course_id = request.POST.get('course') or request.POST.get('course_id')
-    selected_course = _get_selected_course(course_id)
+    course_ref = request.POST.get('course') or request.POST.get('course_id') or request.POST.get('course_slug')
+    selected_course = _get_selected_course(course_ref)
 
     if not selected_course:
         messages.error(request, 'Please select a valid course before saving.')
         return redirect(_dashboard_url())
+
+    if action == 'set_edit_context':
+        section = request.POST.get('section', '').strip()
+        edit_key = request.POST.get('edit_key', '').strip()
+        edit_id = request.POST.get('edit_id', '').strip()
+
+        if not edit_key or not edit_id:
+            messages.error(request, 'Edit request is missing details.')
+            return redirect(_dashboard_url(course_slug=selected_course.slug))
+        if edit_key not in EDITABLE_MAP:
+            messages.error(request, 'Unsupported edit request.')
+            return redirect(_dashboard_url(course_slug=selected_course.slug))
+
+        model = EDITABLE_MAP[edit_key]
+        entry = model.objects.filter(id=edit_id, course=selected_course).first()
+        if not entry:
+            messages.error(request, 'The requested item could not be found.')
+            return redirect(_dashboard_url(course_slug=selected_course.slug))
+
+        _set_dashboard_editor_state(
+            request,
+            selected_course,
+            active_section=section or _get_dashboard_editor_state(request, selected_course).get('active_section'),
+            edit_key=edit_key,
+            edit_id=entry.id,
+        )
+        return redirect(_dashboard_url(course_slug=selected_course.slug))
+
+    if action == 'clear_edit_context':
+        section = request.POST.get('section', '').strip()
+        _set_dashboard_editor_state(
+            request,
+            selected_course,
+            active_section=section or _get_dashboard_editor_state(request, selected_course).get('active_section'),
+            edit_key=None,
+            edit_id=None,
+        )
+        return redirect(_dashboard_url(course_slug=selected_course.slug))
 
     if action == 'save_course_meta':
         form = CourseForm(request.POST, request.FILES, instance=selected_course)

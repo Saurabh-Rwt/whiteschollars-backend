@@ -19,7 +19,7 @@
           type="text"
           class="form-control"
           name="summary_title"
-          placeholder="WhiteScholars Academy — Data Analytics"
+          placeholder="WhiteScholars Academy â€” Data Analytics"
           value="{{ review_section.summary_title|default:'' }}"
         />
       </div>
@@ -62,7 +62,7 @@
       </div>
     </div>
     <div class="mt-3 text-end">
-      <button class="btn btn-outline-primary" type="submit">Save Review Summary</button>
+      <button class="btn btn-primary" type="submit">Save Review Summary</button>
     </div>
   </form>
 </div>
@@ -101,7 +101,7 @@
       </div>
     </div>
     <div class="mt-3 text-end">
-      <button class="btn btn-outline-primary" type="submit">{% if editing.review_item %}Update{% else %}Add Review{% endif %}</button>
+      <button class="btn btn-primary" type="submit">{% if editing.review_item %}Update{% else %}Add Review{% endif %}</button>
     </div>
   </form>
 
@@ -125,3 +125,4 @@
     {% endfor %}
   </ul>
 </div>
+

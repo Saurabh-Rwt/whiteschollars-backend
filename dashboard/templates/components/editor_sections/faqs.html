@@ -7,7 +7,7 @@
     <label class="form-label">Intro Text</label>
     <input type="text" class="form-control" name="intro_text" value="{{ faq_section.intro_text|default:'' }}" />
     <div class="mt-3 text-end">
-      <button class="btn btn-outline-primary" type="submit">Save Intro</button>
+      <button class="btn btn-primary" type="submit">Save Intro</button>
     </div>
   </form>
 </div>
@@ -31,7 +31,7 @@
       </div>
     </div>
     <div class="mt-3 text-end">
-      <button class="btn btn-outline-primary" type="submit">{% if editing.faq_item %}Update{% else %}Add FAQ{% endif %}</button>
+      <button class="btn btn-primary" type="submit">{% if editing.faq_item %}Update{% else %}Add FAQ{% endif %}</button>
     </div>
   </form>
 
@@ -55,3 +55,4 @@
     {% endfor %}
   </ul>
 </div>
+

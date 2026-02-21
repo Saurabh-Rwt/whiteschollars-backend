@@ -11,7 +11,7 @@
         <input type="text" class="form-control" name="text" value="{% if editing.why_white_bullet %}{{ editing.why_white_bullet.text }}{% endif %}" required />
       </div>
       <div class="col-md-2 text-end">
-        <button class="btn btn-outline-primary" type="submit">{% if editing.why_white_bullet %}Update{% else %}Add{% endif %}</button>
+        <button class="btn btn-primary" type="submit">{% if editing.why_white_bullet %}Update{% else %}Add{% endif %}</button>
       </div>
     </div>
   </form>
@@ -53,7 +53,7 @@
         <input type="text" class="form-control" name="image_alt" value="{% if editing.why_white_image %}{{ editing.why_white_image.image_alt }}{% endif %}" />
       </div>
       <div class="col-md-2 text-end">
-        <button class="btn btn-outline-primary" type="submit">{% if editing.why_white_image %}Update{% else %}Add{% endif %}</button>
+        <button class="btn btn-primary" type="submit">{% if editing.why_white_image %}Update{% else %}Add{% endif %}</button>
       </div>
     </div>
   </form>
@@ -79,3 +79,4 @@
     {% endfor %}
   </div>
 </div>
+

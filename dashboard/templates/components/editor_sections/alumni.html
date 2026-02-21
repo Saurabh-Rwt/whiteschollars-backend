@@ -16,7 +16,7 @@
         <input type="text" class="form-control" name="image_alt" value="{% if editing.alumni_logo %}{{ editing.alumni_logo.image_alt }}{% endif %}" />
       </div>
       <div class="col-md-2 text-end">
-        <button class="btn btn-outline-primary" type="submit">{% if editing.alumni_logo %}Update{% else %}Add{% endif %}</button>
+        <button class="btn btn-primary" type="submit">{% if editing.alumni_logo %}Update{% else %}Add{% endif %}</button>
       </div>
     </div>
   </form>
@@ -42,3 +42,4 @@
     {% endfor %}
   </div>
 </div>
+

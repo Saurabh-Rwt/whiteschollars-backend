@@ -123,7 +123,7 @@
         >{{ hero_highlights_text|default:'' }}</textarea>
       </div>
       <div class="col-12 text-end">
-        <button class="btn btn-outline-primary" type="submit">Save Checklist</button>
+        <button class="btn btn-primary" type="submit">Save Checklist</button>
       </div>
     </div>
   </form>
@@ -148,7 +148,7 @@
         />
       </div>
       <div class="col-md-2 text-end">
-        <button class="btn btn-outline-primary" type="submit">Save</button>
+        <button class="btn btn-primary" type="submit">Save</button>
       </div>
     </div>
   </form>
@@ -185,15 +185,15 @@
       </div>
       <div class="col-12">
         <div class="entity-actions">
-        <button class="btn btn-outline-primary" type="submit" data-hero-logo-submit>{% if editing.hero_logo %}Update Logo{% else %}Add Logo{% endif %}</button>
+        <button class="btn btn-primary" type="submit" data-hero-logo-submit>{% if editing.hero_logo %}Update Logo{% else %}Add Logo{% endif %}</button>
         {% if editing.hero_logo %}
-          <a
-            class="btn btn-outline-secondary"
-            href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=hero"
-            data-hero-logo-cancel
-          >
-            Cancel
-          </a>
+          <form method="POST" action="{% url 'dashboard' %}" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="clear_edit_context" />
+            <input type="hidden" name="course" value="{{ selected_course.id }}" />
+            <input type="hidden" name="section" value="hero" />
+            <button class="btn btn-outline-secondary" type="submit" data-hero-logo-cancel>Cancel</button>
+          </form>
         {% endif %}
         </div>
       </div>
@@ -299,15 +299,15 @@
       </div>
       <div class="col-12">
         <div class="entity-actions">
-        <button class="btn btn-outline-primary" type="submit" data-hero-button-submit>{% if editing.hero_button %}Update Button{% else %}Add Button{% endif %}</button>
+        <button class="btn btn-primary" type="submit" data-hero-button-submit>{% if editing.hero_button %}Update Button{% else %}Add Button{% endif %}</button>
         {% if editing.hero_button %}
-          <a
-            class="btn btn-outline-secondary"
-            href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=hero"
-            data-hero-button-cancel
-          >
-            Cancel
-          </a>
+          <form method="POST" action="{% url 'dashboard' %}" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="clear_edit_context" />
+            <input type="hidden" name="course" value="{{ selected_course.id }}" />
+            <input type="hidden" name="section" value="hero" />
+            <button class="btn btn-outline-secondary" type="submit" data-hero-button-cancel>Cancel</button>
+          </form>
         {% endif %}
         </div>
       </div>
@@ -432,3 +432,4 @@
     </div>
   </form>
 </div>
+

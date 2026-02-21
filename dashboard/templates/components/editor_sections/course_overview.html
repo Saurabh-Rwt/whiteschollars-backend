@@ -8,7 +8,7 @@
     <input type="hidden" name="intro_html" id="overview-intro-html" value="{{ course_overview.intro_html|default:'' }}" />
     <div class="form-control" style="padding: 0;" data-quill data-target="overview-intro-html"></div>
     <div class="mt-3 text-end">
-      <button class="btn btn-outline-primary" type="submit">Save Intro</button>
+      <button class="btn btn-primary" type="submit">Save Intro</button>
     </div>
   </form>
 </div>
@@ -32,7 +32,7 @@
       </div>
     </div>
     <div class="mt-3 text-end">
-      <button class="btn btn-outline-primary" type="submit">{% if editing.course_overview_item %}Update{% else %}Add{% endif %}</button>
+      <button class="btn btn-primary" type="submit">{% if editing.course_overview_item %}Update{% else %}Add{% endif %}</button>
     </div>
   </form>
   <ul class="list-group list-group-flush mt-3">
@@ -55,3 +55,4 @@
     {% endfor %}
   </ul>
 </div>
+

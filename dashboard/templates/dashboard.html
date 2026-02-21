@@ -611,7 +611,7 @@
               {% for course in courses %}
                 <a
                   class="course-item {% if selected_course and selected_course.id == course.id %}active{% endif %}"
-                  href="?course={{ course.id }}"
+                  href="{% url 'dashboard_course' course.slug %}"
                 >
                   <span class="course-name">{{ course.name }}</span>
                   <span class="course-slug">{{ course.slug }}</span>
@@ -1151,7 +1151,14 @@
         const modeBadge = document.querySelector('[data-hero-logo-mode]');
         if (modeBadge) modeBadge.textContent = 'Add new logo';
         const cancelButton = form.querySelector('[data-hero-logo-cancel]');
-        if (cancelButton) cancelButton.remove();
+        if (cancelButton) {
+          const cancelForm = cancelButton.closest('form');
+          if (cancelForm) {
+            cancelForm.remove();
+          } else {
+            cancelButton.remove();
+          }
+        }
       };
 
       const resetHeroButtonFormToAddMode = () => {
@@ -1165,7 +1172,14 @@
         const modeBadge = document.querySelector('[data-hero-button-mode]');
         if (modeBadge) modeBadge.textContent = 'Add new button';
         const cancelButton = form.querySelector('[data-hero-button-cancel]');
-        if (cancelButton) cancelButton.remove();
+        if (cancelButton) {
+          const cancelForm = cancelButton.closest('form');
+          if (cancelForm) {
+            cancelForm.remove();
+          } else {
+            cancelButton.remove();
+          }
+        }
         const actionSelect = form.querySelector('[data-action-select]');
         if (actionSelect) updateActionVisibility(actionSelect);
       };
@@ -1206,6 +1220,16 @@
               showToast('Data saved successfully.', 'success');
             } else {
               showToast('Unable to save changes. Please check the form and try again.', 'error');
+            }
+
+            const formAction = form.querySelector('input[name="action"]')?.value || '';
+            if (response.ok && formAction === 'clear_edit_context') {
+              if (payload && payload.redirect_url) {
+                window.location.assign(payload.redirect_url);
+              } else {
+                window.location.reload();
+              }
+              return;
             }
 
             if (response.ok && payload && payload.data) {
@@ -1434,10 +1458,70 @@
         });
       });
 
-      document.addEventListener('click', (event) => {
+      document.addEventListener('click', async (event) => {
         if (event.target.matches('[data-list-remove]')) {
           const row = event.target.closest('[data-list-item]');
           if (row) row.remove();
+          return;
+        }
+
+        const editLink = event.target.closest('a[href*="edit_key="][href*="edit_id="]');
+        if (!editLink) return;
+        if (editLink.getAttribute('target') === '_blank') return;
+
+        let linkUrl = null;
+        try {
+          linkUrl = new URL(editLink.getAttribute('href'), window.location.origin);
+        } catch (error) {
+          return;
+        }
+
+        if (linkUrl.pathname !== dashboardPath) return;
+
+        const editKey = linkUrl.searchParams.get('edit_key');
+        const editId = linkUrl.searchParams.get('edit_id');
+        const courseRef = linkUrl.searchParams.get('course') || selectedCourseId;
+        const section = linkUrl.searchParams.get('section') || '';
+        if (!editKey || !editId || !courseRef) return;
+
+        event.preventDefault();
+
+        const payload = new FormData();
+        payload.append('action', 'set_edit_context');
+        payload.append('course', courseRef);
+        payload.append('section', section);
+        payload.append('edit_key', editKey);
+        payload.append('edit_id', editId);
+
+        try {
+          const response = await fetch(dashboardUrl.toString(), {
+            method: 'POST',
+            body: payload,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRFToken': csrfToken,
+            },
+          });
+
+          let json = null;
+          const contentType = response.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            json = await response.json();
+          }
+
+          if (json && Array.isArray(json.messages)) {
+            json.messages.forEach((entry) => {
+              showToast(entry.text, entry.level);
+            });
+          }
+
+          if (json && json.redirect_url) {
+            window.location.assign(json.redirect_url);
+          } else {
+            window.location.reload();
+          }
+        } catch (error) {
+          showToast('Unable to open editor. Please try again.', 'error');
         }
       });
 

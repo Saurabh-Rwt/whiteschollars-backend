@@ -37,6 +37,19 @@
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.course_overview_item %}{{ editing.course_overview_item.id }}{% endif %}" data-overview-item-id />
 
+    <div class="entity-actions overview-form-actions overview-form-actions-top">
+      <button class="btn btn-primary" type="submit" data-overview-item-submit>
+        {% if editing.course_overview_item %}Update Question{% else %}Add Question{% endif %}
+      </button>
+      <button
+        class="btn btn-outline-secondary {% if not editing.course_overview_item %}d-none{% endif %}"
+        type="button"
+        data-overview-item-cancel
+      >
+        Cancel
+      </button>
+    </div>
+
     <div class="row g-3">
       <div class="col-lg-4">
         <label class="form-label">Question</label>
@@ -62,19 +75,6 @@
         />
         <div class="form-control overview-quill overview-answer-editor" style="padding: 0;" data-quill data-target="overview-answer-html"></div>
       </div>
-    </div>
-
-    <div class="entity-actions overview-form-actions">
-      <button class="btn btn-primary" type="submit" data-overview-item-submit>
-        {% if editing.course_overview_item %}Update Question{% else %}Add Question{% endif %}
-      </button>
-      <button
-        class="btn btn-outline-secondary {% if not editing.course_overview_item %}d-none{% endif %}"
-        type="button"
-        data-overview-item-cancel
-      >
-        Cancel
-      </button>
     </div>
   </form>
 

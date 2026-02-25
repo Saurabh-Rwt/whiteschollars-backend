@@ -79,21 +79,21 @@
       .course-list {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        max-height: 70vh;
+        gap: 6px;
+        max-height: calc(100vh - 220px);
         overflow: auto;
         padding-right: 4px;
       }
 
       .course-item {
-        border-radius: 12px;
+        border-radius: 10px;
         border: 1px solid transparent;
-        padding: 12px;
+        padding: 10px 12px;
         text-decoration: none;
         color: inherit;
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 2px;
         transition: 0.2s ease;
       }
 
@@ -109,11 +109,39 @@
 
       .course-name {
         font-weight: 600;
+        font-size: 14px;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .course-slug {
-        font-size: 12px;
+        font-size: 11px;
         color: var(--panel-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .dashboard-workspace {
+        align-items: start;
+      }
+
+      .dashboard-course-column .courses-panel {
+        position: sticky;
+        top: 16px;
+        padding: 14px;
+      }
+
+      .courses-panel .panel-header {
+        margin-bottom: 10px;
+      }
+
+      .courses-panel .panel-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
 
       .editor-header {
@@ -137,8 +165,8 @@
 
       .editor-layout {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 320px;
-        gap: 24px;
+        grid-template-columns: minmax(0, 1fr) clamp(260px, 20vw, 290px);
+        gap: 16px;
         align-items: start;
       }
 
@@ -232,15 +260,18 @@
         border: 1px dashed var(--panel-soft-border);
         background: #f8fafc;
         border-radius: 16px;
-        padding: 16px;
+        padding: 12px;
         position: sticky;
         top: 16px;
-        max-height: calc(100vh - 140px);
-        overflow: auto;
+        max-height: calc(100vh - 100px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
       }
 
       .preview-card h6 {
         font-weight: 700;
+        font-size: 14px;
       }
 
       .preview-list {
@@ -249,15 +280,16 @@
         margin: 0;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 6px;
       }
 
       .preview-item {
-        padding: 10px 12px;
-        border-radius: 10px;
+        padding: 8px 10px;
+        border-radius: 9px;
         background: #fff;
         border: 1px solid var(--panel-border);
-        font-size: 13px;
+        font-size: 12px;
+        line-height: 1.25;
       }
 
       .preview-item.disabled {
@@ -266,21 +298,29 @@
       }
 
       .preview-tabs .nav-link {
-        font-size: 12px;
-        padding: 6px 10px;
+        font-size: 11px;
+        padding: 5px 9px;
+      }
+
+      .preview-tab-content {
+        margin-top: 10px !important;
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding-right: 2px;
       }
 
       .preview-content {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
       }
 
       .preview-section {
         border: 1px solid var(--panel-border);
         background: #fff;
-        border-radius: 12px;
-        padding: 12px;
+        border-radius: 10px;
+        padding: 10px;
       }
 
       .preview-section.is-disabled {
@@ -296,7 +336,7 @@
 
       .preview-section-title {
         font-weight: 700;
-        font-size: 13px;
+        font-size: 12px;
       }
 
       .preview-disabled-badge {
@@ -748,10 +788,20 @@
 
         .preview-card {
           position: static;
+          max-height: none;
+          overflow: visible;
         }
       }
 
       @media (max-width: 991px) {
+        .dashboard-course-column .courses-panel {
+          position: static;
+        }
+
+        .course-list {
+          max-height: 260px;
+        }
+
         .editor-header {
           flex-direction: column;
           align-items: flex-start;
@@ -803,12 +853,12 @@
         Only fields marked with <strong>*</strong> are mandatory. Alt text fields are optional.
       </div>
 
-      <div class="row g-4">
-        <aside class="col-xl-3 col-lg-4">
-          <div class="panel">
+      <div class="row g-3 dashboard-workspace">
+        <aside class="col-xxl-2 col-xl-3 col-lg-3 dashboard-course-column">
+          <div class="panel courses-panel">
             <div class="panel-header">
               <div>
-                <p class="panel-title">Courses</p>
+                <p class="panel-title">Courses <span class="badge-soft">{{ courses|length }}</span></p>
                 <p class="panel-subtitle">Select a course to edit or create a new one.</p>
               </div>
               <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#courseModal">
@@ -833,7 +883,7 @@
           </div>
         </aside>
 
-        <main class="col-xl-9 col-lg-8">
+        <main class="col-xxl-10 col-xl-9 col-lg-9 dashboard-editor-column">
           {% if not selected_course %}
             <div class="empty-state">
               <h4>Create your first course</h4>
@@ -1004,7 +1054,7 @@
                 </div>
               </div>
 
-              <aside>
+              <aside class="editor-preview-column">
                 <div class="preview-card">
                   <div class="d-flex justify-content-between align-items-start mb-2">
                     <div>
@@ -1038,7 +1088,7 @@
                       </button>
                     </li>
                   </ul>
-                  <div class="tab-content mt-3">
+                  <div class="tab-content preview-tab-content">
                     <div class="tab-pane fade show active" id="preview-structure" role="tabpanel">
                       <ul class="preview-list" data-preview-structure>
                         {% for section in course_sections %}

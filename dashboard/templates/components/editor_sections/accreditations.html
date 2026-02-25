@@ -23,9 +23,21 @@
   <div class="row g-2 mt-3">
     {% for item in accreditation_logos %}
       <div class="col-md-6">
-        <div class="border rounded p-2 d-flex align-items-center justify-content-between">
-          <span class="text-truncate">{{ item.image_alt|default:'Logo' }}</span>
-          <div class="d-flex gap-2">
+        <div class="entity-item">
+          <div class="entity-main">
+            <div class="entity-thumb-wrap">
+              {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.image_alt|default:'Logo' }}" class="entity-thumb" />
+              {% else %}
+                <span class="entity-thumb-placeholder"><i class="bi bi-image"></i></span>
+              {% endif %}
+            </div>
+            <div class="entity-text">
+              <div class="entity-title text-truncate">{{ item.image_alt|default:'Logo' }}</div>
+              <div class="entity-meta">Logo ID #{{ item.id }}</div>
+            </div>
+          </div>
+          <div class="entity-item-actions">
             <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=accreditations&edit_key=accreditation_logo&edit_id={{ item.id }}">Edit</a>
             <form method="POST" action="{% url 'dashboard' %}">
               {% csrf_token %}
@@ -38,7 +50,9 @@
         </div>
       </div>
     {% empty %}
-      <div class="col-12 text-muted">No accreditation logos yet.</div>
+      <div class="col-12">
+        <div class="entity-empty-state">No accreditation logos yet.</div>
+      </div>
     {% endfor %}
   </div>
 </div>

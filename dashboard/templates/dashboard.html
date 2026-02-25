@@ -584,23 +584,32 @@
         border-top: 1px dashed var(--panel-border);
       }
 
-      .overview-form-actions-top {
-        margin-top: 0;
-        margin-bottom: 12px;
-        padding-top: 0;
-        border-top: 0;
+      .overview-question-form .row {
+        align-items: flex-start;
       }
 
-      .overview-quill .ql-container {
-        height: 140px;
+      .overview-quill {
+        overflow: hidden;
+      }
+
+      .overview-quill .ql-toolbar.ql-snow {
+        border: 0;
+        border-bottom: 1px solid var(--panel-border);
+      }
+
+      .overview-quill .ql-container.ql-snow {
+        border: 0;
+        height: 120px !important;
+      }
+
+      .overview-answer-editor .ql-container.ql-snow {
+        height: 140px !important;
       }
 
       .overview-quill .ql-editor {
         min-height: 100%;
-      }
-
-      .overview-answer-editor .ql-container {
-        height: 180px;
+        max-height: 100%;
+        overflow-y: auto;
       }
 
       .overview-list-wrap {

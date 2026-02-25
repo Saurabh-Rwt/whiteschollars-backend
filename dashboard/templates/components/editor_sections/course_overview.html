@@ -1,58 +1,135 @@
-<div class="form-section">
-  <div class="form-section-title">Overview Intro</div>
-  <form method="POST" action="{% url 'dashboard' %}">
+<div class="form-section editor-entity-section overview-editor-section">
+  <div class="entity-header">
+    <div>
+      <div class="form-section-title mb-1">Overview Intro</div>
+      <div class="editor-note">Intro text shown above the overview questions on the course page.</div>
+    </div>
+  </div>
+  <form method="POST" action="{% url 'dashboard' %}" class="entity-form overview-intro-form">
     {% csrf_token %}
     <input type="hidden" name="action" value="save_course_overview" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
-    <label class="form-label">Intro Text</label>
-    <input type="hidden" name="intro_html" id="overview-intro-html" value="{{ course_overview.intro_html|default:'' }}" />
-    <div class="form-control" style="padding: 0;" data-quill data-target="overview-intro-html"></div>
-    <div class="mt-3 text-end">
-      <button class="btn btn-primary" type="submit">Save Intro</button>
+    <div>
+      <label class="form-label">Intro Text</label>
+      <input type="hidden" name="intro_html" id="overview-intro-html" value="{{ course_overview.intro_html|default:'' }}" />
+      <div class="form-control overview-quill" style="padding: 0;" data-quill data-target="overview-intro-html"></div>
+    </div>
+    <div class="entity-actions overview-form-actions">
+      <button class="btn btn-primary" type="submit">Save Overview Intro</button>
     </div>
   </form>
 </div>
 
-<div class="form-section">
-  <div class="form-section-title">Overview Questions</div>
-  <form method="POST" action="{% url 'dashboard' %}">
+<div class="form-section editor-entity-section overview-editor-section">
+  <div class="entity-header">
+    <div>
+      <div class="form-section-title mb-1">Overview Questions</div>
+      <div class="editor-note">Add FAQ-style questions and answers. Edit happens inline without reloading the page.</div>
+    </div>
+    <div class="entity-mode-badge" data-overview-item-mode>
+      {% if editing.course_overview_item %}Editing question{% else %}Add question{% endif %}
+    </div>
+  </div>
+
+  <form method="POST" action="{% url 'dashboard' %}" class="entity-form overview-question-form" data-overview-item-form>
     {% csrf_token %}
     <input type="hidden" name="action" value="save_course_overview_item" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
-    <input type="hidden" name="item_id" value="{% if editing.course_overview_item %}{{ editing.course_overview_item.id }}{% endif %}" />
+    <input type="hidden" name="item_id" value="{% if editing.course_overview_item %}{{ editing.course_overview_item.id }}{% endif %}" data-overview-item-id />
+
     <div class="row g-3">
-      <div class="col-md-4">
+      <div class="col-lg-4">
         <label class="form-label">Question</label>
-        <input type="text" class="form-control" name="question" value="{% if editing.course_overview_item %}{{ editing.course_overview_item.question }}{% endif %}" required />
+        <input
+          type="text"
+          class="form-control"
+          name="question"
+          value="{% if editing.course_overview_item %}{{ editing.course_overview_item.question }}{% endif %}"
+          placeholder="e.g. Who is this course for?"
+          required
+          data-overview-question-input
+        />
+        <div class="editor-note mt-2">Keep it concise so it looks clean in the FAQ accordion.</div>
       </div>
-      <div class="col-md-8">
+      <div class="col-lg-8">
         <label class="form-label">Answer</label>
-        <input type="hidden" name="answer_html" id="overview-answer-html" value="{% if editing.course_overview_item %}{{ editing.course_overview_item.answer_html }}{% endif %}" />
-        <div class="form-control" style="padding: 0;" data-quill data-target="overview-answer-html"></div>
+        <input
+          type="hidden"
+          name="answer_html"
+          id="overview-answer-html"
+          value="{% if editing.course_overview_item %}{{ editing.course_overview_item.answer_html }}{% endif %}"
+          data-overview-answer-input
+        />
+        <div class="form-control overview-quill overview-answer-editor" style="padding: 0;" data-quill data-target="overview-answer-html"></div>
       </div>
     </div>
-    <div class="mt-3 text-end">
-      <button class="btn btn-primary" type="submit">{% if editing.course_overview_item %}Update{% else %}Add{% endif %}</button>
+
+    <div class="entity-actions overview-form-actions">
+      <button class="btn btn-primary" type="submit" data-overview-item-submit>
+        {% if editing.course_overview_item %}Update Question{% else %}Add Question{% endif %}
+      </button>
+      <button
+        class="btn btn-outline-secondary {% if not editing.course_overview_item %}d-none{% endif %}"
+        type="button"
+        data-overview-item-cancel
+      >
+        Cancel
+      </button>
     </div>
   </form>
-  <ul class="list-group list-group-flush mt-3">
-    {% for item in course_overview_items %}
-      <li class="list-group-item d-flex align-items-center justify-content-between">
-        <span class="text-truncate">{{ item.question }}</span>
-        <div class="d-flex gap-2">
-          <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=course_overview&edit_key=course_overview_item&edit_id={{ item.id }}">Edit</a>
-          <form method="POST" action="{% url 'dashboard' %}">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="delete_course_overview_item" />
-            <input type="hidden" name="course" value="{{ selected_course.id }}" />
-            <input type="hidden" name="item_id" value="{{ item.id }}" />
-            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-          </form>
-        </div>
-      </li>
-    {% empty %}
-      <li class="list-group-item text-muted">No overview questions yet.</li>
-    {% endfor %}
-  </ul>
+
+  <div class="overview-list-wrap mt-3">
+    <div class="overview-list-head">
+      <div class="form-label mb-0">Saved Questions</div>
+      <span class="badge-soft">{{ course_overview_items|length }} item{{ course_overview_items|length|pluralize }}</span>
+    </div>
+
+    <ul class="list-group list-group-flush entity-list overview-item-list" data-overview-items-list>
+      {% for item in course_overview_items %}
+        <li class="list-group-item" data-overview-item="{{ item.id }}">
+          <article class="entity-item overview-item-card">
+            <div class="entity-main">
+              <div class="entity-thumb-wrap overview-item-badge" aria-hidden="true">
+                <i class="bi bi-question-circle"></i>
+              </div>
+              <div class="overview-item-text">
+                <div class="entity-title overview-item-question">{{ item.question }}</div>
+                <div class="overview-item-answer">
+                  {{ item.answer_html|striptags|truncatechars:160|default:"No answer text." }}
+                </div>
+              </div>
+            </div>
+            <div class="entity-item-actions" role="group" aria-label="Overview question actions">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                data-overview-item-edit
+                data-item-id="{{ item.id }}"
+                data-question="{{ item.question|escape }}"
+                data-answer-html="{{ item.answer_html|escape }}"
+                title="Edit question"
+                aria-label="Edit question"
+              >
+                <i class="bi bi-pencil"></i>
+              </button>
+              <form method="POST" action="{% url 'dashboard' %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_course_overview_item" />
+                <input type="hidden" name="course" value="{{ selected_course.id }}" />
+                <input type="hidden" name="item_id" value="{{ item.id }}" />
+                <button class="btn btn-sm btn-outline-danger" type="submit" title="Delete question" aria-label="Delete question">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
+          </article>
+        </li>
+      {% empty %}
+        <li class="list-group-item" data-overview-items-empty>
+          <div class="entity-empty-state">No overview questions yet. Add your first question above.</div>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
 </div>
 

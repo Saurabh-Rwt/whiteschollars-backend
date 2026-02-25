@@ -574,6 +574,82 @@
         border-top: 1px dashed var(--panel-border);
       }
 
+      .overview-editor-section .entity-header {
+        margin-bottom: 12px;
+      }
+
+      .overview-form-actions {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px dashed var(--panel-border);
+      }
+
+      .overview-quill .ql-editor {
+        min-height: 120px;
+        max-height: 220px;
+        overflow-y: auto;
+      }
+
+      .overview-answer-editor .ql-editor {
+        min-height: 150px;
+      }
+
+      .overview-list-wrap {
+        border-top: 1px solid #eef2f8;
+        padding-top: 12px;
+      }
+
+      .overview-list-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+
+      .overview-item-list .list-group-item {
+        padding: 10px 0;
+      }
+
+      .overview-item-card {
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .overview-item-card .entity-main {
+        align-items: flex-start;
+        gap: 10px;
+        flex: 1;
+      }
+
+      .overview-item-badge {
+        width: 36px;
+        height: 36px;
+        flex: 0 0 36px;
+        border-radius: 10px;
+        font-size: 15px;
+        color: #1d4e89;
+        background: #f4f8ff;
+      }
+
+      .overview-item-text {
+        min-width: 0;
+      }
+
+      .overview-item-question {
+        margin-bottom: 4px;
+      }
+
+      .overview-item-answer {
+        color: var(--panel-muted);
+        font-size: 13px;
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
       @media (max-width: 768px) {
         .hero-icon-controls {
           flex-wrap: wrap;
@@ -584,6 +660,15 @@
         }
 
         .hero-media-actions {
+          justify-content: flex-start;
+        }
+
+        .overview-list-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .overview-form-actions {
           justify-content: flex-start;
         }
       }
@@ -1203,6 +1288,75 @@
         );
       };
 
+      const htmlToPlainTextPreview = (html, maxLength = 160) => {
+        const temp = document.createElement('div');
+        temp.innerHTML = String(html || '');
+        const text = (temp.textContent || temp.innerText || '').replace(/\s+/g, ' ').trim();
+        if (!text) return 'No answer text.';
+        if (text.length <= maxLength) return text;
+        return `${text.slice(0, Math.max(0, maxLength - 3)).trim()}...`;
+      };
+
+      const setQuillEditorHtml = (targetId, html) => {
+        const hiddenInput = document.getElementById(targetId);
+        if (hiddenInput) {
+          hiddenInput.value = html || '';
+        }
+        const entry = quillEditors.find((editor) => editor.hiddenInput && editor.hiddenInput.id === targetId);
+        if (entry) {
+          entry.quill.root.innerHTML = html || '';
+        }
+      };
+
+      const createOverviewItemMarkup = (item) => {
+        const answerHtml = String(item.answer_html || '');
+        return (
+          `<li class="list-group-item" data-overview-item="${escapeAttr(item.id)}">` +
+          '<article class="entity-item overview-item-card">' +
+          '<div class="entity-main">' +
+          '<div class="entity-thumb-wrap overview-item-badge" aria-hidden="true"><i class="bi bi-question-circle"></i></div>' +
+          '<div class="overview-item-text">' +
+          `<div class="entity-title overview-item-question">${escapeHtml(item.question || '')}</div>` +
+          `<div class="overview-item-answer">${escapeHtml(htmlToPlainTextPreview(answerHtml))}</div>` +
+          '</div>' +
+          '</div>' +
+          '<div class="entity-item-actions" role="group" aria-label="Overview question actions">' +
+          `<button type="button" class="btn btn-sm btn-outline-secondary" data-overview-item-edit data-item-id="${escapeAttr(item.id)}" data-question="${escapeAttr(item.question || '')}" data-answer-html="${escapeAttr(answerHtml)}" title="Edit question" aria-label="Edit question"><i class="bi bi-pencil"></i></button>` +
+          `<form method="POST" action="${dashboardPath}" class="d-inline">` +
+          `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeAttr(csrfToken)}" />` +
+          '<input type="hidden" name="action" value="delete_course_overview_item" />' +
+          `<input type="hidden" name="course" value="${escapeAttr(selectedCourseId)}" />` +
+          `<input type="hidden" name="item_id" value="${escapeAttr(item.id)}" />` +
+          '<button class="btn btn-sm btn-outline-danger" type="submit" title="Delete question" aria-label="Delete question"><i class="bi bi-trash"></i></button>' +
+          '</form>' +
+          '</div>' +
+          '</article>' +
+          '</li>'
+        );
+      };
+
+      const ensureOverviewItemsEmptyState = () => {
+        const list = document.querySelector('[data-overview-items-list]');
+        if (!list) return;
+        const itemCount = list.querySelectorAll('[data-overview-item]').length;
+        let empty = list.querySelector('[data-overview-items-empty]');
+        if (itemCount === 0 && !empty) {
+          list.insertAdjacentHTML(
+            'beforeend',
+            '<li class="list-group-item" data-overview-items-empty><div class="entity-empty-state">No overview questions yet. Add your first question above.</div></li>'
+          );
+          empty = list.querySelector('[data-overview-items-empty]');
+        }
+        if (itemCount > 0 && empty) {
+          empty.remove();
+        }
+
+        const badge = document.querySelector('.overview-list-head .badge-soft');
+        if (badge) {
+          badge.textContent = `${itemCount} item${itemCount === 1 ? '' : 's'}`;
+        }
+      };
+
       const ensureHeroLogosEmptyState = () => {
         const list = document.querySelector('[data-hero-logos-list]');
         if (!list) return;
@@ -1312,6 +1466,23 @@
         setHeroButtonIconSelection('', '');
       };
 
+      const resetOverviewItemFormToAddMode = () => {
+        const form = document.querySelector('[data-overview-item-form]');
+        if (!form) return;
+        form.reset();
+        const itemId = form.querySelector('[data-overview-item-id]');
+        if (itemId) itemId.value = '';
+        const questionInput = form.querySelector('[data-overview-question-input]');
+        if (questionInput) questionInput.value = '';
+        setQuillEditorHtml('overview-answer-html', '');
+        const submitButton = form.querySelector('[data-overview-item-submit]');
+        if (submitButton) submitButton.textContent = 'Add Question';
+        const modeBadge = document.querySelector('[data-overview-item-mode]');
+        if (modeBadge) modeBadge.textContent = 'Add question';
+        const cancelButton = form.querySelector('[data-overview-item-cancel]');
+        if (cancelButton) cancelButton.classList.add('d-none');
+      };
+
       const startHeroLogoEdit = (button) => {
         const form = document.querySelector('[data-hero-logo-form]');
         if (!form || !button) return;
@@ -1355,6 +1526,24 @@
         if (submitButton) submitButton.textContent = 'Update Button';
         if (modeBadge) modeBadge.textContent = 'Editing button';
         if (cancelButton) cancelButton.classList.remove('d-none');
+      };
+
+      const startOverviewItemEdit = (button) => {
+        const form = document.querySelector('[data-overview-item-form]');
+        if (!form || !button) return;
+        const itemId = form.querySelector('[data-overview-item-id]');
+        const questionInput = form.querySelector('[data-overview-question-input]');
+        const submitButton = form.querySelector('[data-overview-item-submit]');
+        const cancelButton = form.querySelector('[data-overview-item-cancel]');
+        const modeBadge = document.querySelector('[data-overview-item-mode]');
+
+        if (itemId) itemId.value = button.dataset.itemId || '';
+        if (questionInput) questionInput.value = button.dataset.question || '';
+        setQuillEditorHtml('overview-answer-html', button.dataset.answerHtml || '');
+        if (submitButton) submitButton.textContent = 'Update Question';
+        if (modeBadge) modeBadge.textContent = 'Editing question';
+        if (cancelButton) cancelButton.classList.remove('d-none');
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       };
 
       const bindDashboardForm = (form) => {
@@ -1429,6 +1618,35 @@
                   const item = list.querySelector(`[data-hero-logo-item="${payload.data.item_id}"]`);
                   if (item) item.remove();
                   ensureHeroLogosEmptyState();
+                }
+              }
+
+              if (action === 'save_course_overview_item' && payload.data.item) {
+                const list = document.querySelector('[data-overview-items-list]');
+                if (list) {
+                  const itemSelector = `[data-overview-item="${payload.data.item.id}"]`;
+                  const existingItem = list.querySelector(itemSelector);
+                  if (existingItem) {
+                    existingItem.outerHTML = createOverviewItemMarkup(payload.data.item);
+                  } else {
+                    list.insertAdjacentHTML('beforeend', createOverviewItemMarkup(payload.data.item));
+                  }
+                  ensureOverviewItemsEmptyState();
+                  bindDashboardForms(list);
+                }
+                resetOverviewItemFormToAddMode();
+              }
+
+              if (action === 'delete_course_overview_item' && payload.data.item_id) {
+                const list = document.querySelector('[data-overview-items-list]');
+                if (list) {
+                  const item = list.querySelector(`[data-overview-item="${payload.data.item_id}"]`);
+                  if (item) item.remove();
+                  ensureOverviewItemsEmptyState();
+                }
+                const activeItem = document.querySelector('[data-overview-item-id]');
+                if (activeItem && String(activeItem.value || '') === String(payload.data.item_id || '')) {
+                  resetOverviewItemFormToAddMode();
                 }
               }
 
@@ -1755,6 +1973,20 @@
           return;
         }
 
+        const overviewItemEditButton = event.target.closest('[data-overview-item-edit]');
+        if (overviewItemEditButton) {
+          event.preventDefault();
+          startOverviewItemEdit(overviewItemEditButton);
+          return;
+        }
+
+        const overviewItemCancel = event.target.closest('[data-overview-item-cancel]');
+        if (overviewItemCancel) {
+          event.preventDefault();
+          resetOverviewItemFormToAddMode();
+          return;
+        }
+
         const editLink = event.target.closest('a[href*="edit_key="][href*="edit_id="]');
         if (!editLink) return;
         if (editLink.getAttribute('target') === '_blank') return;
@@ -1858,6 +2090,8 @@
 
       resetHeroLogoFormToAddMode();
       resetHeroButtonFormToAddMode();
+      resetOverviewItemFormToAddMode();
+      ensureOverviewItemsEmptyState();
       initializeHeroAssetSorting();
       bindDashboardForms();
     </script>

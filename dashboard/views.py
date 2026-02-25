@@ -1114,11 +1114,23 @@ def _handle_dashboard_post(request):
         item.question = question
         item.answer_html = answer_html
         item.save()
+        _set_dashboard_ajax_data(
+            request,
+            'save_course_overview_item',
+            mode='updated' if item_id else 'created',
+            item={
+                'id': item.id,
+                'question': item.question,
+                'answer_html': item.answer_html or '',
+            },
+        )
         messages.success(request, 'Course overview item saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='course_overview'))
 
     if action == 'delete_course_overview_item':
-        CourseOverviewItem.objects.filter(id=request.POST.get('item_id'), course=selected_course).delete()
+        item_id = request.POST.get('item_id')
+        CourseOverviewItem.objects.filter(id=item_id, course=selected_course).delete()
+        _set_dashboard_ajax_data(request, 'delete_course_overview_item', item_id=str(item_id or ''))
         messages.success(request, 'Course overview item removed.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='course_overview'))
 

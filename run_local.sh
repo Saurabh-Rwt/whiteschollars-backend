@@ -10,7 +10,4 @@ elif [ -f "venv/bin/activate" ]; then
   . "venv/bin/activate"
 fi
 
-export DJANGO_ENV=local
-export USE_SQLITE=1
-
 python manage.py runserver "$@"

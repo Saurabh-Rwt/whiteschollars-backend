@@ -11,7 +11,6 @@ SERVICE_NAME="whitescholars-backend"
 
 cd "$PROJECT_DIR"
 
-export DJANGO_ENV=production
 export DJANGO_SETTINGS_MODULE=myproject.settings
 
 echo "==> Running migrations"

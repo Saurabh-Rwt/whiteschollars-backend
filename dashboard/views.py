@@ -511,6 +511,20 @@ class CourseListAPIView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
+# -------------------- API Health --------------------
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def healthz(request):
+    return Response(
+        {
+            'status': 'ok',
+            'service': 'whitescholars-backend',
+            'environment': getattr(settings, 'DJANGO_ENV', os.getenv('DJANGO_ENV', 'unknown')),
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
 # -------------------- API View: Get full course details by slug --------------------
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])

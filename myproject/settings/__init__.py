@@ -26,6 +26,14 @@ def _load_env_file(path: Path) -> None:
 
 _raw_environment = os.getenv("DJANGO_ENV", "local").strip().lower()
 ENVIRONMENT = "production" if _raw_environment in ("production", "prod") else "local"
+
+custom_env_file = os.getenv("DJANGO_ENV_FILE", "").strip()
+if custom_env_file:
+    custom_path = Path(custom_env_file).expanduser()
+    if not custom_path.is_absolute():
+        custom_path = BASE_DIR / custom_path
+    _load_env_file(custom_path)
+
 _load_env_file(BASE_DIR / f".env.{ENVIRONMENT}")
 
 if ENVIRONMENT == "production":

@@ -3,6 +3,8 @@ from . import views
 from .views import CourseListAPIView, get_course_full_data, get_course_page
 
 urlpatterns = [
+    path('healthz/', views.healthz, name='healthz'),
+    path('api/healthz/', views.healthz, name='api-healthz'),
     path('login/', views.user_login, name='login'),
     path('logout/', views.user_logout, name='logout'),
 

@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from typing import List
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -15,13 +14,8 @@ DJANGO_ENV = os.getenv("DJANGO_ENV", "local").strip().lower()
 USE_PRODUCTION = DJANGO_ENV in ("production", "prod")
 
 
-def _split_csv(value: str) -> List[str]:
-    return [item.strip() for item in value.split(",") if item.strip()]
-
-
-allowed_hosts_env = os.getenv("DJANGO_ALLOWED_HOSTS", "")
-ALLOWED_HOSTS = _split_csv(allowed_hosts_env)
-CSRF_TRUSTED_ORIGINS = _split_csv(os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", ""))
+ALLOWED_HOSTS = ["api.whitescholars.com", "127.0.0.1", "localhost"]
+CSRF_TRUSTED_ORIGINS = ["https://api.whitescholars.com"]
 
 INSTALLED_APPS = [
     'django.contrib.admin',

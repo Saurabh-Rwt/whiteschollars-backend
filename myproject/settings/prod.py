@@ -23,7 +23,7 @@ if SECRET_KEY == "django-insecure-change-me-in-production":
     raise ImproperlyConfigured("Set DJANGO_SECRET_KEY for production.")
 
 if not ALLOWED_HOSTS:
-    raise ImproperlyConfigured("Set DJANGO_ALLOWED_HOSTS for production.")
+    raise ImproperlyConfigured("ALLOWED_HOSTS is empty; define allowed hosts in settings.")
 
 mysql_database = os.getenv("MYSQL_DATABASE", "").strip()
 mysql_user = os.getenv("MYSQL_USER", "").strip()

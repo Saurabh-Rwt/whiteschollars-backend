@@ -414,22 +414,26 @@
 
       .curriculum-module-editor {
         overflow: hidden;
+        border-radius: 10px;
       }
 
       .curriculum-module-editor .ql-toolbar.ql-snow {
         border: 0;
         border-bottom: 1px solid var(--panel-border);
+        background: #fbfdff;
       }
 
       .curriculum-module-editor .ql-container.ql-snow {
         border: 0;
-        height: 170px !important;
+        height: 300px !important;
       }
 
       .curriculum-module-editor .ql-editor {
         min-height: 100%;
         max-height: 100%;
         overflow-y: auto;
+        font-size: 14px;
+        line-height: 1.5;
       }
 
       .curriculum-module-actions {
@@ -2198,6 +2202,7 @@
         if (!hiddenInput) return;
         const quill = new Quill(container, {
           theme: 'snow',
+          placeholder: container.dataset.placeholder || '',
           modules: {
             toolbar: [
               ['bold', 'italic', 'underline'],

@@ -67,14 +67,28 @@
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.curriculum_module %}{{ editing.curriculum_module.id }}{% endif %}" />
     <div class="row g-3 curriculum-module-grid">
-      <div class="col-md-4">
+      <div class="col-12">
         <label class="form-label">Module Title</label>
-        <input type="text" class="form-control" name="title" value="{% if editing.curriculum_module %}{{ editing.curriculum_module.title }}{% endif %}" required />
+        <input
+          type="text"
+          class="form-control"
+          name="title"
+          placeholder="Example: Module 1 - Foundations and Core Concepts"
+          value="{% if editing.curriculum_module %}{{ editing.curriculum_module.title }}{% endif %}"
+          required
+        />
       </div>
-      <div class="col-md-8">
+      <div class="col-12">
         <label class="form-label">Module Content</label>
         <input type="hidden" name="content_html" id="curriculum-content-html" value="{% if editing.curriculum_module %}{{ editing.curriculum_module.content_html }}{% endif %}" />
-        <div class="form-control curriculum-module-editor" style="padding: 0;" data-quill data-target="curriculum-content-html"></div>
+        <div
+          class="form-control curriculum-module-editor"
+          style="padding: 0;"
+          data-quill
+          data-target="curriculum-content-html"
+          data-placeholder="Write module details, learning outcomes, tools covered, and practice tasks."
+        ></div>
+        <div class="editor-note mt-1">Tip: Keep each module concise and outcome-focused.</div>
       </div>
     </div>
     <div class="mt-3 d-flex justify-content-end curriculum-module-actions">

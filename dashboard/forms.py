@@ -111,7 +111,16 @@ class ProgramHighlightForm(forms.ModelForm):
 class CareerAssistanceForm(forms.ModelForm):
     class Meta:
         model = CareerAssistance
-        fields = ['course', 'title', 'description', 'description_list', 'image']
+        fields = [
+            'course',
+            'title',
+            'description',
+            'description_list',
+            'media_type',
+            'image',
+            'youtube_video_url',
+            'image_alt',
+        ]
 
     widgets = {
         'description': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Enter detailed description'}),

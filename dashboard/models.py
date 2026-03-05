@@ -136,11 +136,20 @@ class ProgramHighlight(models.Model):
         return self.title
 
 class CareerAssistance(models.Model):
+    MEDIA_TYPE_IMAGE = 'image'
+    MEDIA_TYPE_VIDEO = 'video'
+    MEDIA_TYPE_CHOICES = [
+        (MEDIA_TYPE_IMAGE, 'Image'),
+        (MEDIA_TYPE_VIDEO, 'Video'),
+    ]
+
     course = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='career_assistances')
     title = models.CharField(max_length=255)
     description = models.TextField()  # long text
     description_list = models.JSONField(default=list, blank=True)
+    media_type = models.CharField(max_length=10, choices=MEDIA_TYPE_CHOICES, default=MEDIA_TYPE_IMAGE)
     image = models.ImageField(upload_to='career_assistance/', blank=True, null=True)
+    youtube_video_url = models.URLField(max_length=500, blank=True, null=True)
     image_alt = models.CharField(max_length=255, blank=True)
     sort_order = models.PositiveIntegerField(default=0)
 

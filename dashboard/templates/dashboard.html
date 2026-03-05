@@ -1815,6 +1815,31 @@
         });
       };
 
+      const updateCareerMediaVisibility = (select) => {
+        const scope = select.closest('[data-career-media-scope]');
+        if (!scope) return;
+
+        const selectedType = select.value === 'video' ? 'video' : 'image';
+
+        scope.querySelectorAll('[data-career-media-field]').forEach((field) => {
+          field.style.display = field.dataset.careerMediaField === selectedType ? '' : 'none';
+        });
+
+        scope.querySelectorAll('[data-career-media-help]').forEach((note) => {
+          note.style.display = note.dataset.careerMediaHelp === selectedType ? '' : 'none';
+        });
+
+        const videoInput = scope.querySelector('input[name="youtube_video_url"]');
+        if (videoInput) {
+          videoInput.required = selectedType === 'video';
+          const fieldWrap = videoInput.closest('.col-12') || videoInput.closest('[class*="col-"]');
+          const label = fieldWrap ? fieldWrap.querySelector('.form-label') : null;
+          if (label) {
+            label.classList.toggle('required-label', selectedType === 'video');
+          }
+        }
+      };
+
       const getHeroIconLabel = (iconClass) => {
         if (!iconClass) return '';
         const option = Array.from(document.querySelectorAll('[data-hero-icon-option]')).find(
@@ -1978,6 +2003,11 @@
       document.querySelectorAll('[data-hero-media-select]').forEach((select) => {
         updateHeroMediaVisibility(select);
         select.addEventListener('change', () => updateHeroMediaVisibility(select));
+      });
+
+      document.querySelectorAll('[data-career-media-select]').forEach((select) => {
+        updateCareerMediaVisibility(select);
+        select.addEventListener('change', () => updateCareerMediaVisibility(select));
       });
 
       document.querySelectorAll('[data-list-add]').forEach((button) => {

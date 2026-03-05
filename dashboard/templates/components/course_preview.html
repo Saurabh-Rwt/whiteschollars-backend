@@ -163,7 +163,7 @@
           {% if career_assistances %}
             <ul class="preview-list-inline">
               {% for item in career_assistances|slice:":3" %}
-                <li>{{ item.title }}</li>
+                <li>{{ item.title }} {% if item.media_type == 'video' %}(Video){% else %}(Image){% endif %}</li>
               {% endfor %}
             </ul>
           {% else %}

@@ -67,7 +67,7 @@ from .forms import (
 )
 from .utils import sanitize_html
 from decimal import Decimal, InvalidOperation
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 import json, os
 import logging
 
@@ -418,6 +418,31 @@ def _get_decimal(value, fallback=None):
 
 def _rich_text(value):
     return sanitize_html(value or '')
+
+
+def _is_youtube_url(value):
+    if not value:
+        return False
+    try:
+        parsed = urlparse(value.strip())
+    except ValueError:
+        return False
+
+    if parsed.scheme not in ('http', 'https'):
+        return False
+
+    host = (parsed.netloc or '').lower()
+    if host.startswith('www.'):
+        host = host[4:]
+
+    return (
+        host == 'youtu.be'
+        or host.endswith('.youtu.be')
+        or host == 'youtube.com'
+        or host.endswith('.youtube.com')
+        or host == 'youtube-nocookie.com'
+        or host.endswith('.youtube-nocookie.com')
+    )
 
 
 def _build_dashboard_context(request, selected_course=None, active_section=None, edit_key=None, edit_id=None):
@@ -1273,12 +1298,25 @@ def _handle_dashboard_post(request):
         title = request.POST.get('title', '').strip()
         description = request.POST.get('description', '').strip()
         bullets = _clean_list(request.POST.getlist('bullets[]'))
+        media_type = request.POST.get('media_type', CareerAssistance.MEDIA_TYPE_IMAGE).strip().lower()
+        if media_type not in (CareerAssistance.MEDIA_TYPE_IMAGE, CareerAssistance.MEDIA_TYPE_VIDEO):
+            media_type = CareerAssistance.MEDIA_TYPE_IMAGE
+        youtube_video_url = request.POST.get('youtube_video_url', '').strip()
         image = request.FILES.get('image')
         image_alt = request.POST.get('image_alt', '').strip()
         item_id = request.POST.get('item_id')
         if not title or not description:
             messages.error(request, 'Title and description are required.')
             return redirect(_dashboard_url(course_id=selected_course.id, section='career_assistance'))
+        if media_type == CareerAssistance.MEDIA_TYPE_VIDEO:
+            if not youtube_video_url:
+                messages.error(request, 'YouTube URL is required when media type is Video.')
+                return redirect(_dashboard_url(course_id=selected_course.id, section='career_assistance'))
+            if not _is_youtube_url(youtube_video_url):
+                messages.error(request, 'Please enter a valid YouTube URL.')
+                return redirect(_dashboard_url(course_id=selected_course.id, section='career_assistance'))
+        else:
+            youtube_video_url = ''
         if item_id:
             assistance = CareerAssistance.objects.filter(id=item_id, course=selected_course).first()
             if not assistance:
@@ -1289,8 +1327,10 @@ def _handle_dashboard_post(request):
         assistance.title = title
         assistance.description = description
         assistance.description_list = bullets
+        assistance.media_type = media_type
         if image:
             assistance.image = image
+        assistance.youtube_video_url = youtube_video_url or None
         assistance.image_alt = image_alt
         assistance.save()
         messages.success(request, 'Career assistance item saved.')
@@ -2329,18 +2369,35 @@ def add_career_assistance(request):
     title = request.POST.get('title', '').strip()
     description = request.POST.get('description', '').strip()
     description_list = [item.strip() for item in request.POST.getlist('description_list[]') if item.strip()]
+    media_type = request.POST.get('media_type', CareerAssistance.MEDIA_TYPE_IMAGE).strip().lower()
+    if media_type not in (CareerAssistance.MEDIA_TYPE_IMAGE, CareerAssistance.MEDIA_TYPE_VIDEO):
+        media_type = CareerAssistance.MEDIA_TYPE_IMAGE
+    youtube_video_url = request.POST.get('youtube_video_url', '').strip()
     image = request.FILES.get('image')
+    image_alt = request.POST.get('image_alt', '').strip()
 
     if not title or not description:
         messages.error(request, 'Title and description are required.')
         return redirect(_dashboard_url(tab='career-assistance', course_id=course_id))
+    if media_type == CareerAssistance.MEDIA_TYPE_VIDEO:
+        if not youtube_video_url:
+            messages.error(request, 'YouTube URL is required when media type is Video.')
+            return redirect(_dashboard_url(tab='career-assistance', course_id=course_id))
+        if not _is_youtube_url(youtube_video_url):
+            messages.error(request, 'Please enter a valid YouTube URL.')
+            return redirect(_dashboard_url(tab='career-assistance', course_id=course_id))
+    else:
+        youtube_video_url = ''
 
     CareerAssistance.objects.create(
         course=course,
         title=title,
         description=description,
         description_list=description_list,
-        image=image
+        media_type=media_type,
+        image=image,
+        youtube_video_url=youtube_video_url or None,
+        image_alt=image_alt,
     )
 
     messages.success(request, 'Career assistance saved successfully.')

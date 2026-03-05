@@ -1,12 +1,12 @@
 <div class="form-section">
   <div class="form-section-title">Career Assistance Blocks</div>
-  <p class="editor-note">Each block has a title, description, bullet list, and image.</p>
+  <p class="editor-note">Create each block with text plus either an image or a YouTube video.</p>
   <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
     {% csrf_token %}
     <input type="hidden" name="action" value="save_career_assistance" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.career_assistance %}{{ editing.career_assistance.id }}{% endif %}" />
-    <div class="row g-3">
+    <div class="row g-3" data-career-media-scope>
       <div class="col-md-4">
         <label class="form-label">Title</label>
         <input type="text" class="form-control" name="title" value="{% if editing.career_assistance %}{{ editing.career_assistance.title }}{% endif %}" required />
@@ -15,49 +15,104 @@
         <label class="form-label">Description</label>
         <textarea class="form-control" name="description" rows="2" required>{% if editing.career_assistance %}{{ editing.career_assistance.description }}{% endif %}</textarea>
       </div>
+
       <div class="col-md-4">
+        <label class="form-label">Media Type</label>
+        <select class="form-select" name="media_type" data-career-media-select>
+          <option value="image" {% if editing.career_assistance.media_type == 'image' or not editing.career_assistance or not editing.career_assistance.media_type %}selected{% endif %}>Image</option>
+          <option value="video" {% if editing.career_assistance.media_type == 'video' %}selected{% endif %}>Video (YouTube)</option>
+        </select>
+        <div class="editor-note mt-1" data-career-media-help="image">Best for static visuals. Recommended ratio: 16:10.</div>
+        <div class="editor-note mt-1" data-career-media-help="video">Paste a YouTube link to show an embedded video in this block.</div>
+      </div>
+
+      <div class="col-md-4" data-career-media-field="image">
         <label class="form-label">Image</label>
         <input type="file" class="form-control" name="image" accept="image/*" />
       </div>
-      <div class="col-md-4">
+      <div class="col-md-4" data-career-media-field="image">
         <label class="form-label">Image Alt Text</label>
         <input type="text" class="form-control" name="image_alt" value="{% if editing.career_assistance %}{{ editing.career_assistance.image_alt }}{% endif %}" />
       </div>
+
+      <div class="col-md-8" data-career-media-field="video">
+        <label class="form-label">YouTube Video URL</label>
+        <input
+          type="url"
+          class="form-control"
+          name="youtube_video_url"
+          value="{% if editing.career_assistance %}{{ editing.career_assistance.youtube_video_url }}{% endif %}"
+          placeholder="https://www.youtube.com/watch?v=..."
+        />
+        <div class="editor-note mt-1">Accepted: youtube.com, youtu.be, and embed links.</div>
+      </div>
+
+      {% if editing.career_assistance and editing.career_assistance.image %}
+        <div class="col-12" data-career-media-field="image">
+          <div class="media-preview">
+            <img src="{{ editing.career_assistance.image.url }}" alt="{{ editing.career_assistance.image_alt|default:editing.career_assistance.title }}" />
+            <small class="text-muted">{{ editing.career_assistance.image_alt|default:'Current image' }}</small>
+          </div>
+        </div>
+      {% endif %}
+      {% if editing.career_assistance and editing.career_assistance.youtube_video_url %}
+        <div class="col-12 editor-note" data-career-media-field="video">
+          Current video:
+          <a href="{{ editing.career_assistance.youtube_video_url }}" target="_blank" rel="noopener noreferrer">
+            {{ editing.career_assistance.youtube_video_url|truncatechars:70 }}
+          </a>
+        </div>
+      {% endif %}
     </div>
-    <div class="mt-3">
-      <label class="form-label">Bullet Points</label>
-      <div id="career-assistance-bullets">
+    <div class="mt-3 border rounded p-3 bg-light-subtle">
+      <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+        <label class="form-label mb-0">Bullet Points</label>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-list-add="#career-assistance-bullets" data-template="#career-assistance-template">Add Bullet</button>
+      </div>
+      <div class="editor-note mb-2">Keep points short for better readability in tabs.</div>
+      <div id="career-assistance-bullets" class="d-grid gap-2">
         {% if editing.career_assistance and editing.career_assistance.description_list %}
           {% for bullet in editing.career_assistance.description_list %}
-            <div class="input-group mb-2" data-list-item>
+            <div class="input-group" data-list-item>
               <input type="text" class="form-control" name="bullets[]" value="{{ bullet }}" />
               <button class="btn btn-outline-danger" type="button" data-list-remove>Remove</button>
             </div>
           {% endfor %}
         {% else %}
-          <div class="input-group mb-2" data-list-item>
-            <input type="text" class="form-control" name="bullets[]" placeholder="Add a bullet" />
+          <div class="input-group" data-list-item>
+            <input type="text" class="form-control" name="bullets[]" placeholder="Add a bullet point" />
             <button class="btn btn-outline-danger" type="button" data-list-remove>Remove</button>
           </div>
         {% endif %}
       </div>
-      <button type="button" class="btn btn-sm btn-outline-secondary" data-list-add="#career-assistance-bullets" data-template="#career-assistance-template">Add Bullet</button>
       <template id="career-assistance-template">
-        <div class="input-group mb-2" data-list-item>
-          <input type="text" class="form-control" name="bullets[]" placeholder="Add a bullet" />
+        <div class="input-group" data-list-item>
+          <input type="text" class="form-control" name="bullets[]" placeholder="Add a bullet point" />
           <button class="btn btn-outline-danger" type="button" data-list-remove>Remove</button>
         </div>
       </template>
     </div>
     <div class="mt-3 text-end">
-      <button class="btn btn-primary" type="submit">{% if editing.career_assistance %}Update{% else %}Add Block{% endif %}</button>
+      <button class="btn btn-primary" type="submit">{% if editing.career_assistance %}Update Career Assistance Block{% else %}Save Career Assistance Block{% endif %}</button>
     </div>
   </form>
   <div class="row g-2 mt-3">
     {% for item in career_assistances %}
       <div class="col-md-6">
-        <div class="border rounded p-2 d-flex align-items-center justify-content-between">
-          <span class="text-truncate">{{ item.title }}</span>
+        <div class="border rounded p-3 d-flex align-items-start justify-content-between gap-3">
+          <div class="min-w-0">
+            <div class="fw-semibold text-truncate">{{ item.title }}</div>
+            <div class="editor-note text-truncate">
+              {% if item.media_type == 'video' and item.youtube_video_url %}
+                Video: {{ item.youtube_video_url }}
+              {% elif item.image %}
+                Image attached
+              {% else %}
+                No media selected
+              {% endif %}
+            </div>
+            <span class="badge badge-soft text-capitalize mt-1">{{ item.media_type|default:'image' }}</span>
+          </div>
           <div class="d-flex gap-2">
             <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=career_assistance&edit_key=career_assistance&edit_id={{ item.id }}">Edit</a>
             <form method="POST" action="{% url 'dashboard' %}">

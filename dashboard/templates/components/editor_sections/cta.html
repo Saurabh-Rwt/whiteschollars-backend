@@ -4,7 +4,6 @@
       <div class="form-section-title mb-1">{{ cta_label }} CTA</div>
       <p class="editor-note mb-0">Lead form is handled on frontend; only this layout and image are stored.</p>
     </div>
-    <button class="btn btn-primary btn-sm" type="submit" form="cta-{{ cta_key }}-form">Save CTA</button>
   </div>
   <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}" class="entity-form" id="cta-{{ cta_key }}-form">
     {% csrf_token %}

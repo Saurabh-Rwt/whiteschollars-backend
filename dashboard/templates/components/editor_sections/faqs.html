@@ -4,7 +4,6 @@
       <div class="form-section-title mb-1">FAQ Intro</div>
       <div class="editor-note">Short intro shown above the FAQ accordion on the course page.</div>
     </div>
-    <button class="btn btn-primary btn-sm" type="submit" form="faq-settings-form">Save Intro</button>
   </div>
   <form method="POST" action="{% url 'dashboard' %}" class="entity-form" id="faq-settings-form">
     {% csrf_token %}
@@ -24,12 +23,7 @@
       <div class="form-section-title mb-1">FAQ Items</div>
       <div class="editor-note">Add and update the questions that appear in the public FAQ accordion.</div>
     </div>
-    <div class="d-flex flex-column align-items-end gap-2">
-      <div class="entity-mode-badge">{% if editing.faq_item %}Editing FAQ{% else %}Add FAQ{% endif %}</div>
-      <button class="btn btn-primary btn-sm" type="submit" form="faq-item-form">
-        {% if editing.faq_item %}Update FAQ{% else %}Add FAQ{% endif %}
-      </button>
-    </div>
+    <div class="entity-mode-badge">{% if editing.faq_item %}Editing FAQ{% else %}Add FAQ{% endif %}</div>
   </div>
   <form method="POST" action="{% url 'dashboard' %}" class="entity-form" id="faq-item-form">
     {% csrf_token %}

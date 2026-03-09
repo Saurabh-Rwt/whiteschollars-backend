@@ -408,6 +408,16 @@
         margin-bottom: 8px;
       }
 
+      .form-section-actions {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px dashed var(--panel-border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
       .curriculum-module-grid {
         align-items: flex-start;
       }
@@ -1657,7 +1667,16 @@
           event.preventDefault();
           syncFormQuillEditors(form);
 
-          const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+          const formId = form.getAttribute('id');
+          const inlineSubmitButtons = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
+          const linkedSubmitButtons = formId
+            ? Array.from(
+                document.querySelectorAll(
+                  `button[form="${formId}"][type="submit"], input[form="${formId}"][type="submit"]`
+                )
+              )
+            : [];
+          const submitButtons = [...new Set([...inlineSubmitButtons, ...linkedSubmitButtons])];
           submitButtons.forEach((button) => {
             button.disabled = true;
           });

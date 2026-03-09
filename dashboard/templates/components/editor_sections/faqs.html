@@ -11,10 +11,10 @@
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <label class="form-label">Intro Text</label>
     <input type="text" class="form-control" name="intro_text" value="{{ faq_section.intro_text|default:'' }}" />
-    <div class="form-section-actions">
-      <button class="btn btn-primary" type="submit">Save Intro</button>
-    </div>
   </form>
+  <div class="form-section-actions">
+    <button class="btn btn-primary" type="submit" form="faq-settings-form">Save Intro</button>
+  </div>
 </div>
 
 <div class="form-section editor-entity-section">
@@ -41,10 +41,10 @@
         <div class="form-control" style="padding: 0;" data-quill data-target="faq-answer-html"></div>
       </div>
     </div>
-    <div class="form-section-actions">
-      <button class="btn btn-primary" type="submit">{% if editing.faq_item %}Update{% else %}Add FAQ{% endif %}</button>
-    </div>
   </form>
+  <div class="form-section-actions">
+    <button class="btn btn-primary" type="submit" form="faq-item-form">{% if editing.faq_item %}Update{% else %}Add FAQ{% endif %}</button>
+  </div>
 
   <ul class="list-group list-group-flush mt-3">
     {% for item in faq_items %}

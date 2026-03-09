@@ -24,7 +24,7 @@
       <div class="form-section-title mb-1">FAQ Items</div>
       <div class="editor-note">Add and update the questions that appear in the public FAQ accordion.</div>
     </div>
-    <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+    <div class="d-flex flex-column align-items-end gap-2">
       <div class="entity-mode-badge">{% if editing.faq_item %}Editing FAQ{% else %}Add FAQ{% endif %}</div>
       <button class="btn btn-primary btn-sm" type="submit" form="faq-item-form">
         {% if editing.faq_item %}Update FAQ{% else %}Add FAQ{% endif %}
@@ -37,11 +37,11 @@
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.faq_item %}{{ editing.faq_item.id }}{% endif %}" />
     <div class="row g-3">
-      <div class="col-md-4">
+      <div class="col-12">
         <label class="form-label">Question</label>
         <input type="text" class="form-control" name="question" value="{% if editing.faq_item %}{{ editing.faq_item.question }}{% endif %}" required />
       </div>
-      <div class="col-md-8">
+      <div class="col-12">
         <label class="form-label">Answer</label>
         <input type="hidden" name="answer_html" id="faq-answer-html" value="{% if editing.faq_item %}{{ editing.faq_item.answer_html }}{% endif %}" />
         <div class="form-control" style="padding: 0;" data-quill data-target="faq-answer-html"></div>

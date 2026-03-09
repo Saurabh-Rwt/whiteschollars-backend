@@ -12,11 +12,11 @@
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="cta_key" value="{{ cta_key }}" />
     <div class="row g-3">
-      <div class="col-md-6">
+      <div class="col-12">
         <label class="form-label">Heading</label>
         <input type="text" class="form-control" name="heading" value="{{ cta_instance.heading|default:'' }}" />
       </div>
-      <div class="col-md-6">
+      <div class="col-12">
         <label class="form-label">Image</label>
         <input type="file" class="form-control" name="image" accept="image/*" />
         <label class="form-label mt-2">Image Alt Text</label>

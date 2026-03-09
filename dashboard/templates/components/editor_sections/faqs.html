@@ -5,12 +5,14 @@
       <div class="editor-note">Short intro shown above the FAQ accordion on the course page.</div>
     </div>
   </div>
-  <form method="POST" action="{% url 'dashboard' %}" class="entity-form" id="faq-settings-form">
+  <form method="POST" action="{% url 'dashboard' %}" class="entity-form stacked-entity-form" id="faq-settings-form">
     {% csrf_token %}
     <input type="hidden" name="action" value="save_faq_settings" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
-    <label class="form-label">Intro Text</label>
-    <input type="text" class="form-control" name="intro_text" value="{{ faq_section.intro_text|default:'' }}" />
+    <div class="editor-field">
+      <label class="form-label">Intro Text</label>
+      <input type="text" class="form-control" name="intro_text" value="{{ faq_section.intro_text|default:'' }}" />
+    </div>
     <div class="form-section-actions">
       <button class="btn btn-primary" type="submit">Save Intro</button>
     </div>
@@ -25,21 +27,19 @@
     </div>
     <div class="entity-mode-badge">{% if editing.faq_item %}Editing FAQ{% else %}Add FAQ{% endif %}</div>
   </div>
-  <form method="POST" action="{% url 'dashboard' %}" class="entity-form" id="faq-item-form">
+  <form method="POST" action="{% url 'dashboard' %}" class="entity-form stacked-entity-form" id="faq-item-form">
     {% csrf_token %}
     <input type="hidden" name="action" value="save_faq_item" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.faq_item %}{{ editing.faq_item.id }}{% endif %}" />
-    <div class="d-grid gap-3">
-      <div>
+    <div class="editor-field">
         <label class="form-label">Question</label>
         <input type="text" class="form-control" name="question" value="{% if editing.faq_item %}{{ editing.faq_item.question }}{% endif %}" required />
-      </div>
-      <div>
+    </div>
+    <div class="editor-field">
         <label class="form-label">Answer</label>
         <input type="hidden" name="answer_html" id="faq-answer-html" value="{% if editing.faq_item %}{{ editing.faq_item.answer_html }}{% endif %}" />
-        <div class="form-control" style="padding: 0;" data-quill data-target="faq-answer-html"></div>
-      </div>
+        <div class="form-control stacked-rich-text-editor" style="padding: 0;" data-quill data-target="faq-answer-html"></div>
     </div>
     <div class="form-section-actions">
       <button class="btn btn-primary" type="submit">{% if editing.faq_item %}Update{% else %}Add FAQ{% endif %}</button>

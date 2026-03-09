@@ -416,9 +416,46 @@
         justify-content: flex-end;
         gap: 8px;
         flex-wrap: wrap;
+        width: 100%;
         position: relative;
         z-index: 1;
         background: #fff;
+      }
+
+      .stacked-entity-form {
+        display: grid;
+        gap: 16px;
+      }
+
+      .stacked-entity-form .editor-field {
+        display: grid;
+        gap: 8px;
+      }
+
+      .stacked-entity-form .form-section-actions {
+        margin-top: 0;
+      }
+
+      .stacked-rich-text-editor {
+        overflow: hidden;
+        border-radius: 10px;
+      }
+
+      .stacked-rich-text-editor .ql-toolbar.ql-snow {
+        border: 0;
+        border-bottom: 1px solid var(--panel-border);
+        background: #fbfdff;
+      }
+
+      .stacked-rich-text-editor .ql-container.ql-snow {
+        border: 0;
+        height: 220px !important;
+      }
+
+      .stacked-rich-text-editor .ql-editor {
+        min-height: 100%;
+        max-height: 100%;
+        overflow-y: auto;
       }
 
       .curriculum-module-grid {

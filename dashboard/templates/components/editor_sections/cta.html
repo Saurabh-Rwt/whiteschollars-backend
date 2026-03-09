@@ -5,27 +5,25 @@
       <p class="editor-note mb-0">Lead form is handled on frontend; only this layout and image are stored.</p>
     </div>
   </div>
-  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}" class="entity-form" id="cta-{{ cta_key }}-form">
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}" class="entity-form stacked-entity-form" id="cta-{{ cta_key }}-form">
     {% csrf_token %}
     <input type="hidden" name="action" value="save_lead_cta" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="cta_key" value="{{ cta_key }}" />
-    <div class="d-grid gap-3">
-      <div>
+    <div class="editor-field">
         <label class="form-label">Heading</label>
         <input type="text" class="form-control" name="heading" value="{{ cta_instance.heading|default:'' }}" />
-      </div>
-      <div>
+    </div>
+    <div class="editor-field">
         <label class="form-label">Image</label>
         <input type="file" class="form-control" name="image" accept="image/*" />
         <label class="form-label mt-2">Image Alt Text</label>
         <input type="text" class="form-control" name="image_alt" value="{{ cta_instance.image_alt|default:'' }}" />
-      </div>
-      <div>
+    </div>
+    <div class="editor-field">
         <label class="form-label">Description</label>
         <input type="hidden" name="description_html" id="cta-{{ cta_key }}-desc" value="{{ cta_instance.description_html|default:'' }}" />
-        <div class="form-control" style="padding: 0;" data-quill data-target="cta-{{ cta_key }}-desc"></div>
-      </div>
+        <div class="form-control stacked-rich-text-editor" style="padding: 0;" data-quill data-target="cta-{{ cta_key }}-desc"></div>
     </div>
     <div class="form-section-actions">
       <button class="btn btn-primary" type="submit">Save CTA</button>

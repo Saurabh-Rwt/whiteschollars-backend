@@ -11,10 +11,10 @@
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <label class="form-label">Intro Text</label>
     <input type="text" class="form-control" name="intro_text" value="{{ faq_section.intro_text|default:'' }}" />
+    <div class="form-section-actions">
+      <button class="btn btn-primary" type="submit">Save Intro</button>
+    </div>
   </form>
-  <div class="form-section-actions">
-    <button class="btn btn-primary" type="submit" form="faq-settings-form">Save Intro</button>
-  </div>
 </div>
 
 <div class="form-section editor-entity-section">
@@ -30,21 +30,21 @@
     <input type="hidden" name="action" value="save_faq_item" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.faq_item %}{{ editing.faq_item.id }}{% endif %}" />
-    <div class="row g-3">
-      <div class="col-12">
+    <div class="d-grid gap-3">
+      <div>
         <label class="form-label">Question</label>
         <input type="text" class="form-control" name="question" value="{% if editing.faq_item %}{{ editing.faq_item.question }}{% endif %}" required />
       </div>
-      <div class="col-12">
+      <div>
         <label class="form-label">Answer</label>
         <input type="hidden" name="answer_html" id="faq-answer-html" value="{% if editing.faq_item %}{{ editing.faq_item.answer_html }}{% endif %}" />
         <div class="form-control" style="padding: 0;" data-quill data-target="faq-answer-html"></div>
       </div>
     </div>
+    <div class="form-section-actions">
+      <button class="btn btn-primary" type="submit">{% if editing.faq_item %}Update{% else %}Add FAQ{% endif %}</button>
+    </div>
   </form>
-  <div class="form-section-actions">
-    <button class="btn btn-primary" type="submit" form="faq-item-form">{% if editing.faq_item %}Update{% else %}Add FAQ{% endif %}</button>
-  </div>
 
   <ul class="list-group list-group-flush mt-3">
     {% for item in faq_items %}

@@ -1850,6 +1850,7 @@ def _handle_dashboard_post(request):
         text = request.POST.get('text', '').strip()
         review_url = request.POST.get('review_url', '').strip()
         avatar = request.FILES.get('avatar')
+        clear_avatar = request.POST.get('clear_avatar') == '1'
         avatar_alt = request.POST.get('avatar_alt', '').strip()
         item_id = request.POST.get('item_id')
         if not name or not text:
@@ -1866,15 +1867,32 @@ def _handle_dashboard_post(request):
         item.text = text
         item.rating = int(rating) if rating else item.rating
         item.review_url = review_url
+        if clear_avatar and item.avatar:
+            item.avatar.delete(save=False)
+            item.avatar = None
         if avatar:
             item.avatar = avatar
         item.avatar_alt = avatar_alt
         item.save()
+        _set_dashboard_editor_state(
+            request,
+            selected_course,
+            active_section='reviews',
+            edit_key=None,
+            edit_id=None,
+        )
         messages.success(request, 'Review saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='reviews'))
 
     if action == 'delete_review_item':
         ReviewItem.objects.filter(id=request.POST.get('item_id'), course=selected_course).delete()
+        _set_dashboard_editor_state(
+            request,
+            selected_course,
+            active_section='reviews',
+            edit_key=None,
+            edit_id=None,
+        )
         messages.success(request, 'Review removed.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='reviews'))
 

@@ -1,38 +1,68 @@
-<div class="form-section">
-  <div class="form-section-title">Review Summary</div>
-  <form method="POST" action="{% url 'dashboard' %}">
+<div class="form-section editor-entity-section">
+  <div class="entity-header">
+    <div>
+      <div class="form-section-title mb-1">Review Summary</div>
+      <p class="editor-note mb-0">This controls the left-side review block: rating number, stars, review count, business title, optional support text, and CTA button.</p>
+    </div>
+    <span class="entity-mode-badge">Summary block</span>
+  </div>
+
+  <form method="POST" action="{% url 'dashboard' %}" class="entity-form">
     {% csrf_token %}
     <input type="hidden" name="action" value="save_review_settings" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
+
+    <div class="required-hint">
+      The WhiteScholars logo is fixed on the frontend. Enter only the data that appears under the logo.
+    </div>
+
     <div class="row g-3" data-action-scope>
       <div class="col-md-3">
         <label class="form-label">Rating Value</label>
-        <input type="number" step="0.1" class="form-control" name="rating_value" value="{{ review_section.rating_value|default:'' }}" />
+        <input
+          type="number"
+          step="0.1"
+          class="form-control"
+          name="rating_value"
+          value="{{ review_section.rating_value|default:'' }}"
+          placeholder="4.8"
+        />
+        <div class="editor-note mt-1">Stars are auto-rendered from this value on the frontend.</div>
       </div>
+
       <div class="col-md-3">
         <label class="form-label">Total Reviews</label>
-        <input type="number" class="form-control" name="total_reviews" value="{{ review_section.total_reviews|default:'' }}" />
+        <input
+          type="number"
+          class="form-control"
+          name="total_reviews"
+          value="{{ review_section.total_reviews|default:'' }}"
+          placeholder="184"
+        />
       </div>
+
       <div class="col-md-6">
-        <label class="form-label">Summary Title</label>
+        <label class="form-label">Business Title</label>
         <input
           type="text"
           class="form-control"
           name="summary_title"
-          placeholder="WhiteScholars Academy â€” Data Analytics"
+          placeholder="WhiteScholars Academy - Data Analytics, Data Science Course Training Hyderabad, Digital Marketing"
           value="{{ review_section.summary_title|default:'' }}"
         />
       </div>
+
       <div class="col-md-6">
-        <label class="form-label">Summary Text</label>
+        <label class="form-label">Support Text (Optional)</label>
         <input
           type="text"
           class="form-control"
           name="summary_text"
-          placeholder="184 reviews"
+          placeholder="Add only if you want one extra line under the business title."
           value="{{ review_section.summary_text|default:'' }}"
         />
       </div>
+
       <div class="col-md-3">
         <label class="form-label">CTA Label</label>
         <input
@@ -43,6 +73,7 @@
           value="{{ review_section.cta_label|default:'' }}"
         />
       </div>
+
       <div class="col-md-3">
         <label class="form-label">On Click</label>
         <select class="form-select" name="cta_action_type" data-action-select>
@@ -50,6 +81,7 @@
           <option value="modal" {% if review_section.cta_action_type == 'modal' %}selected{% endif %}>Open Modal</option>
         </select>
       </div>
+
       <div class="col-md-6" data-action-field="link">
         <label class="form-label">CTA URL</label>
         <input
@@ -61,68 +93,155 @@
         />
       </div>
     </div>
+
     <div class="mt-3 text-end">
       <button class="btn btn-primary" type="submit">Save Review Summary</button>
     </div>
   </form>
 </div>
 
-<div class="form-section">
-  <div class="form-section-title">Review Cards</div>
-  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
+<div class="form-section editor-entity-section">
+  <div class="entity-header">
+    <div>
+      <div class="form-section-title mb-1">Review Cards</div>
+      <p class="editor-note mb-0">Each saved item becomes one review card in the slider on the right.</p>
+    </div>
+    <span class="entity-mode-badge">{% if editing.review_item %}Editing card{% else %}Add new card{% endif %}</span>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}" class="entity-form">
     {% csrf_token %}
     <input type="hidden" name="action" value="save_review_item" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
     <input type="hidden" name="item_id" value="{% if editing.review_item %}{{ editing.review_item.id }}{% endif %}" />
+
+    <div class="required-hint">
+      Leave the avatar blank if you want the frontend to auto-generate an initial badge like the reference design.
+    </div>
+
     <div class="row g-3">
       <div class="col-md-4">
         <label class="form-label">Reviewer Name</label>
-        <input type="text" class="form-control" name="name" value="{% if editing.review_item %}{{ editing.review_item.name }}{% endif %}" required />
+        <input
+          type="text"
+          class="form-control"
+          name="name"
+          value="{% if editing.review_item %}{{ editing.review_item.name }}{% endif %}"
+          placeholder="Madaram Ajay"
+          required
+        />
       </div>
+
       <div class="col-md-2">
         <label class="form-label">Rating (1-5)</label>
-        <input type="number" min="1" max="5" class="form-control" name="rating" value="{% if editing.review_item %}{{ editing.review_item.rating }}{% else %}5{% endif %}" />
+        <input
+          type="number"
+          min="1"
+          max="5"
+          class="form-control"
+          name="rating"
+          value="{% if editing.review_item %}{{ editing.review_item.rating }}{% else %}5{% endif %}"
+        />
       </div>
+
       <div class="col-md-6">
-        <label class="form-label">Review Text</label>
-        <textarea class="form-control" name="text" rows="2" required>{% if editing.review_item %}{{ editing.review_item.text }}{% endif %}</textarea>
+        <label class="form-label">Review Link (Optional)</label>
+        <input
+          type="url"
+          class="form-control"
+          name="review_url"
+          value="{% if editing.review_item %}{{ editing.review_item.review_url }}{% endif %}"
+          placeholder="https://..."
+        />
       </div>
+
       <div class="col-md-4">
-        <label class="form-label">Avatar</label>
+        <label class="form-label">Avatar Image (Optional)</label>
         <input type="file" class="form-control" name="avatar" accept="image/*" />
+        {% if editing.review_item and editing.review_item.avatar %}
+          <div class="media-preview">
+            <img
+              src="{{ editing.review_item.avatar.url }}"
+              alt="{{ editing.review_item.avatar_alt|default:editing.review_item.name }}"
+            />
+            <small class="text-muted">{{ editing.review_item.avatar_alt|default:'Current avatar image' }}</small>
+          </div>
+        {% endif %}
       </div>
+
       <div class="col-md-4">
         <label class="form-label">Avatar Alt Text</label>
-        <input type="text" class="form-control" name="avatar_alt" value="{% if editing.review_item %}{{ editing.review_item.avatar_alt }}{% endif %}" />
+        <input
+          type="text"
+          class="form-control"
+          name="avatar_alt"
+          value="{% if editing.review_item %}{{ editing.review_item.avatar_alt }}{% endif %}"
+          placeholder="Madaram Ajay review avatar"
+        />
       </div>
-      <div class="col-md-4">
-        <label class="form-label">Review URL (optional)</label>
-        <input type="url" class="form-control" name="review_url" value="{% if editing.review_item %}{{ editing.review_item.review_url }}{% endif %}" />
+
+      <div class="col-md-12">
+        <label class="form-label">Review Text</label>
+        <textarea
+          class="form-control"
+          name="text"
+          rows="4"
+          placeholder="After B.Tech, I was unsure about my career path until I joined White Scholars..."
+          required
+        >{% if editing.review_item %}{{ editing.review_item.text }}{% endif %}</textarea>
       </div>
     </div>
+
     <div class="mt-3 text-end">
-      <button class="btn btn-primary" type="submit">{% if editing.review_item %}Update{% else %}Add Review{% endif %}</button>
+      <button class="btn btn-primary" type="submit">{% if editing.review_item %}Update Card{% else %}Add Review Card{% endif %}</button>
     </div>
   </form>
 
-  <ul class="list-group list-group-flush mt-3">
+  <div class="row g-2 mt-3">
     {% for item in review_items %}
-      <li class="list-group-item d-flex align-items-center justify-content-between">
-        <span class="text-truncate">{{ item.name }} ({{ item.rating }}/5)</span>
-        <div class="d-flex gap-2">
-          <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=reviews&edit_key=review_item&edit_id={{ item.id }}">Edit</a>
-          <form method="POST" action="{% url 'dashboard' %}">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="delete_review_item" />
-            <input type="hidden" name="course" value="{{ selected_course.id }}" />
-            <input type="hidden" name="item_id" value="{{ item.id }}" />
-            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-          </form>
-        </div>
-      </li>
+      <div class="col-lg-6">
+        <article class="entity-item">
+          <div class="entity-main">
+            <div class="entity-thumb-wrap">
+              {% if item.avatar %}
+                <img src="{{ item.avatar.url }}" alt="{{ item.avatar_alt|default:item.name }}" class="entity-thumb" />
+              {% else %}
+                <span class="entity-thumb-placeholder"><i class="bi bi-person-circle"></i></span>
+              {% endif %}
+            </div>
+            <div class="entity-text">
+              <div class="entity-title text-truncate">{{ item.name }}</div>
+              <div class="entity-meta text-truncate">{{ item.rating }}/5 rating</div>
+              <div class="small text-muted mt-1">{{ item.text|truncatechars:130 }}</div>
+              <div class="entity-tags">
+                <span class="entity-tag">{{ item.rating }} stars</span>
+                {% if item.review_url %}
+                  <span class="entity-tag">Has review link</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="entity-item-actions">
+            <a
+              class="btn btn-sm btn-ghost"
+              href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=reviews&edit_key=review_item&edit_id={{ item.id }}"
+            >
+              Edit
+            </a>
+            <form method="POST" action="{% url 'dashboard' %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_review_item" />
+              <input type="hidden" name="course" value="{{ selected_course.id }}" />
+              <input type="hidden" name="item_id" value="{{ item.id }}" />
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </div>
+        </article>
+      </div>
     {% empty %}
-      <li class="list-group-item text-muted">No reviews yet.</li>
+      <div class="col-12">
+        <div class="entity-empty-state">No review cards yet. Add the first review above.</div>
+      </div>
     {% endfor %}
-  </ul>
+  </div>
 </div>
-

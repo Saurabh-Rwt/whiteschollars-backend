@@ -1407,11 +1407,24 @@ def _handle_dashboard_post(request):
             stat.icon = icon
         stat.icon_alt = icon_alt
         stat.save()
+        _set_dashboard_ajax_data(
+            request,
+            'save_career_transition_stat',
+            mode='updated' if item_id else 'created',
+            item={
+                'id': stat.id,
+                'text': stat.text,
+                'icon_alt': stat.icon_alt or '',
+                'icon_url': stat.icon.url if stat.icon else '',
+            },
+        )
         messages.success(request, 'Career stat saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='career_transitions'))
 
     if action == 'delete_career_transition_stat':
-        CareerTransitionStat.objects.filter(id=request.POST.get('item_id'), course=selected_course).delete()
+        item_id = request.POST.get('item_id')
+        CareerTransitionStat.objects.filter(id=item_id, course=selected_course).delete()
+        _set_dashboard_ajax_data(request, 'delete_career_transition_stat', item_id=str(item_id or ''))
         messages.success(request, 'Career stat removed.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='career_transitions'))
 

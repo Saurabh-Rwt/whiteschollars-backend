@@ -1545,6 +1545,77 @@
         }
       };
 
+      const createCareerTransitionStatItemMarkup = (item) => {
+        const iconAlt = item.icon_alt || '';
+        const thumb = item.icon_url
+          ? `<img src="${escapeAttr(item.icon_url)}" alt="${escapeAttr(iconAlt || item.text || 'Stat icon')}" class="entity-thumb" />`
+          : '<span class="entity-thumb-placeholder"><i class="bi bi-bar-chart-line"></i></span>';
+        return (
+          `<div class="col-lg-6" data-career-stat-item="${escapeAttr(item.id)}">` +
+          '<article class="entity-item">' +
+          '<div class="entity-main">' +
+          `<div class="entity-thumb-wrap">${thumb}</div>` +
+          '<div class="entity-text">' +
+          `<div class="entity-title text-truncate">${escapeHtml(item.text || '')}</div>` +
+          `<div class="entity-meta text-truncate">${escapeHtml(iconAlt || 'No alt text added yet')}</div>` +
+          '</div>' +
+          '</div>' +
+          '<div class="entity-item-actions">' +
+          `<button type="button" class="btn btn-sm btn-ghost" data-career-stat-edit data-item-id="${escapeAttr(item.id)}" data-text="${escapeAttr(item.text || '')}" data-icon-alt="${escapeAttr(iconAlt)}" data-icon-url="${escapeAttr(item.icon_url || '')}">Edit</button>` +
+          `<form method="POST" action="${dashboardPath}">` +
+          `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeAttr(csrfToken)}" />` +
+          '<input type="hidden" name="action" value="delete_career_transition_stat" />' +
+          `<input type="hidden" name="course" value="${escapeAttr(selectedCourseId)}" />` +
+          `<input type="hidden" name="item_id" value="${escapeAttr(item.id)}" />` +
+          '<button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>' +
+          '</form>' +
+          '</div>' +
+          '</article>' +
+          '</div>'
+        );
+      };
+
+      const ensureCareerTransitionStatsEmptyState = () => {
+        const list = document.querySelector('[data-career-stat-list]');
+        if (!list) return;
+        const itemCount = list.querySelectorAll('[data-career-stat-item]').length;
+        let empty = list.querySelector('[data-career-stat-empty]');
+        if (itemCount === 0 && !empty) {
+          list.insertAdjacentHTML(
+            'beforeend',
+            '<div class="col-12" data-career-stat-empty><div class="entity-empty-state">No stats yet. Add the numbers that should appear beside the carousel.</div></div>'
+          );
+          return;
+        }
+        if (itemCount > 0 && empty) {
+          empty.remove();
+        }
+      };
+
+      const setCareerTransitionStatPreview = (url, altText, labelText) => {
+        const form = document.querySelector('[data-career-stat-form]');
+        if (!form) return;
+        const preview = form.querySelector('[data-career-stat-preview]');
+        const previewImage = form.querySelector('[data-career-stat-preview-image]');
+        const previewLabel = form.querySelector('[data-career-stat-preview-label]');
+        if (!preview || !previewImage || !previewLabel) return;
+
+        if (url) {
+          preview.classList.remove('d-none');
+          previewImage.classList.remove('d-none');
+          previewImage.src = url;
+          previewImage.alt = altText || 'Current stat icon';
+          previewLabel.textContent = labelText || altText || 'Current stat icon';
+          return;
+        }
+
+        preview.classList.add('d-none');
+        previewImage.classList.add('d-none');
+        previewImage.src = '';
+        previewImage.alt = '';
+        previewLabel.textContent = '';
+      };
+
       const setHeroButtonIconSelection = (iconClass, iconLabel = '') => {
         const form = document.querySelector('[data-hero-button-form]');
         if (!form) return;
@@ -1637,6 +1708,23 @@
         if (cancelButton) cancelButton.classList.add('d-none');
       };
 
+      const resetCareerTransitionStatFormToAddMode = () => {
+        const form = document.querySelector('[data-career-stat-form]');
+        if (!form) return;
+        form.reset();
+        const itemId = form.querySelector('[data-career-stat-item-id]');
+        if (itemId) itemId.value = '';
+        const iconInput = form.querySelector('[data-career-stat-icon]');
+        if (iconInput) iconInput.value = '';
+        const submitButton = form.querySelector('[data-career-stat-submit]');
+        if (submitButton) submitButton.textContent = 'Add Stat';
+        const modeBadge = document.querySelector('[data-career-stat-mode]');
+        if (modeBadge) modeBadge.textContent = 'Add new stat';
+        const cancelButton = form.querySelector('[data-career-stat-cancel]');
+        if (cancelButton) cancelButton.classList.add('d-none');
+        setCareerTransitionStatPreview('', '', '');
+      };
+
       const startHeroLogoEdit = (button) => {
         const form = document.querySelector('[data-hero-logo-form]');
         if (!form || !button) return;
@@ -1697,6 +1785,32 @@
         if (submitButton) submitButton.textContent = 'Update Question';
         if (modeBadge) modeBadge.textContent = 'Editing question';
         if (cancelButton) cancelButton.classList.remove('d-none');
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      };
+
+      const startCareerTransitionStatEdit = (button) => {
+        const form = document.querySelector('[data-career-stat-form]');
+        if (!form || !button) return;
+        const itemId = form.querySelector('[data-career-stat-item-id]');
+        const iconInput = form.querySelector('[data-career-stat-icon]');
+        const iconAltInput = form.querySelector('[data-career-stat-alt]');
+        const textInput = form.querySelector('[data-career-stat-text]');
+        const submitButton = form.querySelector('[data-career-stat-submit]');
+        const cancelButton = form.querySelector('[data-career-stat-cancel]');
+        const modeBadge = document.querySelector('[data-career-stat-mode]');
+
+        if (itemId) itemId.value = button.dataset.itemId || '';
+        if (iconInput) iconInput.value = '';
+        if (iconAltInput) iconAltInput.value = button.dataset.iconAlt || '';
+        if (textInput) textInput.value = button.dataset.text || '';
+        if (submitButton) submitButton.textContent = 'Update Stat';
+        if (cancelButton) cancelButton.classList.remove('d-none');
+        if (modeBadge) modeBadge.textContent = 'Editing stat';
+        setCareerTransitionStatPreview(
+          button.dataset.iconUrl || '',
+          button.dataset.iconAlt || '',
+          button.dataset.iconAlt || 'Current stat icon'
+        );
         form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       };
 
@@ -1835,6 +1949,35 @@
                   const item = list.querySelector(`[data-hero-button-item="${payload.data.item_id}"]`);
                   if (item) item.remove();
                   ensureHeroButtonsEmptyState();
+                }
+              }
+
+              if (action === 'save_career_transition_stat' && payload.data.item) {
+                const list = document.querySelector('[data-career-stat-list]');
+                if (list) {
+                  const itemSelector = `[data-career-stat-item="${payload.data.item.id}"]`;
+                  const existingItem = list.querySelector(itemSelector);
+                  if (existingItem) {
+                    existingItem.outerHTML = createCareerTransitionStatItemMarkup(payload.data.item);
+                  } else {
+                    list.insertAdjacentHTML('beforeend', createCareerTransitionStatItemMarkup(payload.data.item));
+                  }
+                  ensureCareerTransitionStatsEmptyState();
+                  bindDashboardForms(list);
+                }
+                resetCareerTransitionStatFormToAddMode();
+              }
+
+              if (action === 'delete_career_transition_stat' && payload.data.item_id) {
+                const list = document.querySelector('[data-career-stat-list]');
+                if (list) {
+                  const item = list.querySelector(`[data-career-stat-item="${payload.data.item_id}"]`);
+                  if (item) item.remove();
+                  ensureCareerTransitionStatsEmptyState();
+                }
+                const activeItem = document.querySelector('[data-career-stat-item-id]');
+                if (activeItem && String(activeItem.value || '') === String(payload.data.item_id || '')) {
+                  resetCareerTransitionStatFormToAddMode();
                 }
               }
             }
@@ -2105,6 +2248,18 @@
         select.addEventListener('change', () => updateCareerMediaVisibility(select));
       });
 
+      document.querySelectorAll('[data-career-stat-icon]').forEach((input) => {
+        input.addEventListener('change', () => {
+          if (input.files && input.files.length > 0) {
+            const file = input.files[0];
+            const previewUrl = URL.createObjectURL(file);
+            setCareerTransitionStatPreview(previewUrl, file.name, file.name);
+          } else {
+            setCareerTransitionStatPreview('', '', '');
+          }
+        });
+      });
+
       document.querySelectorAll('[data-list-add]').forEach((button) => {
         button.addEventListener('click', () => {
           const target = document.querySelector(button.dataset.listAdd);
@@ -2177,6 +2332,31 @@
         if (overviewItemCancel) {
           event.preventDefault();
           resetOverviewItemFormToAddMode();
+          return;
+        }
+
+        const careerStatEditButton = event.target.closest('[data-career-stat-edit]');
+        if (careerStatEditButton) {
+          event.preventDefault();
+          startCareerTransitionStatEdit(careerStatEditButton);
+          return;
+        }
+
+        const careerStatCancel = event.target.closest('[data-career-stat-cancel]');
+        if (careerStatCancel) {
+          event.preventDefault();
+          resetCareerTransitionStatFormToAddMode();
+          return;
+        }
+
+        const careerStatAddButton = event.target.closest('[data-career-stat-add]');
+        if (careerStatAddButton) {
+          event.preventDefault();
+          resetCareerTransitionStatFormToAddMode();
+          const form = document.querySelector('[data-career-stat-form]');
+          if (form) {
+            form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
           return;
         }
 
@@ -2286,6 +2466,7 @@
       resetHeroButtonFormToAddMode();
       resetOverviewItemFormToAddMode();
       ensureOverviewItemsEmptyState();
+      ensureCareerTransitionStatsEmptyState();
       initializeHeroAssetSorting();
       bindDashboardForms();
     </script>

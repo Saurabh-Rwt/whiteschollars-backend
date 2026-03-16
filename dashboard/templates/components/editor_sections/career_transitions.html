@@ -254,26 +254,35 @@
       <div class="form-section-title mb-1">Career Transition Stats</div>
       <p class="editor-note mb-0">These cards appear on the right side of the section beside the student carousel.</p>
     </div>
-    <span class="entity-mode-badge">{% if editing.career_transition_stat %}Editing stat{% else %}Add new stat{% endif %}</span>
+    <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+      <button type="button" class="btn btn-sm btn-ghost" data-career-stat-add>Add new stat</button>
+      <span class="entity-mode-badge" data-career-stat-mode>{% if editing.career_transition_stat %}Editing stat{% else %}Add new stat{% endif %}</span>
+    </div>
   </div>
 
-  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}" class="entity-form">
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}" class="entity-form" data-career-stat-form>
     {% csrf_token %}
     <input type="hidden" name="action" value="save_career_transition_stat" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
-    <input type="hidden" name="item_id" value="{% if editing.career_transition_stat %}{{ editing.career_transition_stat.id }}{% endif %}" />
+    <input type="hidden" name="item_id" value="{% if editing.career_transition_stat %}{{ editing.career_transition_stat.id }}{% endif %}" data-career-stat-item-id />
 
     <div class="row g-3 align-items-start">
       <div class="col-lg-4 col-md-5">
         <label class="form-label">Stat Icon</label>
-        <input type="file" class="form-control" name="icon" accept="image/*" />
+        <input type="file" class="form-control" name="icon" accept="image/*" data-career-stat-icon />
         {% if editing.career_transition_stat and editing.career_transition_stat.icon %}
-          <div class="media-preview">
+          <div class="media-preview" data-career-stat-preview>
             <img
               src="{{ editing.career_transition_stat.icon.url }}"
               alt="{{ editing.career_transition_stat.icon_alt|default:editing.career_transition_stat.text }}"
+              data-career-stat-preview-image
             />
-            <small class="text-muted">{{ editing.career_transition_stat.icon_alt|default:'Current stat icon' }}</small>
+            <small class="text-muted" data-career-stat-preview-label>{{ editing.career_transition_stat.icon_alt|default:'Current stat icon' }}</small>
+          </div>
+        {% else %}
+          <div class="media-preview d-none" data-career-stat-preview>
+            <img src="" alt="" class="d-none" data-career-stat-preview-image />
+            <small class="text-muted" data-career-stat-preview-label></small>
           </div>
         {% endif %}
       </div>
@@ -284,6 +293,7 @@
           type="text"
           class="form-control"
           name="icon_alt"
+          data-career-stat-alt
           value="{% if editing.career_transition_stat %}{{ editing.career_transition_stat.icon_alt }}{% endif %}"
           placeholder="Career transitions icon"
         />
@@ -295,6 +305,7 @@
           type="text"
           class="form-control"
           name="text"
+          data-career-stat-text
           value="{% if editing.career_transition_stat %}{{ editing.career_transition_stat.text }}{% endif %}"
           placeholder="500 + Career Transitions"
           required
@@ -302,14 +313,21 @@
       </div>
     </div>
 
-    <div class="mt-3 text-end">
-      <button class="btn btn-primary" type="submit">{% if editing.career_transition_stat %}Update Stat{% else %}Add Stat{% endif %}</button>
+    <div class="mt-3 text-end d-flex justify-content-end gap-2 flex-wrap">
+      <button
+        type="button"
+        class="btn btn-outline-secondary {% if not editing.career_transition_stat %}d-none{% endif %}"
+        data-career-stat-cancel
+      >
+        Cancel Edit
+      </button>
+      <button class="btn btn-primary" type="submit" data-career-stat-submit>{% if editing.career_transition_stat %}Update Stat{% else %}Add Stat{% endif %}</button>
     </div>
   </form>
 
-  <div class="row g-2 mt-3">
+  <div class="row g-2 mt-3" data-career-stat-list>
     {% for item in career_transition_stats %}
-      <div class="col-lg-6">
+      <div class="col-lg-6" data-career-stat-item="{{ item.id }}">
         <article class="entity-item">
           <div class="entity-main">
             <div class="entity-thumb-wrap">
@@ -325,12 +343,17 @@
             </div>
           </div>
           <div class="entity-item-actions">
-            <a
+            <button
+              type="button"
               class="btn btn-sm btn-ghost"
-              href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=career_transitions&edit_key=career_transition_stat&edit_id={{ item.id }}"
+              data-career-stat-edit
+              data-item-id="{{ item.id }}"
+              data-text="{{ item.text }}"
+              data-icon-alt="{{ item.icon_alt }}"
+              data-icon-url="{% if item.icon %}{{ item.icon.url }}{% endif %}"
             >
               Edit
-            </a>
+            </button>
             <form method="POST" action="{% url 'dashboard' %}">
               {% csrf_token %}
               <input type="hidden" name="action" value="delete_career_transition_stat" />
@@ -342,7 +365,7 @@
         </article>
       </div>
     {% empty %}
-      <div class="col-12">
+      <div class="col-12" data-career-stat-empty>
         <div class="entity-empty-state">No stats yet. Add the numbers that should appear beside the carousel.</div>
       </div>
     {% endfor %}

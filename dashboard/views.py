@@ -1577,11 +1577,25 @@ def _handle_dashboard_post(request):
             entry.image = image
         entry.image_alt = image_alt
         entry.save()
+        _set_dashboard_ajax_data(
+            request,
+            'save_program_for',
+            mode='updated' if item_id else 'created',
+            item={
+                'id': entry.id,
+                'title': entry.title,
+                'description': entry.description,
+                'image_alt': entry.image_alt or '',
+                'image_url': entry.image.url if entry.image else '',
+            },
+        )
         messages.success(request, 'Program audience item saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='program_for'))
 
     if action == 'delete_program_for':
-        ProgramFor.objects.filter(id=request.POST.get('item_id'), course=selected_course).delete()
+        item_id = request.POST.get('item_id')
+        ProgramFor.objects.filter(id=item_id, course=selected_course).delete()
+        _set_dashboard_ajax_data(request, 'delete_program_for', item_id=str(item_id or ''))
         messages.success(request, 'Program audience item removed.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='program_for'))
 

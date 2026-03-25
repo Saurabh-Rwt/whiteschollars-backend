@@ -1616,6 +1616,77 @@
         previewLabel.textContent = '';
       };
 
+      const createProgramForItemMarkup = (item) => {
+        const imageAlt = item.image_alt || '';
+        const thumb = item.image_url
+          ? `<img src="${escapeAttr(item.image_url)}" alt="${escapeAttr(imageAlt || item.title || 'Program audience image')}" class="entity-thumb" />`
+          : '<span class="entity-thumb-placeholder"><i class="bi bi-people"></i></span>';
+        return (
+          `<div class="col-xl-4 col-md-6" data-program-for-item="${escapeAttr(item.id)}">` +
+          '<article class="entity-item">' +
+          '<div class="entity-main">' +
+          `<div class="entity-thumb-wrap">${thumb}</div>` +
+          '<div class="entity-text">' +
+          `<div class="entity-title">${escapeHtml(item.title || '')}</div>` +
+          `<div class="entity-meta">${escapeHtml(item.description || '')}</div>` +
+          '</div>' +
+          '</div>' +
+          '<div class="entity-item-actions">' +
+          `<button type="button" class="btn btn-sm btn-ghost" data-program-for-edit data-item-id="${escapeAttr(item.id)}" data-title="${escapeAttr(item.title || '')}" data-description="${escapeAttr(item.description || '')}" data-image-alt="${escapeAttr(imageAlt)}" data-image-url="${escapeAttr(item.image_url || '')}">Edit</button>` +
+          `<form method="POST" action="${dashboardPath}">` +
+          `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeAttr(csrfToken)}" />` +
+          '<input type="hidden" name="action" value="delete_program_for" />' +
+          `<input type="hidden" name="course" value="${escapeAttr(selectedCourseId)}" />` +
+          `<input type="hidden" name="item_id" value="${escapeAttr(item.id)}" />` +
+          '<button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>' +
+          '</form>' +
+          '</div>' +
+          '</article>' +
+          '</div>'
+        );
+      };
+
+      const ensureProgramForEmptyState = () => {
+        const list = document.querySelector('[data-program-for-list]');
+        if (!list) return;
+        const itemCount = list.querySelectorAll('[data-program-for-item]').length;
+        let empty = list.querySelector('[data-program-for-empty]');
+        if (itemCount === 0 && !empty) {
+          list.insertAdjacentHTML(
+            'beforeend',
+            '<div class="col-12" data-program-for-empty><div class="entity-empty-state">No audience cards yet. Add the first card above.</div></div>'
+          );
+          return;
+        }
+        if (itemCount > 0 && empty) {
+          empty.remove();
+        }
+      };
+
+      const setProgramForPreview = (url, altText, labelText) => {
+        const form = document.querySelector('[data-program-for-form]');
+        if (!form) return;
+        const preview = form.querySelector('[data-program-for-preview]');
+        const previewImage = form.querySelector('[data-program-for-preview-image]');
+        const previewLabel = form.querySelector('[data-program-for-preview-label]');
+        if (!preview || !previewImage || !previewLabel) return;
+
+        if (url) {
+          preview.classList.remove('d-none');
+          previewImage.classList.remove('d-none');
+          previewImage.src = url;
+          previewImage.alt = altText || 'Current card image';
+          previewLabel.textContent = labelText || altText || 'Current card image';
+          return;
+        }
+
+        preview.classList.add('d-none');
+        previewImage.classList.add('d-none');
+        previewImage.src = '';
+        previewImage.alt = '';
+        previewLabel.textContent = '';
+      };
+
       const setHeroButtonIconSelection = (iconClass, iconLabel = '') => {
         const form = document.querySelector('[data-hero-button-form]');
         if (!form) return;
@@ -1725,6 +1796,23 @@
         setCareerTransitionStatPreview('', '', '');
       };
 
+      const resetProgramForFormToAddMode = () => {
+        const form = document.querySelector('[data-program-for-form]');
+        if (!form) return;
+        form.reset();
+        const itemId = form.querySelector('[data-program-for-item-id]');
+        if (itemId) itemId.value = '';
+        const imageInput = form.querySelector('[data-program-for-image]');
+        if (imageInput) imageInput.value = '';
+        const submitButton = form.querySelector('[data-program-for-submit]');
+        if (submitButton) submitButton.textContent = 'Add Card';
+        const modeBadge = document.querySelector('[data-program-for-mode]');
+        if (modeBadge) modeBadge.textContent = 'Add new card';
+        const cancelButton = form.querySelector('[data-program-for-cancel]');
+        if (cancelButton) cancelButton.classList.add('d-none');
+        setProgramForPreview('', '', '');
+      };
+
       const startHeroLogoEdit = (button) => {
         const form = document.querySelector('[data-hero-logo-form]');
         if (!form || !button) return;
@@ -1810,6 +1898,34 @@
           button.dataset.iconUrl || '',
           button.dataset.iconAlt || '',
           button.dataset.iconAlt || 'Current stat icon'
+        );
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      };
+
+      const startProgramForEdit = (button) => {
+        const form = document.querySelector('[data-program-for-form]');
+        if (!form || !button) return;
+        const itemId = form.querySelector('[data-program-for-item-id]');
+        const titleInput = form.querySelector('[data-program-for-title]');
+        const descriptionInput = form.querySelector('[data-program-for-description]');
+        const imageInput = form.querySelector('[data-program-for-image]');
+        const imageAltInput = form.querySelector('[data-program-for-image-alt]');
+        const submitButton = form.querySelector('[data-program-for-submit]');
+        const cancelButton = form.querySelector('[data-program-for-cancel]');
+        const modeBadge = document.querySelector('[data-program-for-mode]');
+
+        if (itemId) itemId.value = button.dataset.itemId || '';
+        if (titleInput) titleInput.value = button.dataset.title || '';
+        if (descriptionInput) descriptionInput.value = button.dataset.description || '';
+        if (imageInput) imageInput.value = '';
+        if (imageAltInput) imageAltInput.value = button.dataset.imageAlt || '';
+        if (submitButton) submitButton.textContent = 'Update Card';
+        if (cancelButton) cancelButton.classList.remove('d-none');
+        if (modeBadge) modeBadge.textContent = 'Editing card';
+        setProgramForPreview(
+          button.dataset.imageUrl || '',
+          button.dataset.imageAlt || '',
+          button.dataset.imageAlt || 'Current card image'
         );
         form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       };
@@ -1978,6 +2094,35 @@
                 const activeItem = document.querySelector('[data-career-stat-item-id]');
                 if (activeItem && String(activeItem.value || '') === String(payload.data.item_id || '')) {
                   resetCareerTransitionStatFormToAddMode();
+                }
+              }
+
+              if (action === 'save_program_for' && payload.data.item) {
+                const list = document.querySelector('[data-program-for-list]');
+                if (list) {
+                  const itemSelector = `[data-program-for-item="${payload.data.item.id}"]`;
+                  const existingItem = list.querySelector(itemSelector);
+                  if (existingItem) {
+                    existingItem.outerHTML = createProgramForItemMarkup(payload.data.item);
+                  } else {
+                    list.insertAdjacentHTML('beforeend', createProgramForItemMarkup(payload.data.item));
+                  }
+                  ensureProgramForEmptyState();
+                  bindDashboardForms(list);
+                }
+                resetProgramForFormToAddMode();
+              }
+
+              if (action === 'delete_program_for' && payload.data.item_id) {
+                const list = document.querySelector('[data-program-for-list]');
+                if (list) {
+                  const item = list.querySelector(`[data-program-for-item="${payload.data.item_id}"]`);
+                  if (item) item.remove();
+                  ensureProgramForEmptyState();
+                }
+                const activeItem = document.querySelector('[data-program-for-item-id]');
+                if (activeItem && String(activeItem.value || '') === String(payload.data.item_id || '')) {
+                  resetProgramForFormToAddMode();
                 }
               }
             }
@@ -2260,6 +2405,18 @@
         });
       });
 
+      document.querySelectorAll('[data-program-for-image]').forEach((input) => {
+        input.addEventListener('change', () => {
+          if (input.files && input.files.length > 0) {
+            const file = input.files[0];
+            const previewUrl = URL.createObjectURL(file);
+            setProgramForPreview(previewUrl, file.name, file.name);
+          } else {
+            setProgramForPreview('', '', '');
+          }
+        });
+      });
+
       document.querySelectorAll('[data-list-add]').forEach((button) => {
         button.addEventListener('click', () => {
           const target = document.querySelector(button.dataset.listAdd);
@@ -2354,6 +2511,31 @@
           event.preventDefault();
           resetCareerTransitionStatFormToAddMode();
           const form = document.querySelector('[data-career-stat-form]');
+          if (form) {
+            form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+          return;
+        }
+
+        const programForEditButton = event.target.closest('[data-program-for-edit]');
+        if (programForEditButton) {
+          event.preventDefault();
+          startProgramForEdit(programForEditButton);
+          return;
+        }
+
+        const programForCancel = event.target.closest('[data-program-for-cancel]');
+        if (programForCancel) {
+          event.preventDefault();
+          resetProgramForFormToAddMode();
+          return;
+        }
+
+        const programForAddButton = event.target.closest('[data-program-for-add]');
+        if (programForAddButton) {
+          event.preventDefault();
+          resetProgramForFormToAddMode();
+          const form = document.querySelector('[data-program-for-form]');
           if (form) {
             form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }
@@ -2465,8 +2647,10 @@
       resetHeroLogoFormToAddMode();
       resetHeroButtonFormToAddMode();
       resetOverviewItemFormToAddMode();
+      resetProgramForFormToAddMode();
       ensureOverviewItemsEmptyState();
       ensureCareerTransitionStatsEmptyState();
+      ensureProgramForEmptyState();
       initializeHeroAssetSorting();
       bindDashboardForms();
     </script>

@@ -29,6 +29,7 @@ from .models import (
     OnCampusSection,
     FeeStructure,
     ProgramFor,
+    ProjectsCovered,
     WhyWhiteScholars,
     WhyWhiteScholarsBullet,
     WhyWhiteScholarsImage,
@@ -178,6 +179,12 @@ SECTION_CONFIG = [
         'template': 'components/editor_sections/program_for.html',
     },
     {
+        'key': 'projects_covered',
+        'label': 'Projects Covered',
+        'description': 'Project cards with image, title, and description.',
+        'template': 'components/editor_sections/projects_covered.html',
+    },
+    {
         'key': 'why_white_scholars',
         'label': 'Why WhiteScholars Is the Best',
         'description': 'Bullet list and image slider.',
@@ -285,6 +292,7 @@ EDITABLE_MAP = {
     'on_campus_class': OnCampusClass,
     'fee_structure': FeeStructure,
     'program_for': ProgramFor,
+    'projects_covered': ProjectsCovered,
     'why_white_bullet': WhyWhiteScholarsBullet,
     'why_white_image': WhyWhiteScholarsImage,
     'expert_talk': ExpertTalkVideo,
@@ -564,6 +572,7 @@ def _build_dashboard_context(request, selected_course=None, active_section=None,
         'on_campus_classes': OnCampusClass.objects.filter(course=selected_course).order_by('sort_order'),
         'fee_structures': FeeStructure.objects.filter(course=selected_course).order_by('sort_order'),
         'program_for_items': ProgramFor.objects.filter(course=selected_course).order_by('sort_order'),
+        'projects_covered_items': ProjectsCovered.objects.filter(course=selected_course).order_by('sort_order'),
         'why_white_bullets': WhyWhiteScholarsBullet.objects.filter(course=selected_course).order_by('sort_order'),
         'why_white_images': WhyWhiteScholarsImage.objects.filter(course=selected_course).order_by('sort_order'),
         'expert_talks': ExpertTalkVideo.objects.filter(course=selected_course).order_by('sort_order'),
@@ -1694,6 +1703,53 @@ def _handle_dashboard_post(request):
         _set_dashboard_ajax_data(request, 'delete_program_for', item_id=str(item_id or ''))
         messages.success(request, 'Program audience item removed.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='program_for'))
+
+    if action == 'save_projects_covered':
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+        image = request.FILES.get('image')
+        image_alt = request.POST.get('image_alt', '').strip()
+        item_id = request.POST.get('item_id')
+        if not title or not description:
+            messages.error(request, 'Project title and description are required.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='projects_covered'))
+        if not image and not item_id:
+            messages.error(request, 'Please upload a project image.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='projects_covered'))
+        if item_id:
+            entry = ProjectsCovered.objects.filter(id=item_id, course=selected_course).first()
+            if not entry:
+                messages.error(request, 'Project card not found.')
+                return redirect(_dashboard_url(course_id=selected_course.id, section='projects_covered'))
+        else:
+            entry = ProjectsCovered(course=selected_course, sort_order=_next_sort_order(ProjectsCovered, selected_course))
+        entry.title = title
+        entry.description = description
+        if image:
+            entry.image = image
+        entry.image_alt = image_alt
+        entry.save()
+        _set_dashboard_ajax_data(
+            request,
+            'save_projects_covered',
+            mode='updated' if item_id else 'created',
+            item={
+                'id': entry.id,
+                'title': entry.title,
+                'description': entry.description,
+                'image_alt': entry.image_alt or '',
+                'image_url': entry.image.url if entry.image else '',
+            },
+        )
+        messages.success(request, 'Project card saved.')
+        return redirect(_dashboard_url(course_id=selected_course.id, section='projects_covered'))
+
+    if action == 'delete_projects_covered':
+        item_id = request.POST.get('item_id')
+        ProjectsCovered.objects.filter(id=item_id, course=selected_course).delete()
+        _set_dashboard_ajax_data(request, 'delete_projects_covered', item_id=str(item_id or ''))
+        messages.success(request, 'Project card removed.')
+        return redirect(_dashboard_url(course_id=selected_course.id, section='projects_covered'))
 
     if action == 'save_why_white_bullet':
         text = request.POST.get('text', '').strip()

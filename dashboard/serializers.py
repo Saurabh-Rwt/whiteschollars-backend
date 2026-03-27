@@ -14,6 +14,7 @@ from .models import (
     OnCampusClass,
     FeeStructure,
     ProgramFor,
+    ProjectsCovered,
     WhyWhiteScholars,
     ListenOurExpert,
     CourseSection,
@@ -115,6 +116,11 @@ class FeeStructureSerializer(serializers.ModelSerializer):
 class ProgramForSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProgramFor
+        fields = '__all__'
+
+class ProjectsCoveredSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectsCovered
         fields = '__all__'
 
 class WhyWhiteScholarsSerializer(serializers.ModelSerializer):
@@ -356,6 +362,7 @@ class CourseFullDetailSerializer(serializers.ModelSerializer):
     on_campus_classes = OnCampusClassSerializer(many=True, read_only=True)
     fee_structures = FeeStructureSerializer(many=True, read_only=True)
     program_for = ProgramForSerializer(many=True, read_only=True)
+    projects_covered = ProjectsCoveredSerializer(many=True, read_only=True)
     why_white_scholars = WhyWhiteScholarsSerializer(many=True, read_only=True)
     listen_our_experts = ListenOurExpertSerializer(many=True, read_only=True)
 
@@ -366,7 +373,7 @@ class CourseFullDetailSerializer(serializers.ModelSerializer):
             'sections', 'key_highlights', 'accreditations_certifications',
             'why_choose_items', 'mentors', 'program_highlights',
             'career_assistances', 'career_transitions', 'our_alumni',
-            'on_campus_classes', 'fee_structures', 'program_for',
+            'on_campus_classes', 'fee_structures', 'program_for', 'projects_covered',
             'why_white_scholars', 'listen_our_experts', 'tools_covered_logos'
         ]
 
@@ -404,6 +411,7 @@ class CoursePageSerializer(serializers.ModelSerializer):
     on_campus_classes = OnCampusClassSerializer(many=True, read_only=True)
     fee_structures = FeeStructureSerializer(many=True, read_only=True)
     program_for = ProgramForSerializer(many=True, read_only=True)
+    projects_covered = ProjectsCoveredSerializer(many=True, read_only=True)
     why_white_scholars_bullets = WhyWhiteScholarsBulletSerializer(many=True, read_only=True)
     why_white_scholars_images = WhyWhiteScholarsImageSerializer(many=True, read_only=True)
     expert_talk_videos = ExpertTalkVideoSerializer(many=True, read_only=True)
@@ -459,6 +467,7 @@ class CoursePageSerializer(serializers.ModelSerializer):
             'on_campus_classes',
             'fee_structures',
             'program_for',
+            'projects_covered',
             'why_white_scholars_bullets',
             'why_white_scholars_images',
             'expert_talk_videos',

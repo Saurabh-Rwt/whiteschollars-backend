@@ -248,6 +248,27 @@ class ProgramFor(models.Model):
     def __str__(self):
         return f"{self.course.name} - {self.title}"
 
+
+class ProjectsCovered(models.Model):
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='projects_covered'
+    )
+    image = models.ImageField(upload_to='projects_covered/', blank=True, null=True)
+    image_alt = models.CharField(max_length=255, blank=True)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = 'projects_covered'
+        ordering = ['sort_order']
+
+    def __str__(self):
+        return f"{self.course.name} - {self.title}"
+
+
 class WhyWhiteScholars(models.Model):
     course = models.ForeignKey(
         'Course',
@@ -294,6 +315,7 @@ class CourseSection(models.Model):
         ('on_campus', 'On Campus Classes'),
         ('fee_structure', 'Fee Structure'),
         ('program_for', 'Program For'),
+        ('projects_covered', 'Projects Covered'),
         ('why_white_scholars', 'Why WhiteScholars'),
         ('expert_talks', 'Expert Talks'),
         ('salary_trends', 'Salary Trends'),

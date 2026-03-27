@@ -1687,6 +1687,77 @@
         previewLabel.textContent = '';
       };
 
+      const createProjectsCoveredItemMarkup = (item) => {
+        const imageAlt = item.image_alt || '';
+        const thumb = item.image_url
+          ? `<img src="${escapeAttr(item.image_url)}" alt="${escapeAttr(imageAlt || item.title || 'Project image')}" class="entity-thumb" />`
+          : '<span class="entity-thumb-placeholder"><i class="bi bi-kanban"></i></span>';
+        return (
+          `<div class="col-xl-4 col-md-6" data-projects-covered-item="${escapeAttr(item.id)}">` +
+          '<article class="entity-item">' +
+          '<div class="entity-main">' +
+          `<div class="entity-thumb-wrap">${thumb}</div>` +
+          '<div class="entity-text">' +
+          `<div class="entity-title">${escapeHtml(item.title || '')}</div>` +
+          `<div class="entity-meta">${escapeHtml(item.description || '')}</div>` +
+          '</div>' +
+          '</div>' +
+          '<div class="entity-item-actions">' +
+          `<button type="button" class="btn btn-sm btn-ghost" data-projects-covered-edit data-item-id="${escapeAttr(item.id)}" data-title="${escapeAttr(item.title || '')}" data-description="${escapeAttr(item.description || '')}" data-image-alt="${escapeAttr(imageAlt)}" data-image-url="${escapeAttr(item.image_url || '')}">Edit</button>` +
+          `<form method="POST" action="${dashboardPath}">` +
+          `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeAttr(csrfToken)}" />` +
+          '<input type="hidden" name="action" value="delete_projects_covered" />' +
+          `<input type="hidden" name="course" value="${escapeAttr(selectedCourseId)}" />` +
+          `<input type="hidden" name="item_id" value="${escapeAttr(item.id)}" />` +
+          '<button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>' +
+          '</form>' +
+          '</div>' +
+          '</article>' +
+          '</div>'
+        );
+      };
+
+      const ensureProjectsCoveredEmptyState = () => {
+        const list = document.querySelector('[data-projects-covered-list]');
+        if (!list) return;
+        const itemCount = list.querySelectorAll('[data-projects-covered-item]').length;
+        let empty = list.querySelector('[data-projects-covered-empty]');
+        if (itemCount === 0 && !empty) {
+          list.insertAdjacentHTML(
+            'beforeend',
+            '<div class="col-12" data-projects-covered-empty><div class="entity-empty-state">No project cards yet. Add the first card above.</div></div>'
+          );
+          return;
+        }
+        if (itemCount > 0 && empty) {
+          empty.remove();
+        }
+      };
+
+      const setProjectsCoveredPreview = (url, altText, labelText) => {
+        const form = document.querySelector('[data-projects-covered-form]');
+        if (!form) return;
+        const preview = form.querySelector('[data-projects-covered-preview]');
+        const previewImage = form.querySelector('[data-projects-covered-preview-image]');
+        const previewLabel = form.querySelector('[data-projects-covered-preview-label]');
+        if (!preview || !previewImage || !previewLabel) return;
+
+        if (url) {
+          preview.classList.remove('d-none');
+          previewImage.classList.remove('d-none');
+          previewImage.src = url;
+          previewImage.alt = altText || 'Current project image';
+          previewLabel.textContent = labelText || altText || 'Current project image';
+          return;
+        }
+
+        preview.classList.add('d-none');
+        previewImage.classList.add('d-none');
+        previewImage.src = '';
+        previewImage.alt = '';
+        previewLabel.textContent = '';
+      };
+
       const createToolsCoveredItemMarkup = (item) => {
         const imageAlt = item.image_alt || '';
         const thumb = item.image_url
@@ -1884,6 +1955,26 @@
         setProgramForPreview('', '', '');
       };
 
+      const resetProjectsCoveredFormToAddMode = () => {
+        const form = document.querySelector('[data-projects-covered-form]');
+        if (!form) return;
+        form.reset();
+        const itemId = form.querySelector('[data-projects-covered-item-id]');
+        if (itemId) itemId.value = '';
+        const imageInput = form.querySelector('[data-projects-covered-image]');
+        if (imageInput) {
+          imageInput.value = '';
+          imageInput.required = true;
+        }
+        const submitButton = form.querySelector('[data-projects-covered-submit]');
+        if (submitButton) submitButton.textContent = 'Add Card';
+        const modeBadge = document.querySelector('[data-projects-covered-mode]');
+        if (modeBadge) modeBadge.textContent = 'Add new card';
+        const cancelButton = form.querySelector('[data-projects-covered-cancel]');
+        if (cancelButton) cancelButton.classList.add('d-none');
+        setProjectsCoveredPreview('', '', '');
+      };
+
       const resetToolsCoveredFormToAddMode = () => {
         const form = document.querySelector('[data-tools-covered-form]');
         if (!form) return;
@@ -2019,6 +2110,37 @@
           button.dataset.imageUrl || '',
           button.dataset.imageAlt || '',
           button.dataset.imageAlt || 'Current card image'
+        );
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      };
+
+      const startProjectsCoveredEdit = (button) => {
+        const form = document.querySelector('[data-projects-covered-form]');
+        if (!form || !button) return;
+        const itemId = form.querySelector('[data-projects-covered-item-id]');
+        const titleInput = form.querySelector('[data-projects-covered-title]');
+        const descriptionInput = form.querySelector('[data-projects-covered-description]');
+        const imageInput = form.querySelector('[data-projects-covered-image]');
+        const imageAltInput = form.querySelector('[data-projects-covered-image-alt]');
+        const submitButton = form.querySelector('[data-projects-covered-submit]');
+        const cancelButton = form.querySelector('[data-projects-covered-cancel]');
+        const modeBadge = document.querySelector('[data-projects-covered-mode]');
+
+        if (itemId) itemId.value = button.dataset.itemId || '';
+        if (titleInput) titleInput.value = button.dataset.title || '';
+        if (descriptionInput) descriptionInput.value = button.dataset.description || '';
+        if (imageInput) {
+          imageInput.value = '';
+          imageInput.required = false;
+        }
+        if (imageAltInput) imageAltInput.value = button.dataset.imageAlt || '';
+        if (submitButton) submitButton.textContent = 'Update Card';
+        if (cancelButton) cancelButton.classList.remove('d-none');
+        if (modeBadge) modeBadge.textContent = 'Editing card';
+        setProjectsCoveredPreview(
+          button.dataset.imageUrl || '',
+          button.dataset.imageAlt || '',
+          button.dataset.imageAlt || 'Current project image'
         );
         form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       };
@@ -2243,6 +2365,35 @@
                 const activeItem = document.querySelector('[data-program-for-item-id]');
                 if (activeItem && String(activeItem.value || '') === String(payload.data.item_id || '')) {
                   resetProgramForFormToAddMode();
+                }
+              }
+
+              if (action === 'save_projects_covered' && payload.data.item) {
+                const list = document.querySelector('[data-projects-covered-list]');
+                if (list) {
+                  const itemSelector = `[data-projects-covered-item="${payload.data.item.id}"]`;
+                  const existingItem = list.querySelector(itemSelector);
+                  if (existingItem) {
+                    existingItem.outerHTML = createProjectsCoveredItemMarkup(payload.data.item);
+                  } else {
+                    list.insertAdjacentHTML('beforeend', createProjectsCoveredItemMarkup(payload.data.item));
+                  }
+                  ensureProjectsCoveredEmptyState();
+                  bindDashboardForms(list);
+                }
+                resetProjectsCoveredFormToAddMode();
+              }
+
+              if (action === 'delete_projects_covered' && payload.data.item_id) {
+                const list = document.querySelector('[data-projects-covered-list]');
+                if (list) {
+                  const item = list.querySelector(`[data-projects-covered-item="${payload.data.item_id}"]`);
+                  if (item) item.remove();
+                  ensureProjectsCoveredEmptyState();
+                }
+                const activeItem = document.querySelector('[data-projects-covered-item-id]');
+                if (activeItem && String(activeItem.value || '') === String(payload.data.item_id || '')) {
+                  resetProjectsCoveredFormToAddMode();
                 }
               }
 
@@ -2566,6 +2717,18 @@
         });
       });
 
+      document.querySelectorAll('[data-projects-covered-image]').forEach((input) => {
+        input.addEventListener('change', () => {
+          if (input.files && input.files.length > 0) {
+            const file = input.files[0];
+            const previewUrl = URL.createObjectURL(file);
+            setProjectsCoveredPreview(previewUrl, file.name, file.name);
+          } else {
+            setProjectsCoveredPreview('', '', '');
+          }
+        });
+      });
+
       document.querySelectorAll('[data-tools-covered-image]').forEach((input) => {
         input.addEventListener('change', () => {
           if (input.files && input.files.length > 0) {
@@ -2703,6 +2866,31 @@
           return;
         }
 
+        const projectsCoveredEditButton = event.target.closest('[data-projects-covered-edit]');
+        if (projectsCoveredEditButton) {
+          event.preventDefault();
+          startProjectsCoveredEdit(projectsCoveredEditButton);
+          return;
+        }
+
+        const projectsCoveredCancel = event.target.closest('[data-projects-covered-cancel]');
+        if (projectsCoveredCancel) {
+          event.preventDefault();
+          resetProjectsCoveredFormToAddMode();
+          return;
+        }
+
+        const projectsCoveredAddButton = event.target.closest('[data-projects-covered-add]');
+        if (projectsCoveredAddButton) {
+          event.preventDefault();
+          resetProjectsCoveredFormToAddMode();
+          const form = document.querySelector('[data-projects-covered-form]');
+          if (form) {
+            form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+          return;
+        }
+
         const toolsCoveredEditButton = event.target.closest('[data-tools-covered-edit]');
         if (toolsCoveredEditButton) {
           event.preventDefault();
@@ -2834,10 +3022,12 @@
       resetHeroButtonFormToAddMode();
       resetOverviewItemFormToAddMode();
       resetProgramForFormToAddMode();
+      resetProjectsCoveredFormToAddMode();
       resetToolsCoveredFormToAddMode();
       ensureOverviewItemsEmptyState();
       ensureCareerTransitionStatsEmptyState();
       ensureProgramForEmptyState();
+      ensureProjectsCoveredEmptyState();
       ensureToolsCoveredEmptyState();
       initializeHeroAssetSorting();
       bindDashboardForms();

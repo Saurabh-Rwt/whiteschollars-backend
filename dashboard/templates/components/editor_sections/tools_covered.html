@@ -1,0 +1,61 @@
+<div class="form-section">
+  <div class="form-section-title">Tools Covered</div>
+  <p class="editor-note">Upload the tool logos that should appear right after the course overview section.</p>
+
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_tools_covered_logo" />
+    <input type="hidden" name="course" value="{{ selected_course.id }}" />
+    <input type="hidden" name="item_id" value="{% if editing.tools_covered_logo %}{{ editing.tools_covered_logo.id }}{% endif %}" />
+
+    <div class="row g-3 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label">Tool Logo</label>
+        <input type="file" class="form-control" name="image" accept="image/*" {% if not editing.tools_covered_logo %}required{% endif %} />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Alt Text</label>
+        <input type="text" class="form-control" name="image_alt" value="{% if editing.tools_covered_logo %}{{ editing.tools_covered_logo.image_alt }}{% endif %}" placeholder="Pandas logo" />
+      </div>
+      <div class="col-md-2 text-end">
+        <button class="btn btn-primary" type="submit">{% if editing.tools_covered_logo %}Update{% else %}Add{% endif %}</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="row g-2 mt-3">
+    {% for item in tools_covered_logos %}
+      <div class="col-md-6 col-xl-4">
+        <div class="entity-item">
+          <div class="entity-main">
+            <div class="entity-thumb-wrap">
+              {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.image_alt|default:'Tool logo' }}" class="entity-thumb" />
+              {% else %}
+                <span class="entity-thumb-placeholder"><i class="bi bi-tools"></i></span>
+              {% endif %}
+            </div>
+            <div class="entity-text">
+              <div class="entity-title text-truncate">{{ item.image_alt|default:'Tool logo' }}</div>
+              <div class="entity-meta">Logo ID #{{ item.id }}</div>
+            </div>
+          </div>
+          <div class="entity-item-actions">
+            <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=tools_covered&edit_key=tools_covered_logo&edit_id={{ item.id }}">Edit</a>
+            <form method="POST" action="{% url 'dashboard' %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_tools_covered_logo" />
+              <input type="hidden" name="course" value="{{ selected_course.id }}" />
+              <input type="hidden" name="item_id" value="{{ item.id }}" />
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="entity-empty-state">No tool logos yet. Add the first one above.</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>

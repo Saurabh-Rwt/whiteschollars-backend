@@ -41,6 +41,7 @@ from .models import (
     LiveDemoCta,
     CourseOverview,
     CourseOverviewItem,
+    ToolsCoveredLogo,
     LearnerJourney,
     CurriculumSection,
     CurriculumModule,
@@ -109,6 +110,12 @@ SECTION_CONFIG = [
         'label': 'Course Overview',
         'description': 'Intro text plus expandable overview questions.',
         'template': 'components/editor_sections/course_overview.html',
+    },
+    {
+        'key': 'tools_covered',
+        'label': 'Tools Covered',
+        'description': 'Logo strip for the tools and platforms included in the course.',
+        'template': 'components/editor_sections/tools_covered.html',
     },
     {
         'key': 'mentors',
@@ -268,6 +275,7 @@ EDITABLE_MAP = {
     'key_highlight': KeyHighlight,
     'accreditation_logo': AccreditationLogo,
     'why_choose': WhyChoose,
+    'tools_covered_logo': ToolsCoveredLogo,
     'mentor': Mentor,
     'program_highlight': ProgramHighlight,
     'career_assistance': CareerAssistance,
@@ -386,14 +394,61 @@ def _set_dashboard_editor_state(request, course, active_section=None, edit_key=N
 
 
 def _ensure_course_sections(course):
-    existing = {section.key for section in CourseSection.objects.filter(course=course)}
-    new_sections = []
-    for idx, config in enumerate(SECTION_CONFIG):
-        key = config['key']
-        if key not in existing:
-            new_sections.append(CourseSection(course=course, key=key, sort_order=idx * 10))
-    if new_sections:
-        CourseSection.objects.bulk_create(new_sections)
+    existing_sections = {
+        section.key: section
+        for section in CourseSection.objects.filter(course=course).order_by('sort_order', 'id')
+    }
+    if len(existing_sections) == len(SECTION_CONFIG):
+        return
+
+    pending_sections = []
+    ordered_keys = [config['key'] for config in SECTION_CONFIG]
+
+    def get_section_sort_order(section_key):
+        section = existing_sections.get(section_key)
+        if section:
+            return section.sort_order
+        for pending_key, pending_order in pending_sections:
+            if pending_key == section_key:
+                return pending_order
+        return None
+
+    for idx, key in enumerate(ordered_keys):
+        if key in existing_sections:
+            continue
+
+        previous_order = None
+        for prev_key in reversed(ordered_keys[:idx]):
+            previous_order = get_section_sort_order(prev_key)
+            if previous_order is not None:
+                break
+
+        next_order = None
+        for next_key in ordered_keys[idx + 1:]:
+            next_order = get_section_sort_order(next_key)
+            if next_order is not None:
+                break
+
+        if previous_order is None and next_order is None:
+            sort_order = idx * 10
+        elif previous_order is None:
+            sort_order = max(0, next_order - 5)
+        elif next_order is None:
+            sort_order = previous_order + 10
+        elif next_order - previous_order > 1:
+            sort_order = previous_order + ((next_order - previous_order) // 2)
+        else:
+            sort_order = previous_order + 1
+
+        pending_sections.append((key, sort_order))
+
+    if pending_sections:
+        CourseSection.objects.bulk_create(
+            [
+                CourseSection(course=course, key=key, sort_order=sort_order)
+                for key, sort_order in pending_sections
+            ]
+        )
 
 
 def _next_sort_order(model, course):
@@ -495,6 +550,7 @@ def _build_dashboard_context(request, selected_course=None, active_section=None,
         'live_demo_cta': getattr(selected_course, 'live_demo_cta', None),
         'course_overview': getattr(selected_course, 'course_overview', None),
         'course_overview_items': CourseOverviewItem.objects.filter(course=selected_course).order_by('sort_order'),
+        'tools_covered_logos': ToolsCoveredLogo.objects.filter(course=selected_course).order_by('sort_order'),
         'mentors': Mentor.objects.filter(course=selected_course).order_by('sort_order'),
         'program_highlights': ProgramHighlight.objects.filter(course=selected_course).order_by('sort_order'),
         'learner_journey': getattr(selected_course, 'learner_journey', None),
@@ -563,6 +619,7 @@ def get_course_full_data(request, slug):
     except Course.DoesNotExist:
         return Response({'error': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
 
+    _ensure_course_sections(course)
     serializer = CourseFullDetailSerializer(course)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -576,6 +633,7 @@ def get_course_page(request, slug):
     except Course.DoesNotExist:
         return Response({'error': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
 
+    _ensure_course_sections(course)
     serializer = CoursePageSerializer(course)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1172,6 +1230,32 @@ def _handle_dashboard_post(request):
         _set_dashboard_ajax_data(request, 'delete_course_overview_item', item_id=str(item_id or ''))
         messages.success(request, 'Course overview item removed.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='course_overview'))
+
+    if action == 'save_tools_covered_logo':
+        image = request.FILES.get('image')
+        image_alt = request.POST.get('image_alt', '').strip()
+        item_id = request.POST.get('item_id')
+        if not image and not item_id:
+            messages.error(request, 'Please upload a tool logo.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='tools_covered'))
+        if item_id:
+            logo = ToolsCoveredLogo.objects.filter(id=item_id, course=selected_course).first()
+            if not logo:
+                messages.error(request, 'Tool logo not found.')
+                return redirect(_dashboard_url(course_id=selected_course.id, section='tools_covered'))
+        else:
+            logo = ToolsCoveredLogo(course=selected_course, sort_order=_next_sort_order(ToolsCoveredLogo, selected_course))
+        if image:
+            logo.image = image
+        logo.image_alt = image_alt
+        logo.save()
+        messages.success(request, 'Tool logo saved.')
+        return redirect(_dashboard_url(course_id=selected_course.id, section='tools_covered'))
+
+    if action == 'delete_tools_covered_logo':
+        ToolsCoveredLogo.objects.filter(id=request.POST.get('item_id'), course=selected_course).delete()
+        messages.success(request, 'Tool logo removed.')
+        return redirect(_dashboard_url(course_id=selected_course.id, section='tools_covered'))
 
     if action == 'save_mentor':
         name = request.POST.get('mentor_name', '').strip()

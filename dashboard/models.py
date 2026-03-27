@@ -283,6 +283,7 @@ class CourseSection(models.Model):
         ('why_choose', 'Why Choose'),
         ('live_demo', 'Live Demo CTA'),
         ('course_overview', 'Course Overview'),
+        ('tools_covered', 'Tools Covered'),
         ('mentors', 'Mentors'),
         ('program_highlights', 'Program Highlights'),
         ('learner_journey', 'Learner Journey'),
@@ -438,6 +439,20 @@ class CourseOverviewItem(models.Model):
 
     def __str__(self):
         return f"{self.course.name} - {self.question[:40]}"
+
+
+class ToolsCoveredLogo(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='tools_covered_logos')
+    image = models.ImageField(upload_to='tools_covered/', blank=True, null=True)
+    image_alt = models.CharField(max_length=255, blank=True)
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = 'tools_covered_logos'
+        ordering = ['sort_order']
+
+    def __str__(self):
+        return f"{self.course.name} - Tools Covered Logo"
 
 
 class LearnerJourney(models.Model):

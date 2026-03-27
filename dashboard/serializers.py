@@ -24,6 +24,7 @@ from .models import (
     LiveDemoCta,
     CourseOverview,
     CourseOverviewItem,
+    ToolsCoveredLogo,
     LearnerJourney,
     CurriculumSection,
     CurriculumModule,
@@ -172,6 +173,12 @@ class CourseOverviewSerializer(serializers.ModelSerializer):
 class CourseOverviewItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseOverviewItem
+        fields = '__all__'
+
+
+class ToolsCoveredLogoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ToolsCoveredLogo
         fields = '__all__'
 
 
@@ -340,6 +347,7 @@ class CourseFullDetailSerializer(serializers.ModelSerializer):
     key_highlights = KeyHighlightSerializer(many=True, read_only=True)
     accreditations_certifications = AccreditationsAndCertificationSerializer(many=True, read_only=True)
     why_choose_items = WhyChooseSerializer(many=True, read_only=True)
+    tools_covered_logos = ToolsCoveredLogoSerializer(many=True, read_only=True)
     mentors = MentorSerializer(many=True, read_only=True)
     program_highlights = ProgramHighlightSerializer(many=True, read_only=True)
     career_assistances = CareerAssistanceSerializer(many=True, read_only=True)
@@ -359,7 +367,7 @@ class CourseFullDetailSerializer(serializers.ModelSerializer):
             'why_choose_items', 'mentors', 'program_highlights',
             'career_assistances', 'career_transitions', 'our_alumni',
             'on_campus_classes', 'fee_structures', 'program_for',
-            'why_white_scholars', 'listen_our_experts'
+            'why_white_scholars', 'listen_our_experts', 'tools_covered_logos'
         ]
 
 
@@ -382,6 +390,7 @@ class CoursePageSerializer(serializers.ModelSerializer):
     live_demo_cta = LiveDemoCtaSerializer(read_only=True)
     course_overview = CourseOverviewSerializer(read_only=True)
     course_overview_items = CourseOverviewItemSerializer(many=True, read_only=True)
+    tools_covered_logos = ToolsCoveredLogoSerializer(many=True, read_only=True)
     mentors = MentorSerializer(many=True, read_only=True)
     program_highlights = ProgramHighlightSerializer(many=True, read_only=True)
     learner_journey = LearnerJourneySerializer(read_only=True)
@@ -436,6 +445,7 @@ class CoursePageSerializer(serializers.ModelSerializer):
             'live_demo_cta',
             'course_overview',
             'course_overview_items',
+            'tools_covered_logos',
             'mentors',
             'program_highlights',
             'learner_journey',

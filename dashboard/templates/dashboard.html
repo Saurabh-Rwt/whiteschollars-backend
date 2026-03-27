@@ -1687,6 +1687,54 @@
         previewLabel.textContent = '';
       };
 
+      const createToolsCoveredItemMarkup = (item) => {
+        const imageAlt = item.image_alt || '';
+        const thumb = item.image_url
+          ? `<img src="${escapeAttr(item.image_url)}" alt="${escapeAttr(imageAlt || 'Tool logo')}" class="entity-thumb" />`
+          : '<span class="entity-thumb-placeholder"><i class="bi bi-tools"></i></span>';
+        const editHref = `${dashboardPath}?course=${encodeURIComponent(selectedCourseId)}&section=tools_covered&edit_key=tools_covered_logo&edit_id=${encodeURIComponent(item.id)}`;
+        return (
+          `<div class="col-md-6 col-xl-4" data-tools-covered-item="${escapeAttr(item.id)}">` +
+          '<div class="entity-item">' +
+          '<div class="entity-main">' +
+          `<div class="entity-thumb-wrap">${thumb}</div>` +
+          '<div class="entity-text">' +
+          `<div class="entity-title text-truncate">${escapeHtml(imageAlt || 'Tool logo')}</div>` +
+          `<div class="entity-meta">Logo ID #${escapeHtml(item.id)}</div>` +
+          '</div>' +
+          '</div>' +
+          '<div class="entity-item-actions">' +
+          `<a class="btn btn-sm btn-ghost" href="${escapeAttr(editHref)}">Edit</a>` +
+          `<form method="POST" action="${dashboardPath}">` +
+          `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeAttr(csrfToken)}" />` +
+          '<input type="hidden" name="action" value="delete_tools_covered_logo" />' +
+          `<input type="hidden" name="course" value="${escapeAttr(selectedCourseId)}" />` +
+          `<input type="hidden" name="item_id" value="${escapeAttr(item.id)}" />` +
+          '<button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>' +
+          '</form>' +
+          '</div>' +
+          '</div>' +
+          '</div>'
+        );
+      };
+
+      const ensureToolsCoveredEmptyState = () => {
+        const list = document.querySelector('[data-tools-covered-list]');
+        if (!list) return;
+        const itemCount = list.querySelectorAll('[data-tools-covered-item]').length;
+        let empty = list.querySelector('[data-tools-covered-empty]');
+        if (itemCount === 0 && !empty) {
+          list.insertAdjacentHTML(
+            'beforeend',
+            '<div class="col-12" data-tools-covered-empty><div class="entity-empty-state">No tool logos yet. Add the first one above.</div></div>'
+          );
+          return;
+        }
+        if (itemCount > 0 && empty) {
+          empty.remove();
+        }
+      };
+
       const setHeroButtonIconSelection = (iconClass, iconLabel = '') => {
         const form = document.querySelector('[data-hero-button-form]');
         if (!form) return;
@@ -1811,6 +1859,18 @@
         const cancelButton = form.querySelector('[data-program-for-cancel]');
         if (cancelButton) cancelButton.classList.add('d-none');
         setProgramForPreview('', '', '');
+      };
+
+      const resetToolsCoveredFormToAddMode = () => {
+        const form = document.querySelector('[data-tools-covered-form]');
+        if (!form) return;
+        form.reset();
+        const itemId = form.querySelector('[data-tools-covered-item-id]');
+        if (itemId) itemId.value = '';
+        const imageInput = form.querySelector('[data-tools-covered-image]');
+        if (imageInput) imageInput.required = true;
+        const submitButton = form.querySelector('[data-tools-covered-submit]');
+        if (submitButton) submitButton.textContent = 'Add';
       };
 
       const startHeroLogoEdit = (button) => {
@@ -2123,6 +2183,35 @@
                 const activeItem = document.querySelector('[data-program-for-item-id]');
                 if (activeItem && String(activeItem.value || '') === String(payload.data.item_id || '')) {
                   resetProgramForFormToAddMode();
+                }
+              }
+
+              if (action === 'save_tools_covered_logo' && payload.data.item) {
+                const list = document.querySelector('[data-tools-covered-list]');
+                if (list) {
+                  const itemSelector = `[data-tools-covered-item="${payload.data.item.id}"]`;
+                  const existingItem = list.querySelector(itemSelector);
+                  if (existingItem) {
+                    existingItem.outerHTML = createToolsCoveredItemMarkup(payload.data.item);
+                  } else {
+                    list.insertAdjacentHTML('beforeend', createToolsCoveredItemMarkup(payload.data.item));
+                  }
+                  ensureToolsCoveredEmptyState();
+                  bindDashboardForms(list);
+                }
+                resetToolsCoveredFormToAddMode();
+              }
+
+              if (action === 'delete_tools_covered_logo' && payload.data.item_id) {
+                const list = document.querySelector('[data-tools-covered-list]');
+                if (list) {
+                  const item = list.querySelector(`[data-tools-covered-item="${payload.data.item_id}"]`);
+                  if (item) item.remove();
+                  ensureToolsCoveredEmptyState();
+                }
+                const activeItem = document.querySelector('[data-tools-covered-item-id]');
+                if (activeItem && String(activeItem.value || '') === String(payload.data.item_id || '')) {
+                  resetToolsCoveredFormToAddMode();
                 }
               }
             }

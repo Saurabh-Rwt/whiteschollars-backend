@@ -1249,11 +1249,23 @@ def _handle_dashboard_post(request):
             logo.image = image
         logo.image_alt = image_alt
         logo.save()
+        _set_dashboard_ajax_data(
+            request,
+            'save_tools_covered_logo',
+            mode='updated' if item_id else 'created',
+            item={
+                'id': logo.id,
+                'image_alt': logo.image_alt or '',
+                'image_url': logo.image.url if logo.image else '',
+            },
+        )
         messages.success(request, 'Tool logo saved.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='tools_covered'))
 
     if action == 'delete_tools_covered_logo':
-        ToolsCoveredLogo.objects.filter(id=request.POST.get('item_id'), course=selected_course).delete()
+        item_id = request.POST.get('item_id')
+        ToolsCoveredLogo.objects.filter(id=item_id, course=selected_course).delete()
+        _set_dashboard_ajax_data(request, 'delete_tools_covered_logo', item_id=str(item_id or ''))
         messages.success(request, 'Tool logo removed.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='tools_covered'))
 

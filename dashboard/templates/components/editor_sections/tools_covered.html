@@ -2,30 +2,30 @@
   <div class="form-section-title">Tools Covered</div>
   <p class="editor-note">Upload the tool logos that should appear right after the course overview section.</p>
 
-  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}">
+  <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}" data-tools-covered-form>
     {% csrf_token %}
     <input type="hidden" name="action" value="save_tools_covered_logo" />
     <input type="hidden" name="course" value="{{ selected_course.id }}" />
-    <input type="hidden" name="item_id" value="{% if editing.tools_covered_logo %}{{ editing.tools_covered_logo.id }}{% endif %}" />
+    <input type="hidden" name="item_id" value="{% if editing.tools_covered_logo %}{{ editing.tools_covered_logo.id }}{% endif %}" data-tools-covered-item-id />
 
     <div class="row g-3 align-items-end">
       <div class="col-md-6">
         <label class="form-label">Tool Logo</label>
-        <input type="file" class="form-control" name="image" accept="image/*" {% if not editing.tools_covered_logo %}required{% endif %} />
+        <input type="file" class="form-control" name="image" accept="image/*" data-tools-covered-image {% if not editing.tools_covered_logo %}required{% endif %} />
       </div>
       <div class="col-md-4">
         <label class="form-label">Alt Text</label>
-        <input type="text" class="form-control" name="image_alt" value="{% if editing.tools_covered_logo %}{{ editing.tools_covered_logo.image_alt }}{% endif %}" placeholder="Pandas logo" />
+        <input type="text" class="form-control" name="image_alt" value="{% if editing.tools_covered_logo %}{{ editing.tools_covered_logo.image_alt }}{% endif %}" placeholder="Pandas logo" data-tools-covered-image-alt />
       </div>
       <div class="col-md-2 text-end">
-        <button class="btn btn-primary" type="submit">{% if editing.tools_covered_logo %}Update{% else %}Add{% endif %}</button>
+        <button class="btn btn-primary" type="submit" data-tools-covered-submit>{% if editing.tools_covered_logo %}Update{% else %}Add{% endif %}</button>
       </div>
     </div>
   </form>
 
-  <div class="row g-2 mt-3">
+  <div class="row g-2 mt-3" data-tools-covered-list>
     {% for item in tools_covered_logos %}
-      <div class="col-md-6 col-xl-4">
+      <div class="col-md-6 col-xl-4" data-tools-covered-item="{{ item.id }}">
         <div class="entity-item">
           <div class="entity-main">
             <div class="entity-thumb-wrap">
@@ -53,7 +53,7 @@
         </div>
       </div>
     {% empty %}
-      <div class="col-12">
+      <div class="col-12" data-tools-covered-empty>
         <div class="entity-empty-state">No tool logos yet. Add the first one above.</div>
       </div>
     {% endfor %}

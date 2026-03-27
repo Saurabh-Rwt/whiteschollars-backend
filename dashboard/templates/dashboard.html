@@ -1692,7 +1692,6 @@
         const thumb = item.image_url
           ? `<img src="${escapeAttr(item.image_url)}" alt="${escapeAttr(imageAlt || 'Tool logo')}" class="entity-thumb" />`
           : '<span class="entity-thumb-placeholder"><i class="bi bi-tools"></i></span>';
-        const editHref = `${dashboardPath}?course=${encodeURIComponent(selectedCourseId)}&section=tools_covered&edit_key=tools_covered_logo&edit_id=${encodeURIComponent(item.id)}`;
         return (
           `<div class="col-md-6 col-xl-4" data-tools-covered-item="${escapeAttr(item.id)}">` +
           '<div class="entity-item">' +
@@ -1704,7 +1703,7 @@
           '</div>' +
           '</div>' +
           '<div class="entity-item-actions">' +
-          `<a class="btn btn-sm btn-ghost" href="${escapeAttr(editHref)}">Edit</a>` +
+          `<button type="button" class="btn btn-sm btn-ghost" data-tools-covered-edit data-item-id="${escapeAttr(item.id)}" data-image-alt="${escapeAttr(imageAlt)}" data-image-url="${escapeAttr(item.image_url || '')}">Edit</button>` +
           `<form method="POST" action="${dashboardPath}">` +
           `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeAttr(csrfToken)}" />` +
           '<input type="hidden" name="action" value="delete_tools_covered_logo" />' +
@@ -1733,6 +1732,30 @@
         if (itemCount > 0 && empty) {
           empty.remove();
         }
+      };
+
+      const setToolsCoveredPreview = (url, altText, labelText) => {
+        const form = document.querySelector('[data-tools-covered-form]');
+        if (!form) return;
+        const preview = form.querySelector('[data-tools-covered-preview]');
+        const previewImage = form.querySelector('[data-tools-covered-preview-image]');
+        const previewLabel = form.querySelector('[data-tools-covered-preview-label]');
+        if (!preview || !previewImage || !previewLabel) return;
+
+        if (url) {
+          preview.classList.remove('d-none');
+          previewImage.classList.remove('d-none');
+          previewImage.src = url;
+          previewImage.alt = altText || 'Current tool logo';
+          previewLabel.textContent = labelText || altText || 'Current tool logo';
+          return;
+        }
+
+        preview.classList.add('d-none');
+        previewImage.classList.add('d-none');
+        previewImage.src = '';
+        previewImage.alt = '';
+        previewLabel.textContent = '';
       };
 
       const setHeroButtonIconSelection = (iconClass, iconLabel = '') => {
@@ -1868,9 +1891,19 @@
         const itemId = form.querySelector('[data-tools-covered-item-id]');
         if (itemId) itemId.value = '';
         const imageInput = form.querySelector('[data-tools-covered-image]');
-        if (imageInput) imageInput.required = true;
+        if (imageInput) {
+          imageInput.value = '';
+          imageInput.required = true;
+        }
+        const imageAltInput = form.querySelector('[data-tools-covered-image-alt]');
+        if (imageAltInput) imageAltInput.value = '';
         const submitButton = form.querySelector('[data-tools-covered-submit]');
         if (submitButton) submitButton.textContent = 'Add';
+        const modeBadge = document.querySelector('[data-tools-covered-mode]');
+        if (modeBadge) modeBadge.textContent = 'Add new logo';
+        const cancelButton = form.querySelector('[data-tools-covered-cancel]');
+        if (cancelButton) cancelButton.classList.add('d-none');
+        setToolsCoveredPreview('', '', '');
       };
 
       const startHeroLogoEdit = (button) => {
@@ -1986,6 +2019,33 @@
           button.dataset.imageUrl || '',
           button.dataset.imageAlt || '',
           button.dataset.imageAlt || 'Current card image'
+        );
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      };
+
+      const startToolsCoveredEdit = (button) => {
+        const form = document.querySelector('[data-tools-covered-form]');
+        if (!form || !button) return;
+        const itemId = form.querySelector('[data-tools-covered-item-id]');
+        const imageInput = form.querySelector('[data-tools-covered-image]');
+        const imageAltInput = form.querySelector('[data-tools-covered-image-alt]');
+        const submitButton = form.querySelector('[data-tools-covered-submit]');
+        const cancelButton = form.querySelector('[data-tools-covered-cancel]');
+        const modeBadge = document.querySelector('[data-tools-covered-mode]');
+
+        if (itemId) itemId.value = button.dataset.itemId || '';
+        if (imageInput) {
+          imageInput.value = '';
+          imageInput.required = false;
+        }
+        if (imageAltInput) imageAltInput.value = button.dataset.imageAlt || '';
+        if (submitButton) submitButton.textContent = 'Update';
+        if (cancelButton) cancelButton.classList.remove('d-none');
+        if (modeBadge) modeBadge.textContent = 'Editing logo';
+        setToolsCoveredPreview(
+          button.dataset.imageUrl || '',
+          button.dataset.imageAlt || '',
+          button.dataset.imageAlt || 'Current tool logo'
         );
         form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       };
@@ -2506,6 +2566,18 @@
         });
       });
 
+      document.querySelectorAll('[data-tools-covered-image]').forEach((input) => {
+        input.addEventListener('change', () => {
+          if (input.files && input.files.length > 0) {
+            const file = input.files[0];
+            const previewUrl = URL.createObjectURL(file);
+            setToolsCoveredPreview(previewUrl, file.name, file.name);
+          } else {
+            setToolsCoveredPreview('', '', '');
+          }
+        });
+      });
+
       document.querySelectorAll('[data-list-add]').forEach((button) => {
         button.addEventListener('click', () => {
           const target = document.querySelector(button.dataset.listAdd);
@@ -2631,6 +2703,31 @@
           return;
         }
 
+        const toolsCoveredEditButton = event.target.closest('[data-tools-covered-edit]');
+        if (toolsCoveredEditButton) {
+          event.preventDefault();
+          startToolsCoveredEdit(toolsCoveredEditButton);
+          return;
+        }
+
+        const toolsCoveredCancel = event.target.closest('[data-tools-covered-cancel]');
+        if (toolsCoveredCancel) {
+          event.preventDefault();
+          resetToolsCoveredFormToAddMode();
+          return;
+        }
+
+        const toolsCoveredAddButton = event.target.closest('[data-tools-covered-add]');
+        if (toolsCoveredAddButton) {
+          event.preventDefault();
+          resetToolsCoveredFormToAddMode();
+          const form = document.querySelector('[data-tools-covered-form]');
+          if (form) {
+            form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+          return;
+        }
+
         const editLink = event.target.closest('a[href*="edit_key="][href*="edit_id="]');
         if (!editLink) return;
         if (editLink.getAttribute('target') === '_blank') return;
@@ -2737,9 +2834,11 @@
       resetHeroButtonFormToAddMode();
       resetOverviewItemFormToAddMode();
       resetProgramForFormToAddMode();
+      resetToolsCoveredFormToAddMode();
       ensureOverviewItemsEmptyState();
       ensureCareerTransitionStatsEmptyState();
       ensureProgramForEmptyState();
+      ensureToolsCoveredEmptyState();
       initializeHeroAssetSorting();
       bindDashboardForms();
     </script>

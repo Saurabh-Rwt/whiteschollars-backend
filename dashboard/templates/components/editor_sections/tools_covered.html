@@ -1,6 +1,14 @@
 <div class="form-section">
-  <div class="form-section-title">Tools Covered</div>
-  <p class="editor-note">Upload the tool logos that should appear right after the course overview section.</p>
+  <div class="entity-header">
+    <div>
+      <div class="form-section-title mb-1">Tools Covered</div>
+      <p class="editor-note mb-0">Upload the tool logos that should appear right after the course overview section.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+      <button type="button" class="btn btn-sm btn-ghost" data-tools-covered-add>Add new logo</button>
+      <span class="entity-mode-badge" data-tools-covered-mode>{% if editing.tools_covered_logo %}Editing logo{% else %}Add new logo{% endif %}</span>
+    </div>
+  </div>
 
   <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard' %}" data-tools-covered-form>
     {% csrf_token %}
@@ -12,6 +20,22 @@
       <div class="col-md-6">
         <label class="form-label">Tool Logo</label>
         <input type="file" class="form-control" name="image" accept="image/*" data-tools-covered-image {% if not editing.tools_covered_logo %}required{% endif %} />
+
+        {% if editing.tools_covered_logo and editing.tools_covered_logo.image %}
+          <div class="media-preview mt-2" data-tools-covered-preview>
+            <img
+              src="{{ editing.tools_covered_logo.image.url }}"
+              alt="{{ editing.tools_covered_logo.image_alt|default:'Current tool logo' }}"
+              data-tools-covered-preview-image
+            />
+            <small class="text-muted" data-tools-covered-preview-label>{{ editing.tools_covered_logo.image_alt|default:'Current tool logo' }}</small>
+          </div>
+        {% else %}
+          <div class="media-preview mt-2 d-none" data-tools-covered-preview>
+            <img src="" alt="" class="d-none" data-tools-covered-preview-image />
+            <small class="text-muted" data-tools-covered-preview-label></small>
+          </div>
+        {% endif %}
       </div>
       <div class="col-md-4">
         <label class="form-label">Alt Text</label>
@@ -20,6 +44,16 @@
       <div class="col-md-2 text-end">
         <button class="btn btn-primary" type="submit" data-tools-covered-submit>{% if editing.tools_covered_logo %}Update{% else %}Add{% endif %}</button>
       </div>
+    </div>
+
+    <div class="mt-3 text-end d-flex justify-content-end gap-2 flex-wrap">
+      <button
+        type="button"
+        class="btn btn-outline-secondary {% if not editing.tools_covered_logo %}d-none{% endif %}"
+        data-tools-covered-cancel
+      >
+        Cancel Edit
+      </button>
     </div>
   </form>
 
@@ -41,7 +75,16 @@
             </div>
           </div>
           <div class="entity-item-actions">
-            <a class="btn btn-sm btn-ghost" href="{% url 'dashboard' %}?course={{ selected_course.id }}&section=tools_covered&edit_key=tools_covered_logo&edit_id={{ item.id }}">Edit</a>
+            <button
+              type="button"
+              class="btn btn-sm btn-ghost"
+              data-tools-covered-edit
+              data-item-id="{{ item.id }}"
+              data-image-alt="{{ item.image_alt }}"
+              data-image-url="{% if item.image %}{{ item.image.url }}{% endif %}"
+            >
+              Edit
+            </button>
             <form method="POST" action="{% url 'dashboard' %}">
               {% csrf_token %}
               <input type="hidden" name="action" value="delete_tools_covered_logo" />

@@ -19,6 +19,7 @@ from .models import (
     AccreditationLogo,
     WhyChoose,
     Mentor,
+    GuestLecture,
     ProgramHighlight,
     CareerAssistance,
     CareerTransition,
@@ -123,6 +124,12 @@ SECTION_CONFIG = [
         'label': 'Mentors',
         'description': 'Mentor cards with photo, role, and company logo.',
         'template': 'components/editor_sections/mentors.html',
+    },
+    {
+        'key': 'guest_lectures',
+        'label': 'Guest Lectures',
+        'description': 'Guest lecture cards with speaker photo, role, experience, and company logo.',
+        'template': 'components/editor_sections/guest_lectures.html',
     },
     {
         'key': 'program_highlights',
@@ -284,6 +291,7 @@ EDITABLE_MAP = {
     'why_choose': WhyChoose,
     'tools_covered_logo': ToolsCoveredLogo,
     'mentor': Mentor,
+    'guest_lecture': GuestLecture,
     'program_highlight': ProgramHighlight,
     'career_assistance': CareerAssistance,
     'career_transition': CareerTransition,
@@ -560,6 +568,7 @@ def _build_dashboard_context(request, selected_course=None, active_section=None,
         'course_overview_items': CourseOverviewItem.objects.filter(course=selected_course).order_by('sort_order'),
         'tools_covered_logos': ToolsCoveredLogo.objects.filter(course=selected_course).order_by('sort_order'),
         'mentors': Mentor.objects.filter(course=selected_course).order_by('sort_order'),
+        'guest_lectures': GuestLecture.objects.filter(course=selected_course).order_by('sort_order'),
         'program_highlights': ProgramHighlight.objects.filter(course=selected_course).order_by('sort_order'),
         'learner_journey': getattr(selected_course, 'learner_journey', None),
         'curriculum_section': getattr(selected_course, 'curriculum_section', None),
@@ -1314,6 +1323,60 @@ def _handle_dashboard_post(request):
         Mentor.objects.filter(id=request.POST.get('item_id'), course=selected_course).delete()
         messages.success(request, 'Mentor removed.')
         return redirect(_dashboard_url(course_id=selected_course.id, section='mentors'))
+
+    if action == 'save_guest_lecture':
+        name = request.POST.get('guest_name', '').strip()
+        designation = request.POST.get('designation_name', '').strip()
+        experience = request.POST.get('experience_text', '').strip()
+        guest_image = request.FILES.get('guest_image')
+        guest_image_alt = request.POST.get('guest_image_alt', '').strip()
+        company_logo = request.FILES.get('company_logo')
+        company_logo_alt = request.POST.get('company_logo_alt', '').strip()
+        item_id = request.POST.get('item_id')
+        if not name or not designation or not experience:
+            messages.error(request, 'Guest name, designation, and experience are required.')
+            return redirect(_dashboard_url(course_id=selected_course.id, section='guest_lectures'))
+        if item_id:
+            entry = GuestLecture.objects.filter(id=item_id, course=selected_course).first()
+            if not entry:
+                messages.error(request, 'Guest lecture card not found.')
+                return redirect(_dashboard_url(course_id=selected_course.id, section='guest_lectures'))
+        else:
+            entry = GuestLecture(course=selected_course, sort_order=_next_sort_order(GuestLecture, selected_course))
+        entry.guest_name = name
+        entry.designation_name = designation
+        entry.experience_text = experience
+        if guest_image:
+            entry.guest_image = guest_image
+        entry.guest_image_alt = guest_image_alt
+        if company_logo:
+            entry.company_logo = company_logo
+        entry.company_logo_alt = company_logo_alt
+        entry.save()
+        _set_dashboard_ajax_data(
+            request,
+            'save_guest_lecture',
+            mode='updated' if item_id else 'created',
+            item={
+                'id': entry.id,
+                'guest_name': entry.guest_name,
+                'designation_name': entry.designation_name,
+                'experience_text': entry.experience_text,
+                'guest_image_alt': entry.guest_image_alt or '',
+                'guest_image_url': entry.guest_image.url if entry.guest_image else '',
+                'company_logo_alt': entry.company_logo_alt or '',
+                'company_logo_url': entry.company_logo.url if entry.company_logo else '',
+            },
+        )
+        messages.success(request, 'Guest lecture card saved.')
+        return redirect(_dashboard_url(course_id=selected_course.id, section='guest_lectures'))
+
+    if action == 'delete_guest_lecture':
+        item_id = request.POST.get('item_id')
+        GuestLecture.objects.filter(id=item_id, course=selected_course).delete()
+        _set_dashboard_ajax_data(request, 'delete_guest_lecture', item_id=str(item_id or ''))
+        messages.success(request, 'Guest lecture card removed.')
+        return redirect(_dashboard_url(course_id=selected_course.id, section='guest_lectures'))
 
     if action == 'save_program_highlight':
         title = request.POST.get('title', '').strip()

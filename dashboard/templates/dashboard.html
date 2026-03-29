@@ -1687,6 +1687,102 @@
         previewLabel.textContent = '';
       };
 
+      const createGuestLecturesItemMarkup = (item) => {
+        const imageAlt = item.guest_image_alt || '';
+        const companyLogoAlt = item.company_logo_alt || '';
+        const thumb = item.guest_image_url
+          ? `<img src="${escapeAttr(item.guest_image_url)}" alt="${escapeAttr(imageAlt || item.guest_name || 'Guest lecture image')}" class="entity-thumb" />`
+          : '<span class="entity-thumb-placeholder"><i class="bi bi-mic"></i></span>';
+        return (
+          `<div class="col-xl-4 col-md-6" data-guest-lectures-item="${escapeAttr(item.id)}">` +
+          '<article class="entity-item">' +
+          '<div class="entity-main">' +
+          `<div class="entity-thumb-wrap">${thumb}</div>` +
+          '<div class="entity-text">' +
+          `<div class="entity-title">${escapeHtml(item.guest_name || '')}</div>` +
+          `<div class="entity-meta">${escapeHtml(item.designation_name || '')} | ${escapeHtml(item.experience_text || '')}</div>` +
+          '</div>' +
+          '</div>' +
+          '<div class="entity-item-actions">' +
+          `<button type="button" class="btn btn-sm btn-ghost" data-guest-lectures-edit data-item-id="${escapeAttr(item.id)}" data-guest-name="${escapeAttr(item.guest_name || '')}" data-designation="${escapeAttr(item.designation_name || '')}" data-experience="${escapeAttr(item.experience_text || '')}" data-image-alt="${escapeAttr(imageAlt)}" data-image-url="${escapeAttr(item.guest_image_url || '')}" data-company-logo-alt="${escapeAttr(companyLogoAlt)}" data-company-logo-url="${escapeAttr(item.company_logo_url || '')}">Edit</button>` +
+          `<form method="POST" action="${dashboardPath}">` +
+          `<input type="hidden" name="csrfmiddlewaretoken" value="${escapeAttr(csrfToken)}" />` +
+          '<input type="hidden" name="action" value="delete_guest_lecture" />' +
+          `<input type="hidden" name="course" value="${escapeAttr(selectedCourseId)}" />` +
+          `<input type="hidden" name="item_id" value="${escapeAttr(item.id)}" />` +
+          '<button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>' +
+          '</form>' +
+          '</div>' +
+          '</article>' +
+          '</div>'
+        );
+      };
+
+      const ensureGuestLecturesEmptyState = () => {
+        const list = document.querySelector('[data-guest-lectures-list]');
+        if (!list) return;
+        const itemCount = list.querySelectorAll('[data-guest-lectures-item]').length;
+        let empty = list.querySelector('[data-guest-lectures-empty]');
+        if (itemCount === 0 && !empty) {
+          list.insertAdjacentHTML(
+            'beforeend',
+            '<div class="col-12" data-guest-lectures-empty><div class="entity-empty-state">No guest lecture cards yet. Add the first card above.</div></div>'
+          );
+          return;
+        }
+        if (itemCount > 0 && empty) {
+          empty.remove();
+        }
+      };
+
+      const setGuestLecturesPreview = (url, altText, labelText) => {
+        const form = document.querySelector('[data-guest-lectures-form]');
+        if (!form) return;
+        const preview = form.querySelector('[data-guest-lectures-preview]');
+        const previewImage = form.querySelector('[data-guest-lectures-preview-image]');
+        const previewLabel = form.querySelector('[data-guest-lectures-preview-label]');
+        if (!preview || !previewImage || !previewLabel) return;
+
+        if (url) {
+          preview.classList.remove('d-none');
+          previewImage.classList.remove('d-none');
+          previewImage.src = url;
+          previewImage.alt = altText || 'Current guest image';
+          previewLabel.textContent = labelText || altText || 'Current guest image';
+          return;
+        }
+
+        preview.classList.add('d-none');
+        previewImage.classList.add('d-none');
+        previewImage.src = '';
+        previewImage.alt = '';
+        previewLabel.textContent = '';
+      };
+
+      const setGuestLecturesCompanyPreview = (url, altText, labelText) => {
+        const form = document.querySelector('[data-guest-lectures-form]');
+        if (!form) return;
+        const preview = form.querySelector('[data-guest-lectures-company-preview]');
+        const previewImage = form.querySelector('[data-guest-lectures-company-preview-image]');
+        const previewLabel = form.querySelector('[data-guest-lectures-company-preview-label]');
+        if (!preview || !previewImage || !previewLabel) return;
+
+        if (url) {
+          preview.classList.remove('d-none');
+          previewImage.classList.remove('d-none');
+          previewImage.src = url;
+          previewImage.alt = altText || 'Current company logo';
+          previewLabel.textContent = labelText || altText || 'Current company logo';
+          return;
+        }
+
+        preview.classList.add('d-none');
+        previewImage.classList.add('d-none');
+        previewImage.src = '';
+        previewImage.alt = '';
+        previewLabel.textContent = '';
+      };
+
       const createProjectsCoveredItemMarkup = (item) => {
         const imageAlt = item.image_alt || '';
         const thumb = item.image_url
@@ -1955,6 +2051,26 @@
         setProgramForPreview('', '', '');
       };
 
+      const resetGuestLecturesFormToAddMode = () => {
+        const form = document.querySelector('[data-guest-lectures-form]');
+        if (!form) return;
+        form.reset();
+        const itemId = form.querySelector('[data-guest-lectures-item-id]');
+        if (itemId) itemId.value = '';
+        const imageInput = form.querySelector('[data-guest-lectures-image]');
+        if (imageInput) imageInput.value = '';
+        const companyLogoInput = form.querySelector('[data-guest-lectures-company-logo]');
+        if (companyLogoInput) companyLogoInput.value = '';
+        const submitButton = form.querySelector('[data-guest-lectures-submit]');
+        if (submitButton) submitButton.textContent = 'Add Card';
+        const modeBadge = document.querySelector('[data-guest-lectures-mode]');
+        if (modeBadge) modeBadge.textContent = 'Add new card';
+        const cancelButton = form.querySelector('[data-guest-lectures-cancel]');
+        if (cancelButton) cancelButton.classList.add('d-none');
+        setGuestLecturesPreview('', '', '');
+        setGuestLecturesCompanyPreview('', '', '');
+      };
+
       const resetProjectsCoveredFormToAddMode = () => {
         const form = document.querySelector('[data-projects-covered-form]');
         if (!form) return;
@@ -2110,6 +2226,45 @@
           button.dataset.imageUrl || '',
           button.dataset.imageAlt || '',
           button.dataset.imageAlt || 'Current card image'
+        );
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      };
+
+      const startGuestLecturesEdit = (button) => {
+        const form = document.querySelector('[data-guest-lectures-form]');
+        if (!form || !button) return;
+        const itemId = form.querySelector('[data-guest-lectures-item-id]');
+        const nameInput = form.querySelector('[data-guest-lectures-name]');
+        const designationInput = form.querySelector('[data-guest-lectures-designation]');
+        const experienceInput = form.querySelector('[data-guest-lectures-experience]');
+        const imageInput = form.querySelector('[data-guest-lectures-image]');
+        const imageAltInput = form.querySelector('[data-guest-lectures-image-alt]');
+        const companyLogoInput = form.querySelector('[data-guest-lectures-company-logo]');
+        const companyLogoAltInput = form.querySelector('[data-guest-lectures-company-logo-alt]');
+        const submitButton = form.querySelector('[data-guest-lectures-submit]');
+        const cancelButton = form.querySelector('[data-guest-lectures-cancel]');
+        const modeBadge = document.querySelector('[data-guest-lectures-mode]');
+
+        if (itemId) itemId.value = button.dataset.itemId || '';
+        if (nameInput) nameInput.value = button.dataset.guestName || '';
+        if (designationInput) designationInput.value = button.dataset.designation || '';
+        if (experienceInput) experienceInput.value = button.dataset.experience || '';
+        if (imageInput) imageInput.value = '';
+        if (imageAltInput) imageAltInput.value = button.dataset.imageAlt || '';
+        if (companyLogoInput) companyLogoInput.value = '';
+        if (companyLogoAltInput) companyLogoAltInput.value = button.dataset.companyLogoAlt || '';
+        if (submitButton) submitButton.textContent = 'Update Card';
+        if (cancelButton) cancelButton.classList.remove('d-none');
+        if (modeBadge) modeBadge.textContent = 'Editing card';
+        setGuestLecturesPreview(
+          button.dataset.imageUrl || '',
+          button.dataset.imageAlt || '',
+          button.dataset.imageAlt || 'Current guest image'
+        );
+        setGuestLecturesCompanyPreview(
+          button.dataset.companyLogoUrl || '',
+          button.dataset.companyLogoAlt || '',
+          button.dataset.companyLogoAlt || 'Current company logo'
         );
         form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       };
@@ -2365,6 +2520,35 @@
                 const activeItem = document.querySelector('[data-program-for-item-id]');
                 if (activeItem && String(activeItem.value || '') === String(payload.data.item_id || '')) {
                   resetProgramForFormToAddMode();
+                }
+              }
+
+              if (action === 'save_guest_lecture' && payload.data.item) {
+                const list = document.querySelector('[data-guest-lectures-list]');
+                if (list) {
+                  const itemSelector = `[data-guest-lectures-item="${payload.data.item.id}"]`;
+                  const existingItem = list.querySelector(itemSelector);
+                  if (existingItem) {
+                    existingItem.outerHTML = createGuestLecturesItemMarkup(payload.data.item);
+                  } else {
+                    list.insertAdjacentHTML('beforeend', createGuestLecturesItemMarkup(payload.data.item));
+                  }
+                  ensureGuestLecturesEmptyState();
+                  bindDashboardForms(list);
+                }
+                resetGuestLecturesFormToAddMode();
+              }
+
+              if (action === 'delete_guest_lecture' && payload.data.item_id) {
+                const list = document.querySelector('[data-guest-lectures-list]');
+                if (list) {
+                  const item = list.querySelector(`[data-guest-lectures-item="${payload.data.item_id}"]`);
+                  if (item) item.remove();
+                  ensureGuestLecturesEmptyState();
+                }
+                const activeItem = document.querySelector('[data-guest-lectures-item-id]');
+                if (activeItem && String(activeItem.value || '') === String(payload.data.item_id || '')) {
+                  resetGuestLecturesFormToAddMode();
                 }
               }
 
@@ -2717,6 +2901,30 @@
         });
       });
 
+      document.querySelectorAll('[data-guest-lectures-image]').forEach((input) => {
+        input.addEventListener('change', () => {
+          if (input.files && input.files.length > 0) {
+            const file = input.files[0];
+            const previewUrl = URL.createObjectURL(file);
+            setGuestLecturesPreview(previewUrl, file.name, file.name);
+          } else {
+            setGuestLecturesPreview('', '', '');
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-guest-lectures-company-logo]').forEach((input) => {
+        input.addEventListener('change', () => {
+          if (input.files && input.files.length > 0) {
+            const file = input.files[0];
+            const previewUrl = URL.createObjectURL(file);
+            setGuestLecturesCompanyPreview(previewUrl, file.name, file.name);
+          } else {
+            setGuestLecturesCompanyPreview('', '', '');
+          }
+        });
+      });
+
       document.querySelectorAll('[data-projects-covered-image]').forEach((input) => {
         input.addEventListener('change', () => {
           if (input.files && input.files.length > 0) {
@@ -2860,6 +3068,31 @@
           event.preventDefault();
           resetProgramForFormToAddMode();
           const form = document.querySelector('[data-program-for-form]');
+          if (form) {
+            form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+          return;
+        }
+
+        const guestLecturesEditButton = event.target.closest('[data-guest-lectures-edit]');
+        if (guestLecturesEditButton) {
+          event.preventDefault();
+          startGuestLecturesEdit(guestLecturesEditButton);
+          return;
+        }
+
+        const guestLecturesCancel = event.target.closest('[data-guest-lectures-cancel]');
+        if (guestLecturesCancel) {
+          event.preventDefault();
+          resetGuestLecturesFormToAddMode();
+          return;
+        }
+
+        const guestLecturesAddButton = event.target.closest('[data-guest-lectures-add]');
+        if (guestLecturesAddButton) {
+          event.preventDefault();
+          resetGuestLecturesFormToAddMode();
+          const form = document.querySelector('[data-guest-lectures-form]');
           if (form) {
             form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }

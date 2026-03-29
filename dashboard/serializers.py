@@ -7,6 +7,8 @@ from .models import (
     AccreditationLogo,
     WhyChoose,
     Mentor,
+    GuestLecture,
+    GuestLecture,
     ProgramHighlight,
     CareerAssistance,
     CareerTransition,
@@ -81,6 +83,11 @@ class WhyChooseSerializer(serializers.ModelSerializer):
 class MentorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mentor
+        fields = '__all__'
+
+class GuestLectureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GuestLecture
         fields = '__all__'
 
 class ProgramHighlightSerializer(serializers.ModelSerializer):
@@ -355,6 +362,7 @@ class CourseFullDetailSerializer(serializers.ModelSerializer):
     why_choose_items = WhyChooseSerializer(many=True, read_only=True)
     tools_covered_logos = ToolsCoveredLogoSerializer(many=True, read_only=True)
     mentors = MentorSerializer(many=True, read_only=True)
+    guest_lectures = GuestLectureSerializer(many=True, read_only=True)
     program_highlights = ProgramHighlightSerializer(many=True, read_only=True)
     career_assistances = CareerAssistanceSerializer(many=True, read_only=True)
     career_transitions = CareerTransitionSerializer(many=True, read_only=True)
@@ -371,7 +379,7 @@ class CourseFullDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'slug', 'description',
             'sections', 'key_highlights', 'accreditations_certifications',
-            'why_choose_items', 'mentors', 'program_highlights',
+            'why_choose_items', 'mentors', 'guest_lectures', 'program_highlights',
             'career_assistances', 'career_transitions', 'our_alumni',
             'on_campus_classes', 'fee_structures', 'program_for', 'projects_covered',
             'why_white_scholars', 'listen_our_experts', 'tools_covered_logos'
@@ -399,6 +407,7 @@ class CoursePageSerializer(serializers.ModelSerializer):
     course_overview_items = CourseOverviewItemSerializer(many=True, read_only=True)
     tools_covered_logos = ToolsCoveredLogoSerializer(many=True, read_only=True)
     mentors = MentorSerializer(many=True, read_only=True)
+    guest_lectures = GuestLectureSerializer(many=True, read_only=True)
     program_highlights = ProgramHighlightSerializer(many=True, read_only=True)
     learner_journey = LearnerJourneySerializer(read_only=True)
     curriculum_section = CurriculumSectionSerializer(read_only=True)
@@ -455,6 +464,7 @@ class CoursePageSerializer(serializers.ModelSerializer):
             'course_overview_items',
             'tools_covered_logos',
             'mentors',
+            'guest_lectures',
             'program_highlights',
             'learner_journey',
             'curriculum_section',

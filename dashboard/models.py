@@ -119,6 +119,28 @@ class Mentor(models.Model):
     class Meta:
         db_table = 'mentors'
 
+class GuestLecture(models.Model):
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='guest_lectures'
+    )
+    guest_image = models.ImageField(upload_to='guest_lectures/', blank=True, null=True)
+    guest_image_alt = models.CharField(max_length=255, blank=True)
+    guest_name = models.CharField(max_length=255)
+    designation_name = models.CharField(max_length=255)
+    experience_text = models.TextField()
+    company_logo = models.ImageField(upload_to='guest_lecture_company_logos/', blank=True, null=True)
+    company_logo_alt = models.CharField(max_length=255, blank=True)
+    sort_order = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.guest_name} ({self.designation_name})"
+
+    class Meta:
+        db_table = 'guest_lectures'
+        ordering = ['sort_order']
+
 class ProgramHighlight(models.Model):
     course = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='program_highlights')
     title = models.CharField(max_length=255)
@@ -306,6 +328,7 @@ class CourseSection(models.Model):
         ('course_overview', 'Course Overview'),
         ('tools_covered', 'Tools Covered'),
         ('mentors', 'Mentors'),
+        ('guest_lectures', 'Guest Lectures'),
         ('program_highlights', 'Program Highlights'),
         ('learner_journey', 'Learner Journey'),
         ('curriculum', 'Curriculum'),
